@@ -1,0 +1,158 @@
+---
+title: "Calculator Trading Feature"
+description: "Case Study — BA tại Nami Innovation | 1/2024 – 5/2024"
+icon: "calculator"
+---
+
+# Calculator Trading Feature
+
+<Info>
+  **Vai trò:** Business Analyst · **Công ty:** Nami Innovation  
+  **Thời gian:** 1/2024 – 5/2024 · **Platform:** Web / Mobile  
+  **Team:** ~10 người (BA, Dev, QA, UI/UX)
+</Info>
+
+---
+
+## Bối cảnh & Vấn đề
+
+Đây là **dự án BA đầu tiên** tôi thực hiện tại Nami Innovation — bắt đầu vào tháng 1/2024, ngay khi chuyển sang vai trò BA từ Marketing.
+
+Trading calculator là công cụ giúp trader **ước tính kết quả giao dịch trước khi đặt lệnh**. Thay vì tính toán thủ công, user nhập các thông số và calculator tự động tính:
+
+- **PnL dự kiến** (Profit & Loss)
+- **Liquidation price** (giá thanh lý)
+- **Required margin**
+- **ROE (Return on Equity)**
+
+**Vấn đề ban đầu:** User (đặc biệt trader mới) liên tục hỏi CS về cách tính PnL và margin — nhưng thực ra họ chỉ cần một công cụ tính nhanh ngay trên app mà không cần rời nền tảng sang tool ngoài.
+
+---
+
+## Vai trò & Trách nhiệm BA
+
+<AccordionGroup>
+  <Accordion title="1. Thu thập User Feedback qua CS Team" icon="headset">
+    Phương pháp đầu tiên: **interview CS Team** để khai thác câu hỏi thường gặp từ user.
+
+    **Insights từ CS:**
+    - Top câu hỏi: "Tôi đặt lệnh X với leverage Y thì bị thanh lý tại giá nào?"
+    - User hay dùng sai: tính PnL theo giá kỳ vọng nhưng quên tính phí giao dịch
+    - Nhiều user không biết margin required khác nhau giữa Isolated và Cross
+    - Trader pro muốn tính nhanh break-even price khi hold lệnh thua
+
+    **User personas được xác định:**
+    | Persona | Nhu cầu chính | Ưu tiên tính năng |
+    |---|---|---|
+    | **Trader mới** | Hiểu tôi có thể mất bao nhiêu | Liquidation price, required margin |
+    | **Trader thường** | Tính PnL target trước khi vào lệnh | PnL calculator, ROE |
+    | **Trader pro** | Tính break-even, tối ưu leverage | Full calculator với tất cả input |
+  </Accordion>
+
+  <Accordion title="2. Competitor Analysis — Xác định Feature Scope" icon="magnifying-glass">
+    Tôi phân tích calculator trên các sàn lớn để benchmark:
+
+    | Platform | Tính năng | Ưu điểm | Hạn chế |
+    |---|---|---|---|
+    | **Binance** | Đầy đủ nhất: PnL, Liq Price, ROE, Target Price | Nhiều mode, phân tab rõ | Phức tạp với trader mới |
+    | **OKX** | Calculator tích hợp ngay trên order form | UX mượt, contextual | Không standalone |
+    | **Bybit** | 4 loại calculator tách biệt | Rõ ràng từng use case | Phải navigate nhiều |
+
+    **Quyết định scope Nami (từ analysis):**
+    - MVP: PnL Calculator + Liquidation Price Calculator (cover 80% nhu cầu)
+    - Thiết kế dạng tab đơn giản (học từ Bybit)
+    - Thêm toggle Long/Short (học từ Binance UX)
+    - Tích hợp nút "Fill from position" — kéo thông số từ lệnh đang mở vào calculator
+  </Accordion>
+
+  <Accordion title="3. Định nghĩa Formulas" icon="square-root-variable">
+    Phần kỹ thuật nhất của dự án — phải định nghĩa chính xác công thức để Dev implement đúng.
+
+    **PnL Calculator:**
+
+    | Loại | Công thức Long | Công thức Short |
+    |---|---|---|
+    | PnL | `(Exit Price - Entry Price) × Quantity` | `(Entry Price - Exit Price) × Quantity` |
+    | PnL (%) | `PnL / Initial Margin × 100` | `PnL / Initial Margin × 100` |
+    | ROE | `PnL / Initial Margin × 100` | `PnL / Initial Margin × 100` |
+
+    **Liquidation Price Calculator:**
+
+    | Margin Mode | Long Liquidation | Short Liquidation |
+    |---|---|---|
+    | Isolated | `Entry × (1 - 1/Leverage + MM Rate)` | `Entry × (1 + 1/Leverage - MM Rate)` |
+    | Cross | Phức tạp hơn — phụ thuộc toàn bộ account equity | Tương tự |
+
+    **Required Margin:**
+    ```
+    Initial Margin = (Entry Price × Quantity) / Leverage
+    Maintenance Margin = Entry Price × Quantity × MM Rate
+    ```
+
+    *Note: MM Rate (Maintenance Margin Rate) thay đổi theo tier position size — phải có lookup table.*
+  </Accordion>
+
+  <Accordion title="4. Finalize UI/UX Flow với Design & Development" icon="figma">
+    **Phối hợp với Design Team:**
+    - Wireframe: layout 2 cột (input bên trái, kết quả bên phải) cho desktop
+    - Mobile: stacked layout; kết quả hiện bên dưới sau khi user nhập đủ input
+    - Color coding: PnL dương → xanh; PnL âm → đỏ; rõ ràng cho mọi ngưỡng màu sắc
+    - Input UX: slider cho leverage (kèm input box); dropdown cho coin pair
+
+    **Phối hợp với Development Team:**
+    - Clarify rounding rule: PnL hiển thị 2 chữ số thập phân; price hiển thị theo tick size của từng pair
+    - Xử lý edge case: leverage = 1 (không có liquidation); margin mode = Cross (hiển thị disclaimer)
+    - Performance: tính toán real-time khi user thay đổi bất kỳ input nào (không cần bấm "Tính")
+    - Mobile keyboard: auto-show numeric keyboard khi focus vào input field
+
+    **Review rounds:** 3 vòng với Design; 2 vòng clarification với Dev trước khi start coding.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Điểm nổi bật
+
+<CardGroup cols={2}>
+  <Card title="Dự án khởi đầu BA" icon="rocket">
+    Calculator là bước đầu chuyển đổi từ Marketing → BA. Dự án nhỏ nhưng đòi hỏi hiểu sâu domain (công thức tài chính) và rèn kỹ năng viết PRD lần đầu trong môi trường thực tế.
+  </Card>
+  <Card title="Research-driven approach" icon="magnifying-glass">
+    Thay vì spec từ trên xuống, dự án bắt đầu bằng user research (CS interviews) và competitor analysis — đảm bảo build đúng thứ user cần, không build theo assumption.
+  </Card>
+</CardGroup>
+
+---
+
+## Thách thức & Bài học
+
+<CardGroup cols={2}>
+  <Card title="Thách thức" icon="triangle-exclamation">
+    Là BA mới, phải nhanh chóng nắm các công thức futures trading (liquidation price, MM rate, leverage tiers) trong thời gian ngắn. Domain knowledge là prerequisite để viết được spec đúng.
+  </Card>
+  <Card title="Bài học" icon="lightbulb">
+    **"Talk to CS first"** — CS team là goldmine insight về user pain point thực tế. Với tính năng tool/utility như calculator, feedback từ CS nhanh hơn và chính xác hơn nhiều so với user survey.
+  </Card>
+</CardGroup>
+
+---
+
+## Skills thể hiện trong dự án này
+
+<CardGroup cols={3}>
+  <Card title="User Research" icon="users">
+    CS interview · Competitor analysis · Persona
+  </Card>
+  <Card title="Domain Knowledge" icon="chart-candlestick">
+    Futures formulas · PnL · Liquidation · Margin
+  </Card>
+  <Card title="BA Artifacts" icon="file-lines">
+    PRD · Formula Spec · UI/UX Flow · Edge Cases
+  </Card>
+</CardGroup>
+
+---
+
+<Note>
+  Đây là **dự án thực tế tại Nami Innovation** — dự án BA đầu tiên sau khi chuyển từ Marketing. Nội dung trên là tóm tắt cấp độ case study để bảo mật thông tin nội bộ.
+</Note>
