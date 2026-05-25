@@ -1,0 +1,164 @@
+---
+title: "Crypto Futures Trading Platform"
+description: "Case Study — BA tại Nami Innovation | 6/2025 – 1/2026"
+icon: "chart-line"
+---
+
+# Crypto Futures Trading Platform
+
+<Info>
+  **Vai trò:** Business Analyst · **Công ty:** Nami Innovation  
+  **Thời gian:** 6/2025 – 1/2026 · **Platform:** Web / Mobile  
+  **Team:** ~20 người (BA, Dev, QA, UI/UX, DevOps)
+</Info>
+
+---
+
+## Kết quả dự án
+
+<CardGroup cols={2}>
+  <Card title="6,000+" icon="users">
+    Active users sau khi ra mắt
+  </Card>
+  <Card title="~$10M" icon="dollar-sign">
+    Trading volume trong giai đoạn đầu
+  </Card>
+</CardGroup>
+
+---
+
+## Bối cảnh & Vấn đề
+
+Nami Innovation muốn mở rộng sản phẩm từ spot trading sang **futures trading** — một bước nhảy lớn về độ phức tạp nghiệp vụ. Futures trading yêu cầu hệ thống xử lý real-time cho:
+
+- **Margin management**: tính toán initial margin, maintenance margin theo từng position
+- **Leverage trading**: hỗ trợ đòn bẩy tối đa (5x – 125x tuỳ cặp coin)
+- **Liquidation engine**: giám sát liên tục và tự động thanh lý khi margin không đủ
+- **Risk control**: giới hạn vị thế, quản lý thua lỗ tối đa, bảo vệ tài khoản
+
+Thách thức là **domain cực kỳ phức tạp** — logic tài chính đan xen với yêu cầu latency thấp và trải nghiệm người dùng tốt cho cả trader mới lẫn pro.
+
+---
+
+## Vai trò & Trách nhiệm BA
+
+<AccordionGroup>
+  <Accordion title="1. Business Rule Definition — Trading Logic" icon="book">
+    Phần cốt lõi và phức tạp nhất của dự án. Tôi phải định nghĩa chính xác:
+
+    **Margin Calculation:**
+    | Loại Margin | Công thức | Ghi chú |
+    |---|---|---|
+    | Initial Margin | `Position Size / Leverage` | Số tiền ký quỹ ban đầu bắt buộc |
+    | Maintenance Margin | `Position Size × MM Rate` | Ngưỡng duy trì; thường 0.5–1% |
+    | Liquidation Price | Phụ thuộc Long/Short, Entry Price, Leverage | Giá kích hoạt thanh lý |
+
+    **Liquidation Conditions:**
+    - Khi `Margin Ratio = Maintenance Margin / Account Equity ≥ 100%`
+    - Hệ thống tự động đóng toàn bộ position; không thể cancel sau khi trigger
+    - Cảnh báo email + in-app khi Margin Ratio ≥ 80%
+
+    **Funding Rate (Perpetual Futures):**
+    - Thu/trả mỗi 8 giờ giữa long và short holders
+    - BA phải định nghĩa rõ ai trả, ai nhận, hiển thị countdown và rate trên UI
+  </Accordion>
+
+  <Accordion title="2. Tài liệu sản xuất" icon="file-lines">
+    | Tài liệu | Mục đích | Người nhận |
+    |---|---|---|
+    | **BRS** (Business Requirements Specification) | Scope và business rules tổng thể | Product, Engineering Lead |
+    | **PRD** (Product Requirements Document) | Mô tả chi tiết từng feature, user flow, edge cases | Dev, QA, UI/UX |
+    | **User Guide** | Hướng dẫn cho end user | CS Team, Marketing |
+    | **Functional Specifications** | Chi tiết kỹ thuật từng API và màn hình | Developer |
+
+    **Scope PRD bao gồm:**
+    - Order types: Limit, Market, Stop-Limit, Take Profit/Stop Loss
+    - Position management: Isolated vs Cross Margin
+    - Leverage adjustment mid-position
+    - PnL calculation (Unrealized, Realized)
+    - Order book, trade history, liquidation history
+  </Accordion>
+
+  <Accordion title="3. User Flow Design" icon="diagram-project">
+    Thiết kế toàn bộ luồng người dùng cho 2 scenario chính:
+
+    **Order Placement Flow:**
+    ```
+    Chọn cặp coin
+      → Chọn Isolated / Cross Margin
+      → Chọn Leverage (slider + input)
+      → Chọn Order Type (Limit / Market / Stop-Limit)
+      → Nhập giá + quantity (hoặc % balance)
+      → Preview margin required & liq. price
+      → Confirm → Submit order → Real-time status update
+    ```
+
+    **Position Management Flow:**
+    ```
+    View open positions
+      → Xem PnL unrealized (update mỗi giây)
+      → Adjust leverage hoặc thêm margin
+      → Set / chỉnh TP/SL
+      → Close position (Market / Limit)
+      → View settlement + history
+    ```
+  </Accordion>
+
+  <Accordion title="4. Engineering Collaboration — Edge Cases" icon="code">
+    Phối hợp chặt với Engineering team để giải quyết các edge case phức tạp:
+
+    | Edge Case | Vấn đề | Giải pháp BA đề xuất |
+    |---|---|---|
+    | **Liquidation cascade** | Nhiều account bị liq cùng lúc → áp lực lên order book | Insurance fund absorb; auto-deleveraging nếu fund cạn |
+    | **Partial fill** | Order khớp một phần; user muốn cancel phần còn lại | Cho phép cancel remainder; hiển thị trạng thái PARTIALLY_FILLED |
+    | **Cross margin negative balance** | Thua lỗ vượt balance trong cross margin | Account equity không về âm; insurance fund cover; ghi nợ |
+    | **Leverage ≥ 20x — UI warning** | User dễ bị liq nếu không hiểu rủi ro | Popup confirm bắt buộc; "Tôi hiểu rủi ro" checkbox |
+    | **Giá oracle manipulation** | Giá mark price bị manipulate kích hoạt liq sai | Dùng aggregate từ 3+ exchange; delay 5s trước khi liq |
+  </Accordion>
+
+  <Accordion title="5. Validation trước Release" icon="circle-check">
+    Trước mỗi release, tôi phối hợp QA để validate:
+
+    - **Trading logic accuracy**: kiểm tra từng công thức margin và PnL với test cases thực tế
+    - **System behavior dưới áp lực**: mô phỏng 500+ orders/giây; kiểm tra latency
+    - **Edge case coverage**: toàn bộ danh sách edge cases đã định nghĩa trong FRD
+    - **Regulatory compliance**: đảm bảo UI hiển thị risk warning đúng theo yêu cầu
+
+    Kết quả: ra mắt không có critical bug liên quan đến trading logic; user feedback tích cực về clarity của UI.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Thách thức & Bài học
+
+<CardGroup cols={2}>
+  <Card title="Thách thức lớn nhất" icon="triangle-exclamation">
+    Futures trading có hàng chục công thức tài chính liên kết nhau. Mỗi khi thay đổi một giả định (ví dụ: MM rate), hàng loạt rule khác phải update. Cần xây dựng **"business rule register"** để tracking dependency.
+  </Card>
+  <Card title="Bài học rút ra" icon="lightbulb">
+    Với domain phức tạp như này, **làm việc từ user story xuống** (thay vì từ tech specs lên) giúp team không bị lạc vào technical details sớm. Prototype flow trên Figma trước khi viết PRD tiết kiệm nhiều revision.
+  </Card>
+</CardGroup>
+
+---
+
+## Skills thể hiện trong dự án này
+
+<CardGroup cols={3}>
+  <Card title="Domain Expertise" icon="chart-candlestick">
+    Futures, Margin, Liquidation, Funding Rate, PnL
+  </Card>
+  <Card title="BA Artifacts" icon="file-lines">
+    BRS · PRD · FRD · User Guide · Functional Spec
+  </Card>
+  <Card title="Collaboration" icon="people-group">
+    Cross-team: Dev, QA, UI/UX, CS, DevOps
+  </Card>
+</CardGroup>
+
+---
+
+<Note>
+  Đây là **dự án thực tế tại Nami Innovation**. Các chi tiết về business rules, số liệu nội bộ và tài liệu kỹ thuật không được công khai để bảo mật thông tin doanh nghiệp. Nội dung trên là tóm tắt cấp độ case study.
+</Note>
