@@ -1,0 +1,505 @@
+---
+title: "Module 01 — Authentication"
+description: "PRD-EW-AUTH-001 | Đăng ký · Đăng nhập · PIN · Biometric · Session"
+icon: "lock"
+---
+
+# PRD: Authentication Module
+
+<Info>
+  **Document ID:** PRD-EW-AUTH-001 · **Version:** 1.0 · **Status:** Draft  
+  **Ngày tạo:** 2026-05-25 · **Tác giả:** BA Team  
+  **Reviewer:** Tech Lead, Security Team, QA Lead · **Approver:** Head of Product
+</Info>
+
+| Vai trò | Mục đích đọc |
+|---|---|
+| Tech Lead / Developer | Thiết kế Auth Service, Token Service, luồng xác thực |
+| Security Team | Review PIN storage, session management, brute-force protection |
+| QA Lead | Xây dựng test cases: đăng ký, đăng nhập, lock/unlock, biometric |
+| UX Designer | Hiểu điều kiện hiển thị từng màn hình, error state |
+
+---
+
+## 1. Tổng quan module
+
+Module Authentication xử lý toàn bộ vòng đời xác thực người dùng:
+
+<CardGroup cols={2}>
+  <Card title="Đăng ký tài khoản" icon="user-plus">
+    SĐT + OTP → Tạo PIN → Nhập thông tin cơ bản → Tạo ví
+  </Card>
+  <Card title="Đăng nhập" icon="right-to-bracket">
+    PIN hoặc Biometric (Face ID / Fingerprint) → JWT token
+  </Card>
+  <Card title="Quên / Đổi PIN" icon="key">
+    SĐT → OTP → PIN mới · Invalidate toàn bộ session cũ
+  </Card>
+  <Card title="Session Management" icon="clock">
+    Access token 15 phút · Refresh token 30 ngày · Auto-logout khi expire
+  </Card>
+</CardGroup>
+
+---
+
+## 2. Danh sách màn hình
+
+| Screen ID | Tên màn hình | Điều kiện hiển thị |
+|---|---|---|
+| SCR-AUTH-01 | Splash / Onboarding | App khởi động lần đầu hoặc chưa đăng nhập |
+| SCR-AUTH-02 | Lựa chọn Đăng ký / Đăng nhập | Sau splash; chưa có session |
+| SCR-AUTH-03 | Nhập SĐT (Đăng ký) | User chọn "Đăng ký" |
+| SCR-AUTH-04 | Nhập OTP (Đăng ký) | Sau khi SĐT hợp lệ + chưa đăng ký |
+| SCR-AUTH-05 | Tạo PIN | OTP đăng ký xác thực thành công |
+| SCR-AUTH-06 | Xác nhận PIN | Sau khi user nhập PIN lần 1 |
+| SCR-AUTH-07 | Nhập thông tin cơ bản | PIN tạo thành công |
+| SCR-AUTH-08 | Đăng nhập — Nhập SĐT | User chọn "Đăng nhập" |
+| SCR-AUTH-09 | Đăng nhập — Nhập PIN | SĐT đã đăng ký; Biometric chưa bật hoặc fail |
+| SCR-AUTH-10 | Đăng nhập — Biometric | SĐT đã đăng ký + Biometric đã kích hoạt |
+| SCR-AUTH-11 | Quên PIN — Nhập SĐT | User bấm "Quên PIN" từ màn đăng nhập |
+| SCR-AUTH-12 | Quên PIN — Nhập OTP | SĐT quên PIN hợp lệ + đã đăng ký |
+| SCR-AUTH-13 | Tạo PIN mới | OTP reset xác thực thành công |
+| SCR-AUTH-14 | Đổi PIN (từ Settings) | User đã đăng nhập; vào Settings > Bảo mật |
+| SCR-AUTH-15 | Cảnh báo thiết bị mới | Đăng nhập thành công trên device\_id lạ |
+
+---
+
+## 3. User Flow — Đăng ký
+
+```mermaid
+flowchart TD
+    A([Mở app]) --> B{Có session\nhợp lệ?}
+    B -- Có --> HOME([Home])
+    B -- Không --> C[SCR-AUTH-01\nSplash / Onboarding]
+    C --> D[SCR-AUTH-02\nChọn Đăng ký / Đăng nhập]
+    D -- Đăng ký --> E[SCR-AUTH-03\nNhập SĐT]
+
+    E --> F{Validate\nSĐT}
+    F -- Không hợp lệ --> E
+    F -- Hợp lệ --> G{SĐT đã\nđăng ký?}
+    G -- Có --> H[Toast: SĐT đã tồn tại\nGợi ý Đăng nhập]
+    H --> D
+    G -- Chưa --> I[Gửi OTP SMS]
+    I --> J[SCR-AUTH-04\nNhập OTP]
+
+    J --> K{OTP đúng?}
+    K -- Sai lần 1-2 --> L[Hiển thị lỗi +\nsố lần còn lại]
+    L --> J
+    K -- Sai lần 3 --> M[Block 15 phút\nDisable Gửi lại]
+    K -- Đúng --> N[SCR-AUTH-05\nTạo PIN]
+
+    N --> O[SCR-AUTH-06\nXác nhận PIN]
+    O --> P{PIN\nkhớp?}
+    P -- Không --> Q[Error + reset\nvề SCR-AUTH-05]
+    P -- Có --> R[SCR-AUTH-07\nNhập thông tin cơ bản]
+    R --> S{Validate\nthông tin}
+    S -- Lỗi --> R
+    S -- OK --> T[Tạo User + Wallet\nIssue token]
+    T --> U{Thiết bị\nhỗ trợ\nBiometric?}
+    U -- Có --> V[Popup: Bật Face ID/\nVân tay không?]
+    V -- Bỏ qua --> HOME
+    V -- Bật --> W[Đăng ký Biometric\nvà về Home]
+    W --> HOME
+    U -- Không --> HOME
+```
+
+---
+
+## 4. User Flow — Đăng nhập
+
+```mermaid
+flowchart TD
+    A[SCR-AUTH-02\nChọn Đăng nhập] --> B[SCR-AUTH-08\nNhập SĐT]
+    B --> C{SĐT hợp lệ\nvà đã đăng ký?}
+    C -- Không tồn tại --> D[Error: Chưa đăng ký\nGợi ý Đăng ký]
+    D --> A
+    C -- Có --> E{Account\nbị khóa?}
+    E -- Đang khóa --> F[Hiển thị thời gian\nmở khóa còn lại]
+    E -- Không --> G{Biometric\nđã bật?}
+    G -- Có --> H[SCR-AUTH-10\nBiometric prompt]
+    G -- Không --> I[SCR-AUTH-09\nNhập PIN]
+
+    H --> J{Biometric OK?}
+    J -- Thành công --> K[Issue Token]
+    J -- Hủy --> I
+    J -- Lỗi 1-2 lần --> H
+    J -- Lỗi 3 lần --> I
+
+    I --> L{PIN đúng?}
+    L -- Sai lần 1-4 --> M[Cảnh báo còn\nN lần]
+    M --> I
+    L -- Sai lần 5 --> N[Khóa 30 phút\nGửi Push + SMS]
+    L -- Đúng --> K
+
+    K --> O{Thiết bị\nmới?}
+    O -- Có --> P[SCR-AUTH-15\nCảnh báo thiết bị mới]
+    P --> Q[Gửi Push notify\nđến thiết bị cũ]
+    Q --> HOME([Home])
+    O -- Không --> HOME
+```
+
+---
+
+## 5. User Flow — Quên PIN / Đặt lại PIN
+
+```mermaid
+flowchart TD
+    A[SCR-AUTH-09\nNhập PIN] -- Bấm Quên PIN --> B[SCR-AUTH-11\nNhập SĐT]
+    B --> C{SĐT đã\nđăng ký?}
+    C -- Không --> D[Error: Chưa đăng ký]
+    C -- Có --> E[Gửi OTP SMS\nmục đích: RESET_PIN]
+    E --> F[SCR-AUTH-12\nNhập OTP]
+
+    F --> G{OTP đúng?}
+    G -- Sai 1-2 lần --> H[Error + số lần\ncòn lại]
+    H --> F
+    G -- Sai 3 lần --> I[Block 15 phút]
+    G -- Đúng --> J[SCR-AUTH-13\nTạo PIN mới]
+
+    J --> K[Xác nhận PIN mới]
+    K --> L{PIN khớp?}
+    L -- Không --> J
+    L -- Có --> M[Hash PIN mới\nLưu DB]
+    M --> N[Invalidate ALL\nRefresh tokens]
+    N --> O[Đăng nhập tự động\nvới token mới]
+    O --> HOME([Home])
+```
+
+---
+
+## 6. Sequence Diagram — Đăng ký
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant App
+    participant AuthService
+    participant OTPGateway
+    participant UserService
+    participant WalletService
+    participant TokenService
+
+    User->>App: Nhập SĐT
+    App->>AuthService: POST /auth/check-phone {phone}
+    AuthService->>UserService: GET /users/phone/{phone}
+    UserService-->>AuthService: 404 Not Found
+    AuthService-->>App: 200 {available: true}
+
+    App->>AuthService: POST /auth/otp/send {phone, purpose: "REGISTER"}
+    AuthService->>OTPGateway: SendSMS(phone, otp_code)
+    OTPGateway-->>AuthService: {message_id, status: "SENT"}
+    AuthService-->>App: 200 {otp_id, expires_in: 180, resend_after: 60}
+
+    User->>App: Nhập OTP
+    App->>AuthService: POST /auth/otp/verify {otp_id, code}
+    Note over AuthService: Hash OTP, compare, check expiry & attempts
+    AuthService-->>App: 200 {verified: true, register_token: "JWT_30min"}
+
+    User->>App: Nhập PIN + thông tin (tên, ngày sinh)
+    App->>UserService: POST /users/register\n{phone, pin_hash, full_name, dob, register_token}
+    UserService->>UserService: Validate tuổi ≥ 15
+    UserService->>WalletService: CreateWallet(user_id, tier: "TIER_1")
+    WalletService-->>UserService: {wallet_id, balance: 0}
+    UserService-->>App: 201 {user_id, wallet_id}
+
+    App->>TokenService: POST /tokens/issue {user_id, device_id}
+    TokenService-->>App: 200 {access_token, refresh_token, expires_in: 900}
+    App->>User: Chuyển Home screen
+```
+
+---
+
+## 7. Sequence Diagram — Đăng nhập (PIN + Thiết bị mới)
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant App
+    participant AuthService
+    participant DeviceService
+    participant TokenService
+    participant NotifService
+
+    User->>App: Nhập SĐT + PIN
+    App->>AuthService: POST /auth/login {phone, pin_hash, device_id, device_info}
+
+    AuthService->>AuthService: Lookup user by phone
+    AuthService->>AuthService: Check account_status != LOCKED
+    AuthService->>AuthService: Verify bcrypt(pin_hash)
+
+    alt PIN đúng
+        AuthService->>DeviceService: GET /devices?user_id&device_id
+        DeviceService-->>AuthService: {known: false}
+
+        AuthService->>TokenService: IssueTokens(user_id)
+        TokenService-->>AuthService: {access_token, refresh_token}
+
+        AuthService->>DeviceService: RegisterDevice(user_id, device_id, device_info)
+        AuthService->>NotifService: PushAlert(user_id, "NEW_DEVICE_LOGIN", device_info)
+        NotifService-->>AuthService: {sent: true}
+
+        AuthService-->>App: 200 {access_token, refresh_token, new_device: true}
+        App->>User: SCR-AUTH-15: Cảnh báo thiết bị mới
+
+    else PIN sai (< 5 lần)
+        AuthService->>AuthService: Increment failed_attempts
+        AuthService-->>App: 401 {error: "INVALID_PIN",\nremaining_attempts: N}
+        App->>User: "PIN không đúng. Còn N lần."
+
+    else PIN sai lần 5
+        AuthService->>AuthService: Set account_status = LOCKED\nlock_until = now + 30min
+        AuthService->>NotifService: SendSMS(phone, "ACCOUNT_LOCKED")
+        AuthService-->>App: 423 {error: "ACCOUNT_LOCKED",\nunlock_at: timestamp}
+        App->>User: "Tài khoản bị khóa. Thử lại sau X phút."
+    end
+```
+
+---
+
+## 8. Sequence Diagram — Token Refresh
+
+```mermaid
+sequenceDiagram
+    participant App
+    participant APIGateway
+    participant AuthService
+    participant TokenService
+
+    App->>APIGateway: Bất kỳ API call (Access Token hết hạn)
+    APIGateway-->>App: 401 {error: "TOKEN_EXPIRED"}
+
+    App->>AuthService: POST /auth/token/refresh {refresh_token}
+    AuthService->>TokenService: ValidateRefreshToken(refresh_token)
+
+    alt Refresh token còn hạn
+        TokenService->>TokenService: Rotate refresh token
+        TokenService-->>AuthService: {new_access_token, new_refresh_token}
+        AuthService-->>App: 200 {access_token, refresh_token}
+        App->>APIGateway: Retry original request (new access token)
+        APIGateway-->>App: Original response
+
+    else Refresh token hết hạn hoặc bị revoke
+        TokenService-->>AuthService: {valid: false, reason: "EXPIRED"}
+        AuthService-->>App: 401 {error: "SESSION_EXPIRED"}
+        App->>App: Clear local tokens
+        App->>User: Redirect → SCR-AUTH-02 (Đăng nhập lại)
+    end
+```
+
+---
+
+## 9. Screen Specifications
+
+### SCR-AUTH-03 — Nhập SĐT (Đăng ký)
+
+| Component | Loại | Label / Placeholder | Điều kiện hiển thị | Action |
+|---|---|---|---|---|
+| Header title | Text | "Đăng ký tài khoản" | Always | — |
+| Back button | Icon button | ← | Always | Về SCR-AUTH-02 |
+| Progress indicator | Step bar | Bước 1/3 | Always | — |
+| Phone input | Text input | "Nhập số điện thoại" | Always | Numeric keyboard; auto-format |
+| Country prefix | Label | "+84" | Always | Non-editable |
+| Inline error | Text (red) | Xem bảng Validation | Khi validate fail | — |
+| "Tiếp tục" button | Primary button | "Tiếp tục" | Always | Disabled khi input rỗng hoặc lỗi |
+| "Đã có tài khoản?" | Text link | "Đăng nhập ngay" | Always | Về SCR-AUTH-08 |
+
+**Điều kiện nút "Tiếp tục":**
+- Disabled: SĐT rỗng, format sai, đang gọi API
+- Enabled: SĐT hợp lệ chưa submit
+- Loading state: đang gọi `/auth/check-phone`
+
+---
+
+### SCR-AUTH-04 — Nhập OTP (Đăng ký)
+
+| Component | Loại | Label / Placeholder | Điều kiện hiển thị | Action |
+|---|---|---|---|---|
+| Header title | Text | "Xác nhận số điện thoại" | Always | — |
+| Subtitle | Text | "Nhập mã 6 chữ số gửi đến {phone}" | Always | Ẩn 3 số giữa SĐT |
+| OTP input | 6-cell input | ○ ○ ○ ○ ○ ○ | Always | Auto-focus; numeric; auto-submit khi đủ 6 số |
+| Countdown timer | Text | "Gửi lại sau {N}s" | Trong 60s đầu | Disabled |
+| "Gửi lại OTP" | Text button | "Gửi lại OTP" | Sau 60s | Gọi `/auth/otp/send` lại; reset countdown |
+| Inline error | Text (red) | Xem bảng Validation | Khi OTP sai | — |
+| Block state | Banner (red) | "Nhập sai quá 3 lần. Thử lại sau {N} phút." | Khi bị block | Disable tất cả input |
+| "Đổi SĐT" | Text link | "Dùng số khác?" | Always | Về SCR-AUTH-03 |
+
+**Điều kiện auto-submit:** Khi user nhập đủ ký tự thứ 6, tự động gọi verify API mà không cần bấm nút.
+
+---
+
+### SCR-AUTH-05 & 06 — Tạo PIN & Xác nhận PIN
+
+| Component | Loại | Label | Điều kiện hiển thị | Action |
+|---|---|---|---|---|
+| Header title | Text | "Tạo mã PIN" / "Xác nhận mã PIN" | Per screen | — |
+| Subtitle | Text | "PIN dùng để đăng nhập và xác thực giao dịch" | SCR-05 only | — |
+| PIN input | 6-dot display | ● ● ● ● ● ● | Always | Ẩn ký tự; numeric pad below |
+| Numeric pad | Custom keypad | 0-9 + Xóa | Always | Tap để nhập |
+| Strength indicator | — | — | SCR-05: Không hiển thị strength | — |
+| Inline error | Text (red) | Xem Validation | Khi PIN không hợp lệ | — |
+| "PIN không khớp" | Banner | "Hai mã PIN chưa khớp. Vui lòng nhập lại." | SCR-06: Khi sai | Auto-clear cả 2 ô; về SCR-05 |
+
+---
+
+### SCR-AUTH-09 — Đăng nhập — Nhập PIN
+
+| Component | Loại | Label | Điều kiện hiển thị | Action |
+|---|---|---|---|---|
+| Avatar + SĐT | Display | Ảnh đại diện + SĐT (ẩn giữa) | Always | — |
+| "Không phải bạn?" | Text link | "Dùng tài khoản khác" | Always | Clear SĐT; về SCR-AUTH-08 |
+| PIN input | 6-dot display | ● ● ● ● ● ● | Always | — |
+| Numeric pad | Custom keypad | 0-9 + Xóa | Always | — |
+| Remaining attempts | Text (orange) | "PIN không đúng. Còn {N} lần." | Sau lần sai đầu tiên | — |
+| Lock banner | Banner (red) | "Tài khoản bị khóa đến {time}" | Account locked | Ẩn PIN pad; chỉ hiện thời gian |
+| "Quên PIN?" | Text link | "Quên PIN?" | Khi account không bị lock | Về SCR-AUTH-11 |
+| Biometric icon | Icon button | Fingerprint/Face icon | Nếu Biometric bật | Switch sang SCR-AUTH-10 |
+
+---
+
+### SCR-AUTH-15 — Cảnh báo thiết bị mới
+
+| Component | Loại | Nội dung | Action |
+|---|---|---|---|
+| Icon cảnh báo | Icon | Shield với dấu ! | — |
+| Title | Text | "Đăng nhập từ thiết bị mới" | — |
+| Device info | Card | Tên thiết bị · Hệ điều hành · Thời gian · Vị trí (IP geolocation) | — |
+| Mô tả | Text | "Nếu đây là bạn, không cần làm gì. Nếu không phải, hãy đổi PIN ngay." | — |
+| "Đổi PIN ngay" | Primary button | "Đổi PIN ngay" | Về SCR-AUTH-14 (Đổi PIN) |
+| "Đây là tôi" | Secondary button | "Đây là tôi, tiếp tục" | Đóng popup; vào Home |
+
+---
+
+## 10. Validation Rules
+
+| Field | Rule | Error message | Trigger |
+|---|---|---|---|
+| **Số điện thoại** | Bắt buộc | "Vui lòng nhập số điện thoại" | On blur / submit |
+| | Đúng 10 ký tự | "Số điện thoại phải có đúng 10 chữ số" | On blur |
+| | Chỉ chứa số | "Số điện thoại chỉ gồm chữ số" | On input |
+| | Đầu số hợp lệ VN (03x, 05x, 07x, 08x, 09x) | "Số điện thoại không hợp lệ" | On blur |
+| | Chưa đăng ký (register flow) | "Số điện thoại đã được đăng ký. Đăng nhập?" | After API |
+| | Đã đăng ký (login flow) | "Số điện thoại chưa đăng ký. Đăng ký?" | After API |
+| **OTP** | Bắt buộc | "Vui lòng nhập mã OTP" | On submit |
+| | Đúng 6 chữ số | "Mã OTP gồm 6 chữ số" | On input |
+| | OTP sai (lần 1-2) | "Mã OTP không đúng. Còn {N} lần thử." | After API |
+| | OTP sai lần 3 | "Nhập sai quá nhiều lần. Thử lại sau 15 phút." | After API |
+| | OTP hết hạn (3 phút) | "Mã OTP đã hết hạn. Vui lòng gửi lại." | After API |
+| | Gửi lại quá 3 lần/giờ | "Bạn đã gửi OTP quá nhiều lần. Thử lại sau {X} phút." | After API |
+| **PIN (tạo mới)** | Bắt buộc | "Vui lòng nhập PIN" | On submit |
+| | Đúng 6 chữ số | "PIN phải có 6 chữ số" | Real-time |
+| | Không phải pattern đơn giản | "PIN quá đơn giản. Chọn PIN khác." | After 6 digits |
+| | — Các pattern bị chặn: 123456, 654321, 000000–999999 (6 số giống nhau), 111111, 222222...| | |
+| **Xác nhận PIN** | Phải khớp PIN vừa nhập | "Hai mã PIN chưa khớp. Vui lòng thử lại." | After 6 digits |
+| **PIN (đăng nhập)** | Sai < 5 lần | "PIN không đúng. Còn {N} lần." | After API |
+| | Sai lần 5 | "Tài khoản bị tạm khóa 30 phút." | After API |
+| **Họ tên** | Bắt buộc | "Vui lòng nhập họ tên" | On blur |
+| | 2–100 ký tự | "Tên phải từ 2 đến 100 ký tự" | On blur |
+| | Không chứa số hoặc ký tự đặc biệt | "Tên không hợp lệ" | On blur |
+| **Ngày sinh** | Bắt buộc | "Vui lòng nhập ngày sinh" | On blur |
+| | Ngày hợp lệ | "Ngày sinh không hợp lệ" | On blur |
+| | Tuổi ≥ 15 | "Bạn phải đủ 15 tuổi để đăng ký ví điện tử" | After API |
+| | Tuổi < 18 | Hiển thị thêm: "Người dùng dưới 18 tuổi cần sự đồng ý của phụ huynh." | Client-side |
+
+---
+
+## 11. Business Rules
+
+| ID | Rule | Áp dụng tại |
+|---|---|---|
+| BR-AUTH-01 | Mỗi SĐT chỉ được đăng ký 1 tài khoản | SCR-AUTH-03, `/auth/check-phone` |
+| BR-AUTH-02 | OTP hết hạn sau 3 phút kể từ khi gửi | SCR-AUTH-04, SCR-AUTH-12 |
+| BR-AUTH-03 | Tối đa 3 lần nhập sai OTP → block 15 phút | SCR-AUTH-04, SCR-AUTH-12 |
+| BR-AUTH-04 | Tối đa 3 lần gửi lại OTP / 1 giờ / 1 SĐT | SCR-AUTH-04 "Gửi lại" |
+| BR-AUTH-05 | PIN 6 số; không phải pattern đơn giản | SCR-AUTH-05 |
+| BR-AUTH-06 | Tối đa 5 lần nhập sai PIN → khóa tài khoản 30 phút | SCR-AUTH-09 |
+| BR-AUTH-07 | Đặt lại PIN phải invalidate toàn bộ refresh token cũ | SCR-AUTH-13, SCR-AUTH-14 |
+| BR-AUTH-08 | Access token hết hạn sau 15 phút; Refresh token sau 30 ngày | Token Service |
+| BR-AUTH-09 | Đăng nhập thiết bị mới → gửi cảnh báo đến thiết bị cũ | SCR-AUTH-15, Notification |
+| BR-AUTH-10 | PIN hash dùng bcrypt với salt; không lưu plaintext | UserService DB |
+| BR-AUTH-11 | Biometric chỉ là shortcut; vẫn cần PIN khi re-enroll hoặc biometric fail 3 lần | SCR-AUTH-10 |
+| BR-AUTH-12 | Session timeout: tự động logout sau 30 phút inactive (app background) | App client |
+| BR-AUTH-13 | Tuổi đăng ký tối thiểu: 15 tuổi (Nghị định 52/2024) | SCR-AUTH-07 |
+
+---
+
+## 12. Notification Specifications
+
+| Event | Channel | Nội dung | Thời điểm gửi |
+|---|---|---|---|
+| Gửi OTP đăng ký | SMS | "Mã xác thực [APP] của bạn: {OTP}. Hiệu lực 3 phút. Không chia sẻ mã này." | Ngay khi gửi OTP |
+| Gửi OTP đặt lại PIN | SMS | "Mã đặt lại PIN [APP]: {OTP}. Hiệu lực 3 phút. Nếu không phải bạn, bỏ qua." | Ngay khi gửi OTP |
+| Đăng nhập thành công | Push (thiết bị hiện tại) | "Đăng nhập thành công lúc {time}." | Mỗi lần đăng nhập |
+| Thiết bị mới | Push (thiết bị cũ) + Email | Push: "Phát hiện đăng nhập mới từ {device} lúc {time}. Không phải bạn? Đổi PIN ngay." Email: Chi tiết device info, IP, thời gian, link đổi PIN | Khi phát hiện device mới |
+| Tài khoản bị khóa | SMS + Push | "Tài khoản bị tạm khóa do nhập sai PIN nhiều lần. Mở khóa lúc {time}." | Khi lock xảy ra |
+| Tài khoản mở khóa | Push | "Tài khoản đã mở khóa. Bạn có thể đăng nhập bình thường." | Khi hết thời gian lock |
+| Đổi PIN thành công | Push + Email | "Mã PIN đã thay đổi lúc {time}. Nếu không phải bạn, liên hệ CSKH ngay." | Sau khi đổi PIN thành công |
+| Đăng xuất toàn bộ thiết bị | Push (tất cả device) | "Bạn đã đăng xuất khỏi tất cả thiết bị." | Khi reset PIN (invalidate all sessions) |
+
+---
+
+## 13. API Summary
+
+| Method | Endpoint | Request body | Response | Mô tả |
+|---|---|---|---|---|
+| POST | `/auth/check-phone` | `{phone}` | `{available: bool}` | Kiểm tra SĐT tồn tại |
+| POST | `/auth/otp/send` | `{phone, purpose}` | `{otp_id, expires_in, resend_after}` | Gửi OTP; purpose: REGISTER / RESET_PIN / VERIFY_DEVICE |
+| POST | `/auth/otp/verify` | `{otp_id, code}` | `{verified: true, token}` | Verify OTP; trả short-lived token |
+| POST | `/users/register` | `{phone, pin_hash, full_name, dob, register_token}` | `{user_id, wallet_id}` | Tạo user + ví |
+| POST | `/auth/login` | `{phone, pin_hash, device_id, device_info}` | `{access_token, refresh_token, new_device?}` | Đăng nhập PIN |
+| POST | `/auth/login/biometric` | `{user_id, biometric_token, device_id}` | `{access_token, refresh_token}` | Đăng nhập Biometric |
+| POST | `/auth/token/refresh` | `{refresh_token}` | `{access_token, refresh_token}` | Refresh token; rotate refresh |
+| POST | `/auth/pin/reset` | `{phone, new_pin_hash, reset_token}` | `{success: true}` | Đặt lại PIN |
+| POST | `/auth/pin/change` | `{old_pin_hash, new_pin_hash}` | `{success: true}` | Đổi PIN (cần đăng nhập) |
+| POST | `/auth/logout` | `{refresh_token}` | `{success: true}` | Đăng xuất; revoke token |
+| POST | `/auth/logout/all` | — | `{success: true}` | Đăng xuất tất cả thiết bị |
+| GET | `/devices` | — (header: access_token) | `[{device_id, device_name, last_seen}]` | Danh sách thiết bị đã đăng nhập |
+| DELETE | `/devices/{device_id}` | — | `{success: true}` | Đăng xuất một thiết bị cụ thể |
+
+---
+
+## 14. Error Codes
+
+| Code | HTTP Status | Hiển thị người dùng | Ghi chú dev |
+|---|---|---|---|
+| `AUTH_001` | 400 | "Số điện thoại không hợp lệ" | Validate format phone trước khi gọi API |
+| `AUTH_002` | 409 | "Số điện thoại đã đăng ký. Đăng nhập?" | Check phone trong register flow |
+| `AUTH_003` | 404 | "Số điện thoại chưa đăng ký." | Check phone trong login / reset flow |
+| `AUTH_004` | 400 | "Mã OTP không đúng. Còn {N} lần." | `remaining_attempts` trong response |
+| `AUTH_005` | 429 | "Nhập sai OTP quá nhiều lần. Thử lại sau {X} phút." | `retry_after` (seconds) trong response |
+| `AUTH_006` | 400 | "Mã OTP đã hết hạn. Vui lòng gửi lại." | So sánh `expires_at` server-side |
+| `AUTH_007` | 429 | "Gửi OTP quá nhiều lần. Thử lại sau {X} phút." | Rate limit per phone per hour |
+| `AUTH_008` | 400 | "Mã PIN quá đơn giản. Chọn PIN khác." | Validate pattern list server-side |
+| `AUTH_009` | 401 | "PIN không đúng. Còn {N} lần." | `remaining_attempts` trong response |
+| `AUTH_010` | 423 | "Tài khoản tạm khóa đến {time}." | `unlock_at` ISO8601 trong response |
+| `AUTH_011` | 401 | *(Auto refresh; nếu fail → redirect login)* | `TOKEN_EXPIRED` — handle silently |
+| `AUTH_012` | 401 | "Phiên đăng nhập hết hạn. Đăng nhập lại." | `SESSION_EXPIRED` — refresh token hết hạn |
+| `AUTH_013` | 400 | "Bạn phải đủ 15 tuổi để đăng ký." | Validate server-side lại |
+| `AUTH_014` | 400 | "Hai mã PIN không khớp." | Validate client-side trước khi gửi API |
+
+---
+
+## 15. Edge Cases
+
+| Trường hợp | Xử lý |
+|---|---|
+| User thoát app giữa chừng đăng ký (sau OTP, trước tạo PIN) | `register_token` còn hiệu lực 30 phút; user có thể tiếp tục bằng SĐT đó mà không cần OTP lại |
+| SMS OTP không đến (SMS service down) | Sau 60s, hiện "Gửi lại OTP"; sau 3 lần fail gọi OTP Gateway → fallback Zalo OA; alert ops |
+| Biometric thay đổi (user thêm vân tay mới trên điện thoại) | OS invalidate biometric key → App tự phát hiện → yêu cầu đăng nhập PIN → re-enroll biometric |
+| Tài khoản bị lock đúng lúc token refresh | Token refresh thành công nhưng các API tiếp theo trả `AUTH_010`; App hiển thị lock screen |
+| Hai thiết bị đăng nhập cùng lúc | Cả hai session đều hợp lệ; không force logout thiết bị cũ (chỉ cảnh báo) |
+| User click "Đây là tôi" nhưng thực ra là hacker | Case này xử lý bởi Security Team (fraud detection); ngoài scope Auth module |
+| Network mất kết nối khi đang nhập OTP | Giữ nguyên OTP đã nhập; retry khi reconnect; OTP vẫn còn hạn |
+| User uninstall + reinstall app | Device ID mới → coi như thiết bị mới; cần PIN lại; cảnh báo thiết bị mới được gửi |
+
+---
+
+## 16. Open Questions
+
+| # | Câu hỏi | Owner | Sprint |
+|---|---|---|---|
+| OQ-AUTH-01 | Có cho phép đăng ký bằng email thay SĐT không (dual method)? | Product | Sprint 1 |
+| OQ-AUTH-02 | Biometric: dùng LocalAuthentication (on-device) hay server-side verify qua FIDO2? | Security + Tech | Sprint 1 |
+| OQ-AUTH-03 | Fallback khi Zalo OA cũng không gửi được OTP — dùng voice call? | Tech | Sprint 2 |
+| OQ-AUTH-04 | Sau khi tài khoản bị lock 5 lần, user có thể reset qua "Quên PIN" ngay không hay phải chờ hết 30 phút? | Product + Security | Sprint 1 |
+| OQ-AUTH-05 | Đăng xuất tất cả thiết bị có cần xác thực PIN lại không (phòng trường hợp session bị chiếm)? | Security | Sprint 2 |
+| OQ-AUTH-06 | Thời gian inactive trước khi auto-logout là 30 phút — có cần cấu hình per user không? | Product | Sprint 2 |
