@@ -1,0 +1,161 @@
+---
+title: "Reward Program Feature"
+description: "Case Study — BA tại Nami Innovation | 10/2024 – 6/2025"
+icon: "gift"
+---
+
+# Reward Program Feature
+
+<Info>
+  **Vai trò:** Business Analyst · **Công ty:** Nami Innovation  
+  **Thời gian:** 10/2024 – 6/2025 · **Platform:** Web / Mobile  
+  **Team:** ~20 người (BA, Dev, QA, UI/UX, Content, CS, BI, Growth)
+</Info>
+
+---
+
+## Kết quả dự án
+
+<CardGroup cols={2}>
+  <Card title="20,000+" icon="users">
+    User engagement trong các chiến dịch reward
+  </Card>
+  <Card title="60%+" icon="arrow-trend-up">
+    Trading volume tăng trong giai đoạn triển khai
+  </Card>
+</CardGroup>
+
+---
+
+## Bối cảnh & Vấn đề
+
+Nami Innovation cần một **hệ thống reward linh hoạt** để thúc đẩy user engagement và trading volume thông qua các chiến dịch khuyến mãi. Trước khi có hệ thống này, mỗi campaign phải được hardcode riêng → tốn chi phí dev, thời gian ra market chậm, khó điều chỉnh logic khi cần.
+
+**Yêu cầu cốt lõi:**
+- Hỗ trợ nhiều loại reward: token airdrop, voucher giảm phí, cashback, unlock feature
+- Trigger dựa trên hành động người dùng: giao dịch đủ volume, nạp tiền lần đầu, refer bạn, login streak
+- Cho phép Growth team tự cấu hình campaign mà không cần dev
+- Track real-time user progress và phát reward tự động
+
+---
+
+## Vai trò & Trách nhiệm BA
+
+<AccordionGroup>
+  <Accordion title="1. Phối hợp PO & Growth/MKT — Định nghĩa Reward Logic" icon="people-group">
+    Đây là dự án hiếm hoi mà BA phải cầu nối giữa **nhiều stakeholder phức tạp** cùng lúc:
+
+    | Stakeholder | Nhu cầu chính | Conflict cần giải quyết |
+    |---|---|---|
+    | **Growth Team** | Muốn campaign cực kỳ linh hoạt, nhiều loại reward | Yêu cầu quá phức tạp, dev không estimate được |
+    | **Engineering** | Muốn hệ thống đơn giản, ít edge case | Lo ngại về performance khi user lớn |
+    | **BI Team** | Cần đủ data để measure ROI của campaign | Yêu cầu log event chi tiết |
+    | **CS Team** | Cần giải thích cho user khi có dispute | Cần UI hiển thị rõ điều kiện reward |
+
+    **Cách tiếp cận:** Tổ chức workshop riêng với từng nhóm → tổng hợp → ưu tiên theo business impact → viết PRD với clear prioritization.
+  </Accordion>
+
+  <Accordion title="2. Reward Logic Design — Conditions & Limits" icon="sliders">
+    **Các loại Trigger được định nghĩa:**
+
+    | Trigger Type | Ví dụ | Ghi chú |
+    |---|---|---|
+    | **Volume-based** | Giao dịch ≥ $100 trong 7 ngày | Cộng dồn; không tính GD bị cancel |
+    | **Event-based** | Nạp tiền lần đầu; KYC hoàn thành | One-time; không repeat |
+    | **Streak-based** | Login 7 ngày liên tiếp | Reset nếu bỏ 1 ngày |
+    | **Referral** | Invite friend hoàn thành KYC + GD đầu tiên | Require chain action |
+
+    **Reward Limits:**
+    - Tối đa reward per user per campaign
+    - Budget cap toàn campaign (tổng reward không vượt ngân sách)
+    - Cooldown giữa các lần nhận reward (chống farm)
+    - Blacklist users (accounts nghi gian lận)
+
+    **Automation Rules:**
+    - Reward phát tự động ngay khi đủ điều kiện hoặc batch hàng ngày (tuỳ config)
+    - Expiry ngày nhận reward (ví dụ: voucher hết hạn sau 7 ngày)
+    - Rollback reward nếu GD bị reverse trong vòng 24h
+  </Accordion>
+
+  <Accordion title="3. PRD — Flow & Experience từng chương trình" icon="file-lines">
+    Mỗi loại campaign có PRD riêng vì UX và logic khác nhau đáng kể:
+
+    **PRD cấu trúc:**
+    - Campaign overview + business objective
+    - Eligibility rules (ai được tham gia)
+    - Progress tracking UI: progress bar, milestone counter, countdown timer
+    - Reward display: loại reward, giá trị, cách nhận
+    - History & transparency: user thấy tại sao nhận / không nhận được reward
+    - Edge cases: claim tất cả cùng lúc, claim khi budget hết, expire notification
+
+    **UI Components định nghĩa:**
+    - Campaign card trên home page (thumbnail, title, CTA, deadline)
+    - Campaign detail page (progress tracker, conditions, rewards list)
+    - Reward inbox (danh sách reward đã nhận, trạng thái)
+    - Notification push khi đủ điều kiện nhận reward
+  </Accordion>
+
+  <Accordion title="4. Data Tracking & Tinh chỉnh Logic" icon="chart-bar">
+    Sau khi launch, tôi làm việc sát với BI Team để phân tích:
+
+    | Metric theo dõi | Tool | Tần suất review |
+    |---|---|---|
+    | Funnel completion rate (tham gia → nhận reward) | Metabase | Hàng ngày trong 2 tuần đầu |
+    | Drop-off point trong campaign | Metabase | Weekly |
+    | Reward cost vs. volume increment | Excel | Weekly |
+    | Abuse pattern (user farm reward) | BI Dashboard | Real-time alert |
+
+    **Điều chỉnh dựa trên data:**
+    - Campaign A: drop-off cao ở milestone 3 → giảm yêu cầu từ 5 GD xuống 3 GD → completion rate tăng 35%
+    - Campaign B: budget hết trong 2 ngày (dự kiến 14 ngày) → thêm cap per user + daily limit
+    - Phát hiện pattern bot farming → thêm rule: account < 7 ngày tuổi không eligible
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Điểm khác biệt so với feature thông thường
+
+<CardGroup cols={2}>
+  <Card title="Multi-stakeholder complexity" icon="sitemap">
+    Reward Program liên quan đến 8 team khác nhau — nhiều nhất trong các dự án tôi từng làm. Kỹ năng **stakeholder management và conflict resolution** là yếu tố quyết định.
+  </Card>
+  <Card title="Data-driven iteration" icon="rotate">
+    Dự án này có vòng lặp ngắn: launch → measure → adjust → re-launch. BA phải sẵn sàng update PRD nhanh dựa trên real data, không chỉ dựa trên spec ban đầu.
+  </Card>
+</CardGroup>
+
+---
+
+## Thách thức & Bài học
+
+<CardGroup cols={2}>
+  <Card title="Thách thức" icon="triangle-exclamation">
+    Growth team liên tục muốn thêm tính năng vào campaign đang chạy (scope creep). Phải thiết lập quy trình change request rõ ràng: mọi thay đổi sau khi dev bắt đầu cần estimate lại và approve từ PO.
+  </Card>
+  <Card title="Bài học" icon="lightbulb">
+    Với hệ thống reward, **anti-abuse rules phải được thiết kế từ đầu** — không phải thêm sau. Khi user farm được reward, thiệt hại xảy ra trước khi phát hiện. BA cần làm việc với Risk Team ngay trong giai đoạn elicitation.
+  </Card>
+</CardGroup>
+
+---
+
+## Skills thể hiện trong dự án này
+
+<CardGroup cols={3}>
+  <Card title="Stakeholder Mgmt" icon="people-group">
+    8 teams, cross-functional alignment
+  </Card>
+  <Card title="Data Analysis" icon="chart-bar">
+    Metabase · BI Dashboard · Funnel analysis
+  </Card>
+  <Card title="BA Artifacts" icon="file-lines">
+    PRD · Campaign Logic Doc · Data Tracking Plan
+  </Card>
+</CardGroup>
+
+---
+
+<Note>
+  Đây là **dự án thực tế tại Nami Innovation**. Các chi tiết về business rules, số liệu nội bộ và campaign logic không được công khai để bảo mật thông tin doanh nghiệp. Nội dung trên là tóm tắt cấp độ case study.
+</Note>
