@@ -1,0 +1,45 @@
+---
+title: "Module 05 — Transfer"
+description: "PRD-EW-TRANSFER-001 | P2P · Business Disbursement · Maker-Checker · Batch"
+icon: "arrow-right-arrow-left"
+---
+
+# PRD: Transfer Module
+
+<Info>
+  **Document ID:** PRD-EW-TRANSFER-001 · **Version:** 1.0 · **Status:** Draft  
+  **Ngày tạo:** 2026-05-25 · **Tác giả:** BA Team  
+  **Tài liệu tham chiếu:** [MoMo Transfer — BRD](/projects/momo-transfer/brd) · [FRD](/projects/momo-transfer/frd) · [Use Case Spec](/projects/momo-transfer/use-case-spec) · [ERD](/projects/momo-transfer/erd)
+</Info>
+
+<Warning>
+  **Tài liệu đang được mở rộng.** Module Transfer trong bộ tài liệu E-Wallet sẽ là phiên bản mở rộng và chuẩn hóa từ bộ tài liệu MoMo Transfer, bổ sung thêm: authentication flow tích hợp, notification spec đầy đủ, API summary, và sequence diagram end-to-end.
+</Warning>
+
+---
+
+## Tham chiếu tài liệu MoMo Transfer
+
+Bộ tài liệu Transfer đã có đầy đủ trong phần **Tài liệu mẫu — MoMo Transfer**:
+
+| Tài liệu | Nội dung |
+|---|---|
+| [BRD](/projects/momo-transfer/brd) | Business objectives, 12 business requirements, scope, stakeholders |
+| [FRD](/projects/momo-transfer/frd) | P2P happy path, auth flow, business disbursement, NFR |
+| [User Stories](/projects/momo-transfer/user-stories) | 4 stories với Given/When/Then AC |
+| [Use Case Spec](/projects/momo-transfer/use-case-spec) | UC-01 đến UC-05, exception flows |
+| [ERD](/projects/momo-transfer/erd) | 10 entities, Mermaid ERD, index recommendations |
+
+---
+
+## Nội dung mở rộng sẽ có
+
+- Sequence diagram end-to-end (App → Transfer Service → Wallet Core → Notification)
+- Screen spec chi tiết: màn hình tìm người nhận, xác nhận, kết quả, lịch sử
+- Notification spec: thông báo thành công/thất bại cho cả sender và recipient
+- API summary đầy đủ với request/response format
+- Integration với Auth module: mapping auth level theo amount threshold
+
+---
+
+_Tài liệu đầy đủ sẽ được cập nhật trong sprint tiếp theo._
