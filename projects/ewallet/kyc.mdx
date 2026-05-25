@@ -1,0 +1,34 @@
+---
+title: "Module 02 — KYC"
+description: "PRD-EW-KYC-001 | eKYC · CCCD Scan · Face Liveness · Tier Upgrade"
+icon: "id-card"
+---
+
+# PRD: KYC Module
+
+<Info>
+  **Document ID:** PRD-EW-KYC-001 · **Version:** 1.0 · **Status:** Draft  
+  **Ngày tạo:** 2026-05-25 · **Tác giả:** BA Team
+</Info>
+
+<Warning>
+  **Tài liệu đang được soạn thảo.** Module này sẽ bao gồm: eKYC flow (CCCD scan + OCR + face liveness), KYC tier system, limit unlock logic, re-KYC khi CCCD hết hạn, và integration với eKYC provider (FPT.AI / VNPTeID).
+</Warning>
+
+---
+
+## Nội dung sẽ có
+
+- Tier system: Tier 0 → Tier 1 → Tier 2 → Tier 3 và hạn mức tương ứng
+- User flow: Upload CCCD → OCR → Face liveness → Chờ duyệt → Kết quả
+- Sequence diagram: App → KYC Service → eKYC Provider → Notification
+- Screen spec: màn hình KYC, trạng thái chờ, thông báo kết quả
+- Validation: độ nét ảnh, CCCD còn hạn, họ tên khớp tài khoản
+- Business rules: 1 CCCD = 1 tài khoản; re-KYC khi CCCD hết hạn
+- Notification: trạng thái duyệt, tier đã nâng, từ chối + lý do
+- Error codes: ảnh mờ, khuôn mặt không khớp, CCCD đã dùng, hết hạn
+- Open questions: SLA duyệt KYC, manual review vs auto-approve
+
+---
+
+_Tài liệu đầy đủ sẽ được cập nhật trong sprint tiếp theo._
