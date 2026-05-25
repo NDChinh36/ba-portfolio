@@ -1,0 +1,162 @@
+---
+title: "Money Transfer Feature"
+description: "Case Study — BA tại Nami Innovation | 6/2024 – 10/2024"
+icon: "arrow-right-arrow-left"
+---
+
+# Money Transfer Feature
+
+<Info>
+  **Vai trò:** Business Analyst · **Công ty:** Nami Innovation  
+  **Thời gian:** 6/2024 – 10/2024 · **Platform:** Mobile  
+  **Team:** ~10 người (BA, Dev, QA, UI/UX, Growth, Brand)
+</Info>
+
+---
+
+## Bối cảnh & Vấn đề
+
+Nami Innovation muốn thêm tính năng **chuyển tiền nội bộ** giữa các tài khoản trong hệ sinh thái Nami — cho phép user dễ dàng di chuyển tài sản mà không cần rút ra sàn ngoài. Đây là tính năng quan trọng để giữ thanh khoản trong platform và tăng tính tiện lợi cho user.
+
+**Thách thức nghiệp vụ:**
+- Cần define rõ các loại tài khoản trong hệ sinh thái Nami và rule chuyển tiền giữa chúng
+- Xác định validation logic để ngăn lỗi người dùng (nhập sai địa chỉ, chuyển coin sai network)
+- Đảm bảo UX đơn giản dù phía sau logic phức tạp
+- Align đầy đủ với Growth và Brand team về communication khi ra mắt
+
+---
+
+## Vai trò & Trách nhiệm BA
+
+<AccordionGroup>
+  <Accordion title="1. Định nghĩa Transfer Rules" icon="book">
+    **Loại tài khoản hỗ trợ chuyển:**
+    - Spot account ↔ Futures account (cùng user)
+    - Spot account → Spot account (khác user — internal transfer)
+    - Futures account không cho phép chuyển trực tiếp sang account khác user (risk control)
+
+    **Validation Logic:**
+    | Điều kiện | Rule |
+    |---|---|
+    | Số dư | Không được chuyển quá số dư khả dụng (available balance, không phải total) |
+    | Tài khoản đích | Phải tồn tại và active trong hệ thống Nami |
+    | Chuyển chính mình | Không cho phép chuyển về cùng loại tài khoản (Spot → Spot cùng user) |
+    | Coin hỗ trợ | Chỉ một số coin được hỗ trợ internal transfer; danh sách do Engineering quyết định |
+    | Minimum amount | Mỗi loại coin có minimum khác nhau (do phí mạng) |
+
+    **User Constraints:**
+    - User chưa KYC: giới hạn số lượng transfer per day
+    - User có open position (Futures): một phần margin bị lock, không transfer được
+  </Accordion>
+
+  <Accordion title="2. Tài liệu — PRD & User Guide" icon="file-lines">
+    **PRD bao gồm:**
+    - Feature overview và business objective
+    - User flows cho từng transfer type (internal cùng user, internal khác user)
+    - Màn hình chi tiết: select coin, nhập amount, confirm screen, result screen
+    - Validation messages cho từng loại lỗi (với exact copy text)
+    - Edge cases: transfer khi đang có lệnh pending, transfer số tiền bằng đúng balance
+
+    **User Guide (cho CS Team):**
+    - Giải thích các loại tài khoản bằng ngôn ngữ người dùng hiểu
+    - FAQ: tại sao không chuyển được, khác biệt giữa withdraw và internal transfer
+    - Troubleshooting guide khi user gặp lỗi phổ biến
+
+    **Alignment với các team:**
+    - Growth: xác nhận metric đo thành công (số lượng transfer, volume)
+    - Brand: review copy text và tone of voice
+    - QA: walkthrough test plan trước khi dev bắt đầu
+  </Accordion>
+
+  <Accordion title="3. User Flow Design — Transfer Scenarios & Edge Cases" icon="diagram-project">
+    **Luồng chính — Internal Transfer (cùng user):**
+    ```
+    Home → "Chuyển tiền nội bộ"
+      → Chọn Từ (Spot / Futures)
+      → Chọn Đến (Spot / Futures) [auto-switch]
+      → Chọn coin
+      → Nhập amount (hoặc bấm MAX)
+      → Preview: từ đâu, đến đâu, coin, amount, phí (nếu có)
+      → Confirm → Xử lý tức thì
+      → Success screen + balance update
+    ```
+
+    **Luồng phụ — Chuyển cho user khác (P2P internal):**
+    ```
+    Home → "Chuyển tiền"
+      → Nhập UID hoặc email của người nhận
+      → Hệ thống hiển thị avatar + tên để confirm
+      → Chọn coin + nhập amount
+      → Nhập nội dung (optional)
+      → Confirm → OTP verify (nếu amount lớn)
+      → Success
+    ```
+
+    **Edge Cases được định nghĩa:**
+    | Trường hợp | Hành vi |
+    |---|---|
+    | User nhập amount = MAX nhưng có lệnh mở Futures | Tính available balance trừ margin locked |
+    | Transfer thất bại sau khi debit (hệ thống lỗi) | Rollback tức thì; log incident; notify user |
+    | Người nhận không active | Hiển thị lỗi trước confirm screen; không tiếp tục |
+    | Coin không hỗ trợ transfer | Ẩn option này; không hiển thị lỗi |
+  </Accordion>
+
+  <Accordion title="4. QA Validation — Functionality & UX Consistency" icon="circle-check">
+    Vai trò của BA trong giai đoạn QA:
+
+    - **UAT lead**: chạy user acceptance testing theo từng scenario trong PRD
+    - **Bug triage**: phân loại bug theo mức độ (critical / major / minor); quyết định bug nào block release
+    - **UX consistency check**: đảm bảo copy text, màu sắc, icon consistent với design system
+    - **Edge case re-test**: tập trung test các case phức tạp (balance locking, concurrent transfer)
+
+    Dự án hoàn thành đúng timeline 4 tháng; release không có critical bug liên quan đến transfer logic.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Điểm nổi bật
+
+<CardGroup cols={2}>
+  <Card title="First real BA project" icon="star">
+    Đây là dự án BA đầu tiên độc lập sau khi gia nhập Nami (1/2024). Money Transfer là nền tảng để build kỹ năng ownership toàn bộ feature từ elicitation đến release.
+  </Card>
+  <Card title="Tight timeline" icon="clock">
+    4 tháng cho một feature với nhiều loại tài khoản và validation logic phức tạp. Cần prioritize rõ ràng scope và defer một số edge case sang v2.
+  </Card>
+</CardGroup>
+
+---
+
+## Thách thức & Bài học
+
+<CardGroup cols={2}>
+  <Card title="Thách thức" icon="triangle-exclamation">
+    Lần đầu làm việc với Futures domain — phải nhanh chóng nắm margin locked, available balance, open position. Không thể viết rule đúng nếu không hiểu đủ domain.
+  </Card>
+  <Card title="Bài học" icon="lightbulb">
+    **Đầu tư vào user flow trước khi viết PRD** — khi flow rõ ràng, PRD viết nhanh hơn nhiều và ít bị revise hơn. Với team nhỏ (10 người), flow rõ = tiết kiệm đáng kể communication overhead.
+  </Card>
+</CardGroup>
+
+---
+
+## Skills thể hiện trong dự án này
+
+<CardGroup cols={3}>
+  <Card title="Feature Ownership" icon="flag">
+    End-to-end: elicitation → release
+  </Card>
+  <Card title="BA Artifacts" icon="file-lines">
+    PRD · User Guide · User Flow · Edge Case Doc
+  </Card>
+  <Card title="QA Collaboration" icon="circle-check">
+    UAT lead · Bug triage · UX consistency
+  </Card>
+</CardGroup>
+
+---
+
+<Note>
+  Đây là **dự án thực tế tại Nami Innovation**. Các chi tiết về business rules, transfer logic nội bộ và số liệu không được công khai để bảo mật thông tin doanh nghiệp. Nội dung trên là tóm tắt cấp độ case study.
+</Note>
