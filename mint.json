@@ -47,7 +47,16 @@
       ]
     },
     {
-      "group": "Dự án BA",
+      "group": "Dự án thực tế — Nami Innovation",
+      "pages": [
+        "projects/nami-futures-trading",
+        "projects/nami-reward-program",
+        "projects/nami-money-transfer",
+        "projects/nami-calculator"
+      ]
+    },
+    {
+      "group": "Tài liệu mẫu — MoMo Transfer",
       "pages": [
         {
           "group": "MoMo — Chuyển tiền nội bộ",
