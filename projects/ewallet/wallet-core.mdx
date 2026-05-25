@@ -1,0 +1,35 @@
+---
+title: "Module 03 — Wallet Core"
+description: "PRD-EW-WALLET-001 | Số dư · Nạp tiền · Rút tiền · Hạn mức"
+icon: "sack-dollar"
+---
+
+# PRD: Wallet Core Module
+
+<Info>
+  **Document ID:** PRD-EW-WALLET-001 · **Version:** 1.0 · **Status:** Draft  
+  **Ngày tạo:** 2026-05-25 · **Tác giả:** BA Team
+</Info>
+
+<Warning>
+  **Tài liệu đang được soạn thảo.** Module này sẽ bao gồm: hiển thị số dư, nạp tiền (qua ngân hàng liên kết / ATM / thẻ), rút tiền về ngân hàng, hạn mức theo KYC tier, và transaction limit engine.
+</Warning>
+
+---
+
+## Nội dung sẽ có
+
+- Balance display: available vs. locked balance
+- Nạp tiền: NAPAS 247, QR bank, ATM card, bank transfer
+- Rút tiền: về tài khoản ngân hàng liên kết; thời gian xử lý T+0 vs T+1
+- Hạn mức theo tier: nạp/rút/ngày/tháng (per Nghị định 52/2024)
+- Sequence diagram: Top-up flow (App → Wallet Core → NAPAS → Bank)
+- Screen spec: màn hình số dư, nạp tiền, rút tiền, lịch sử mini
+- Validation: số tiền tối thiểu/tối đa, limit check realtime
+- Business rules: atomic debit/credit, idempotency key, no negative balance
+- Notification: nạp thành công, rút thành công/thất bại, gần đạt hạn mức
+- Error codes: balance không đủ, vượt hạn mức, bank timeout, duplicate request
+
+---
+
+_Tài liệu đầy đủ sẽ được cập nhật trong sprint tiếp theo._
