@@ -1,0 +1,36 @@
+---
+title: "Module 07 — Transaction History"
+description: "PRD-EW-HISTORY-001 | Lịch sử · Filter · Search · Export · Receipt"
+icon: "clock-rotate-left"
+---
+
+# PRD: Transaction History Module
+
+<Info>
+  **Document ID:** PRD-EW-HISTORY-001 · **Version:** 1.0 · **Status:** Draft  
+  **Ngày tạo:** 2026-05-25 · **Tác giả:** BA Team
+</Info>
+
+<Warning>
+  **Tài liệu đang được soạn thảo.** Module này sẽ bao gồm: danh sách giao dịch với lazy loading, filter đa chiều, search, xem chi tiết, tải biên lai PDF, và export CSV.
+</Warning>
+
+---
+
+## Nội dung sẽ có
+
+- Transaction list: pagination / infinite scroll, sort by date desc
+- Filter: khoảng ngày, loại GD (nạp/rút/chuyển/thanh toán), trạng thái, amount range
+- Search: theo tên đối tác, mã GD, nội dung chuyển tiền
+- Transaction detail: đầy đủ thông tin + auth level + fee + trạng thái
+- Receipt: download PDF biên lai; chia sẻ qua app
+- Export: CSV cho khoảng thời gian tùy chọn (max 3 tháng)
+- Screen spec: list screen, filter panel, detail screen, receipt screen
+- Validation: date range max 90 ngày cho export
+- Business rules: lưu trữ 5 năm (Nghị định 52/2024); không cho phép xóa
+- Performance: load < 2s với 10,000+ GD; lazy load images
+- Error codes: GD không tìm thấy, export quá lớn, download thất bại
+
+---
+
+_Tài liệu đầy đủ sẽ được cập nhật trong sprint tiếp theo._
