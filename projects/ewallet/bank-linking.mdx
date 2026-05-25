@@ -1,0 +1,34 @@
+---
+title: "Module 04 — Bank Linking"
+description: "PRD-EW-BANK-001 | Liên kết ngân hàng · Verify · NAPAS"
+icon: "building-columns"
+---
+
+# PRD: Bank Linking Module
+
+<Info>
+  **Document ID:** PRD-EW-BANK-001 · **Version:** 1.0 · **Status:** Draft  
+  **Ngày tạo:** 2026-05-25 · **Tác giả:** BA Team
+</Info>
+
+<Warning>
+  **Tài liệu đang được soạn thảo.** Module này sẽ bao gồm: thêm tài khoản ngân hàng (qua số tài khoản hoặc số thẻ), xác thực OTP ngân hàng, quản lý danh sách ngân hàng liên kết, ngân hàng mặc định, và hủy liên kết.
+</Warning>
+
+---
+
+## Nội dung sẽ có
+
+- Supported banks: danh sách ngân hàng hỗ trợ NAPAS 247
+- Add bank flow: nhập STK/số thẻ → lookup tên chủ TK → OTP ngân hàng → confirm
+- Verify ownership: OTP từ ngân hàng (không phải OTP ví điện tử)
+- Manage: đặt ngân hàng mặc định, hủy liên kết (không được hủy khi còn lệnh rút pending)
+- Sequence diagram: App → Bank Service → NAPAS → Bank OTP Gateway
+- Screen spec: danh sách ngân hàng, thêm ngân hàng, xác thực OTP ngân hàng
+- Business rules: tối đa N ngân hàng liên kết; STK phải đúng chính chủ (tên khớp KYC)
+- Validation: số TK format, ngân hàng không hỗ trợ, TK đã liên kết
+- Error codes: bank timeout, OTP ngân hàng sai, TK không tồn tại
+
+---
+
+_Tài liệu đầy đủ sẽ được cập nhật trong sprint tiếp theo._
