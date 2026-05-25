@@ -56,11 +56,31 @@
       ]
     },
     {
+      "group": "Tài liệu mẫu — Ví điện tử",
+      "pages": [
+        {
+          "group": "Generic E-Wallet App",
+          "icon": "wallet",
+          "pages": [
+            "projects/ewallet/overview",
+            "projects/ewallet/auth",
+            "projects/ewallet/kyc",
+            "projects/ewallet/wallet-core",
+            "projects/ewallet/bank-linking",
+            "projects/ewallet/transfer",
+            "projects/ewallet/qr-payment",
+            "projects/ewallet/transaction-history",
+            "projects/ewallet/notifications-settings"
+          ]
+        }
+      ]
+    },
+    {
       "group": "Tài liệu mẫu — MoMo Transfer",
       "pages": [
         {
           "group": "MoMo — Chuyển tiền nội bộ",
-          "icon": "wallet",
+          "icon": "arrow-right-arrow-left",
           "pages": [
             "projects/momo-transfer/overview",
             "projects/momo-transfer/brd",
