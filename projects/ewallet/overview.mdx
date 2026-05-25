@@ -1,0 +1,140 @@
+---
+title: "Tổng quan sản phẩm"
+description: "Generic E-Wallet App — Bộ tài liệu BA đầy đủ cho ứng dụng ví điện tử"
+icon: "wallet"
+---
+
+# Generic E-Wallet App — Product Overview
+
+<Info>
+  **Loại tài liệu:** Sample Project — Thực hành BA  
+  **Domain:** Fintech / E-Wallet  
+  **Quy định áp dụng:** Thông tư 39/2014/TT-NHNN · Nghị định 52/2024/NĐ-CP  
+  **Phiên bản:** v1.0 · **Cập nhật:** 2026-05-25
+</Info>
+
+---
+
+## Giới thiệu sản phẩm
+
+**Generic E-Wallet App** là bộ tài liệu BA mẫu mô tả đầy đủ nghiệp vụ cho một ứng dụng ví điện tử tiêu chuẩn tại thị trường Việt Nam. Bộ tài liệu bao gồm **8 module chức năng cốt lõi**, từ đăng ký tài khoản đến thanh toán QR và quản lý giao dịch.
+
+Tài liệu được viết theo format **Hybrid PRD** — mỗi module là một PRD đầy đủ gồm: user flow (Mermaid), sequence diagram, screen spec, validation rules, notification spec, API summary và error codes. Định dạng này phản ánh cách BA chuyên nghiệp làm việc thực tế với Development và QA team.
+
+---
+
+## Kiến trúc module
+
+```mermaid
+flowchart TB
+    subgraph Core["Core Services"]
+        AuthService["Auth Service"]
+        WalletCore["Wallet Core"]
+        TxEngine["Transaction Engine"]
+        LimitEngine["Limit Engine"]
+    end
+
+    subgraph External["External Integrations"]
+        OTPGw["OTP Gateway\n(SMS/ZALO)"]
+        KYCProvider["eKYC Provider\n(VNPTeID / FPT.AI)"]
+        NAPASGw["NAPAS Gateway\n(Interbank)"]
+        PushGw["Push Notification\n(FCM/APNs)"]
+    end
+
+    subgraph Modules["Application Modules"]
+        AUTH["01. Authentication"]
+        KYC["02. KYC"]
+        WALLET["03. Wallet Core"]
+        BANK["04. Bank Linking"]
+        TRANSFER["05. Transfer"]
+        QR["06. QR Payment"]
+        HISTORY["07. Transaction History"]
+        NOTIF["08. Notifications & Settings"]
+    end
+
+    AUTH --> AuthService
+    AUTH --> OTPGw
+    KYC --> KYCProvider
+    WALLET --> WalletCore
+    WALLET --> LimitEngine
+    BANK --> NAPASGw
+    TRANSFER --> TxEngine
+    TRANSFER --> LimitEngine
+    QR --> TxEngine
+    HISTORY --> TxEngine
+    NOTIF --> PushGw
+```
+
+---
+
+## Danh sách module & tài liệu
+
+| # | Module | Document ID | Nội dung chính |
+|---|---|---|---|
+| 01 | [Authentication](/projects/ewallet/auth) | PRD-EW-AUTH-001 | Đăng ký, đăng nhập, PIN, Biometric, session management |
+| 02 | [KYC](/projects/ewallet/kyc) | PRD-EW-KYC-001 | eKYC, CCCD scan, face liveness, tier upgrade, limit unlock |
+| 03 | [Wallet Core](/projects/ewallet/wallet-core) | PRD-EW-WALLET-001 | Số dư, nạp tiền, rút tiền, hạn mức giao dịch |
+| 04 | [Bank Linking](/projects/ewallet/bank-linking) | PRD-EW-BANK-001 | Liên kết / hủy liên kết ngân hàng, verify OTP ngân hàng |
+| 05 | [Transfer](/projects/ewallet/transfer) | PRD-EW-TRANSFER-001 | P2P, Business disbursement, Maker-Checker, Batch |
+| 06 | [QR Payment](/projects/ewallet/qr-payment) | PRD-EW-QR-001 | Quét QR, nhận QR, thanh toán merchant, bill payment |
+| 07 | [Transaction History](/projects/ewallet/transaction-history) | PRD-EW-HISTORY-001 | Filter, search, export, receipt download |
+| 08 | [Notifications & Settings](/projects/ewallet/notifications-settings) | PRD-EW-NOTIF-001 | Push/in-app notification, profile, security settings |
+
+---
+
+## Quy định áp dụng
+
+<AccordionGroup>
+  <Accordion title="Nghị định 52/2024/NĐ-CP — Thanh toán không dùng tiền mặt">
+    Thay thế Nghị định 101/2012. Áp dụng cho ví điện tử từ 01/07/2024.
+
+    | Quy định | Chi tiết |
+    |---|---|
+    | Hạn mức nạp/rút | Cá nhân ≤ 100M VND/tháng; Tổ chức ≤ 500M VND/tháng |
+    | Liên kết ngân hàng | Bắt buộc liên kết ít nhất 1 tài khoản ngân hàng |
+    | Xác minh danh tính | Bắt buộc eKYC để mở tài khoản; CCCD/CMND + ảnh selfie |
+    | Tuổi tối thiểu | 15 tuổi (có sự đồng ý của phụ huynh nếu < 18) |
+    | Lưu trữ log | Tối thiểu 5 năm cho mọi giao dịch |
+  </Accordion>
+
+  <Accordion title="Thông tư 39/2014/TT-NHNN — Dịch vụ trung gian thanh toán">
+    Quy định về hoạt động của tổ chức cung ứng dịch vụ trung gian thanh toán (TGTT).
+
+    | Yêu cầu | Chi tiết |
+    |---|---|
+    | Giấy phép | Phải có giấy phép NHNN cấp |
+    | Vốn tối thiểu | 50 tỷ VND |
+    | Báo cáo NHNN | Định kỳ hàng tháng/quý về giao dịch |
+    | Bảo đảm thanh toán | Số dư ví phải có bảo đảm tương đương tại ngân hàng |
+  </Accordion>
+
+  <Accordion title="Hạn mức giao dịch theo KYC tier">
+    | Tier | Xác minh | Hạn mức GD/lần | Hạn mức tháng | Ghi chú |
+    |---|---|---|---|---|
+    | **Tier 0** | Chưa KYC | 0 VND | 0 VND | Chỉ xem; không giao dịch |
+    | **Tier 1** | SĐT verified | 1M VND | 10M VND | Chỉ nạp; không rút |
+    | **Tier 2** | eKYC (CCCD + Selfie) | 20M VND | 100M VND | Đủ chức năng cơ bản |
+    | **Tier 3** | Full KYC (có phê duyệt) | 100M VND | 500M VND | Business / VIP account |
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Technology Stack (tham chiếu)
+
+| Layer | Technology | Ghi chú |
+|---|---|---|
+| Mobile | React Native | iOS + Android cùng codebase |
+| Backend | Node.js / Go | Microservice architecture |
+| Auth | JWT (Access 15 phút + Refresh 30 ngày) | Redis session store |
+| Database | PostgreSQL + Redis | Postgres cho data; Redis cho session/cache |
+| eKYC | FPT.AI hoặc VNPTeID | OCR + face liveness |
+| OTP | Viettel SMS / Zalo OA | Fallback sang Zalo nếu SMS fail |
+| Push | Firebase (Android) + APNs (iOS) | |
+| Interbank | NAPAS 247 | Nạp/rút qua ngân hàng |
+
+---
+
+<Note>
+  Tất cả tài liệu trong bộ **Generic E-Wallet App** là **sample project** phục vụ thực hành BA. Tên tổ chức, số liệu và API endpoint chỉ mang tính minh họa.
+</Note>
