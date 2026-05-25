@@ -1,0 +1,36 @@
+---
+title: "Module 06 — QR Payment"
+description: "PRD-EW-QR-001 | Quét QR · Merchant Payment · Bill Payment · Nhận QR"
+icon: "qrcode"
+---
+
+# PRD: QR Payment Module
+
+<Info>
+  **Document ID:** PRD-EW-QR-001 · **Version:** 1.0 · **Status:** Draft  
+  **Ngày tạo:** 2026-05-25 · **Tác giả:** BA Team
+</Info>
+
+<Warning>
+  **Tài liệu đang được soạn thảo.** Module này sẽ bao gồm: quét QR merchant (VietQR / EMV Co), tạo QR nhận tiền, thanh toán hóa đơn (điện, nước, viễn thông), và dynamic QR với amount.
+</Warning>
+
+---
+
+## Nội dung sẽ có
+
+- QR standard: VietQR (NAPAS) và EMV QR — parse và validate
+- Quét QR flow: scan → parse → confirm amount → auth → complete
+- Tạo QR: static QR (không có amount) vs dynamic QR (có amount)
+- Merchant QR: tích hợp POS terminal, merchant portal
+- Bill payment: tra cứu mã khách hàng → hiển thị hóa đơn → thanh toán
+- Sequence diagram: App → QR Service → Merchant/Bill Service → Transaction Engine
+- Screen spec: màn hình quét QR, confirm payment, receipt, tạo QR
+- Validation: QR hợp lệ/hết hạn, merchant active, amount trong hạn mức
+- Business rules: QR tĩnh không expire; dynamic QR expire sau 5 phút
+- Notification: xác nhận thanh toán merchant; biên lai điện tử
+- Error codes: QR hết hạn, merchant suspended, bill không tìm thấy
+
+---
+
+_Tài liệu đầy đủ sẽ được cập nhật trong sprint tiếp theo._
