@@ -1,0 +1,206 @@
+---
+title: "Use Case Spec"
+description: "UC-MOMO-TRANSFER-001 | Use Case Specification — P2P, Auth, Maker-Checker, Batch"
+icon: "diagram-project"
+---
+
+# Use Case Specification: Chuyển Tiền Nội Bộ Ví MoMo
+
+---
+
+## Thông tin tài liệu
+
+| Trường | Nội dung |
+|---|---|
+| **Document ID** | UC-MOMO-TRANSFER-001 |
+| **Version** | 1.0 |
+| **Status** | Draft |
+| **Ngày tạo** | 2026-05-25 |
+| **Tác giả** | BA Team |
+| **Reviewer** | Tech Lead, QA Lead |
+| **Approver** | Head of Product |
+| **Tài liệu liên quan** | BRD-MOMO-TRANSFER-001, FRD-MOMO-TRANSFER-001, US-MOMO-TRANSFER-001 |
+| **Bảo mật** | Internal — Không phát hành ra ngoài |
+
+## Người đọc dự kiến
+
+| Vai trò | Mục đích |
+|---|---|
+| Tech Lead / Developer | Hiểu luồng tương tác để thiết kế hệ thống |
+| QA Lead | Xây dựng test scenarios và test cases |
+| Product Manager | Review scope hành vi hệ thống |
+| UX Designer | Hiểu step-by-step interaction để thiết kế UI |
+
+---
+
+## 1. Danh sách Use Case
+
+| ID | Tên Use Case | Actor chính | Độ ưu tiên |
+|---|---|---|---|
+| UC-01 | Chuyển tiền P2P — Luồng cơ bản | Người dùng cá nhân | Must Have |
+| UC-02 | Chuyển tiền P2P — Xác thực 2FA/3FA | Người dùng cá nhân, Auth Service | Must Have |
+| UC-03 | Giải ngân đơn lẻ (Business → Cá nhân) | Maker, Checker | Must Have |
+| UC-04 | Giải ngân hàng loạt — Batch Disbursement | Maker, Checker, Batch Processor | Must Have |
+| UC-05 | Tra cứu lịch sử giao dịch | Người dùng cá nhân / Doanh nghiệp | Should Have |
+
+---
+
+## 2. UC-01: Chuyển Tiền P2P — Luồng Cơ Bản
+
+| Trường | Nội dung |
+|---|---|
+| **Actor chính** | Người dùng cá nhân (Sender) |
+| **Actor phụ** | Wallet Core, Notification Service, Limit Engine |
+| **Preconditions** | Sender đã đăng nhập; ví Sender active; balance đủ |
+| **Postconditions** | Balance Sender giảm; balance Recipient tăng; transaction log created |
+| **Trigger** | Sender nhấn "Chuyển tiền" trên màn hình chính |
+
+### Main Flow
+
+| Bước | Actor | Hành động |
+|---|---|---|
+| 1 | Sender | Nhấn "Chuyển tiền" |
+| 2 | System | Hiển thị màn hình nhập thông tin người nhận |
+| 3 | Sender | Nhập SĐT / quét QR / tìm tên người nhận |
+| 4 | System | Tra cứu Recipient; kiểm tra trạng thái active |
+| 5 | System | Hiển thị tên đầy đủ + avatar Recipient để Sender xác nhận |
+| 6 | Sender | Xác nhận đúng người nhận → nhấn "Tiếp tục" |
+| 7 | Sender | Nhập số tiền |
+| 8 | System | Gọi Limit Engine: kiểm tra hạn mức GD, ngày, tháng |
+| 9 | System | Xác định mức xác thực (1FA / 2FA / 3FA) |
+| 10 | Sender | Hoàn thành xác thực |
+| 11 | System | Hiển thị màn hình xác nhận giao dịch |
+| 12 | Sender | Nhấn "Xác nhận chuyển" |
+| 13 | System | Wallet Core: atomic debit Sender + credit Recipient |
+| 14 | System | Tạo transaction record; ghi audit log |
+| 15 | System | Push notification → Sender và Recipient |
+| 16 | System | Hiển thị màn hình thành công + transaction ID |
+
+### Exception Flows
+
+| ID | Điều kiện | Hệ thống phản hồi |
+|---|---|---|
+| EX-01 | Recipient không tồn tại hoặc không active | "Số điện thoại chưa đăng ký MoMo" → dừng |
+| EX-02 | Vượt hạn mức GD (> 20M VND) | Hiển thị lỗi hạn mức cụ thể → reject |
+| EX-03 | Vượt hạn mức ngày (> 100M VND) | Hiển thị số tiền còn lại trong ngày → reject |
+| EX-04 | Ví chưa eKYC vượt 20M VND/tháng | Thông báo + hướng dẫn eKYC |
+| EX-05 | Xác thực thất bại 3 lần liên tiếp | Khóa 30 phút; ghi log |
+| EX-06 | Wallet Core timeout > 30s | Rollback; "Giao dịch thất bại — thử lại" |
+| EX-07 | Balance không đủ tại thời điểm debit | Lỗi số dư không đủ → dừng |
+
+---
+
+## 3. UC-02: Xác Thực 2FA/3FA
+
+### Logic Xác Thực
+
+| Điều kiện | Mức xác thực | Yếu tố bắt buộc |
+|---|---|---|
+| amount < 10M **VÀ** cumulative\_1h < 20M | 1FA | PIN **hoặc** Face ID |
+| amount ≥ 10M **VÀ** cumulative\_1h < 20M | 2FA | PIN **VÀ** Face ID |
+| cumulative\_1h + amount ≥ 20M | 3FA | PIN **VÀ** Face ID **VÀ** OTP |
+
+### Main Flow — 3FA
+
+| Bước | Actor | Hành động |
+|---|---|---|
+| 1 | System | Xác định level 3FA |
+| 2–4 | System + Sender | Nhập PIN → Verify |
+| 5–7 | System + Sender | Face ID scan → Verify |
+| 8 | System | Gọi OTP Gateway: gửi OTP qua SMS |
+| 9–11 | System + Sender | Nhập OTP → Verify → issue auth token |
+| 12 | System | Trả auth token về UC-01 |
+
+### Exception Flows
+
+| ID | Điều kiện | Hệ thống phản hồi |
+|---|---|---|
+| EX-AUTH-01 | PIN sai ≤ 2 lần | Thông báo sai + số lần còn lại |
+| EX-AUTH-02 | PIN sai lần 3 | Khóa auth session; ghi log security |
+| EX-AUTH-03 | Face ID thất bại | Retry tối đa 2 lần → fallback PIN |
+| EX-AUTH-04 | OTP hết hạn | Nút "Gửi lại OTP"; tối đa 3 lần/phiên |
+| EX-AUTH-05 | OTP sai lần 3 | Hủy giao dịch; reset auth session |
+
+---
+
+## 4. UC-03: Giải Ngân Đơn Lẻ — Maker-Checker
+
+| Trường | Nội dung |
+|---|---|
+| **Actor chính** | Maker (tạo lệnh), Checker (phê duyệt) |
+| **Preconditions** | Business account active; số dư đủ; Maker ≠ Checker |
+| **Trigger** | Maker nhấn "Tạo lệnh giải ngân" trên Business Portal |
+
+<Warning>
+  **BR-CRITICAL**: Maker và Checker **bắt buộc** là hai tài khoản khác nhau. Constraint này được enforce tại DB level — `CHECK (maker_user_id != checker_user_id)`.
+</Warning>
+
+### Main Flow
+
+| Bước | Actor | Hành động |
+|---|---|---|
+| 1–2 | Maker | Đăng nhập Portal; nhập SĐT Recipient, amount, description |
+| 3–4 | System | Tra cứu Recipient; kiểm tra số dư |
+| 5–6 | Maker + System | Xác nhận → tạo request PENDING\_APPROVAL |
+| 7 | System | Notify Checker qua email + in-app |
+| 8–10 | Checker + System | Review → Nhập PIN + OTP → Verify |
+| 11 | Checker | Nhấn "Phê duyệt" |
+| 12 | System | Kiểm tra Maker ≠ Checker |
+| 13–14 | System | Atomic debit/credit → ghi audit log |
+| 15 | System | Notify Maker (approved) + Recipient (nhận tiền) |
+
+### Exception Flows
+
+| ID | Điều kiện | Hệ thống phản hồi |
+|---|---|---|
+| EX-DIS-01 | Số dư Business không đủ | Block tạo lệnh |
+| EX-DIS-02 | Recipient không active | Cảnh báo; Maker không thể tiếp tục |
+| EX-DIS-03 | Maker = Checker | System reject tự động; ghi security log |
+| EX-DIS-04 | Wallet Core timeout | Rollback; status = FAILED |
+| EX-DIS-05 | Checker auth thất bại 3 lần | Khóa session Checker; lệnh vẫn PENDING |
+
+---
+
+## 5. UC-04: Batch Disbursement
+
+### File Batch Format
+
+| Cột | Kiểu | Bắt buộc | Validation |
+|---|---|---|---|
+| recipient\_phone | String | ✅ | 10 số, bắt đầu 0 |
+| amount | Integer | ✅ | 1,000 ≤ amount ≤ 20,000,000 |
+| description | String | ✅ | Max 200 ký tự |
+| reference\_id | String | ✅ | Unique per file; idempotency key |
+
+### Main Flow — Batch
+
+| Bước | Actor | Hành động |
+|---|---|---|
+| 1–4 | Maker + System | Upload file → Validate → Preview (tổng dòng/tiền/lỗi) |
+| 5–7 | Maker + System | Confirm → Gửi duyệt → Tạo batch\_job PENDING |
+| 8–9 | Checker + System | Review summary → PIN + OTP → Phê duyệt |
+| 10–13 | System | Xử lý từng dòng → Update progress → Summary report → Notify Maker |
+
+### Exception Flows
+
+| ID | Điều kiện | Hệ thống phản hồi |
+|---|---|---|
+| EX-B-01 | File > 1,000 dòng | Reject upload |
+| EX-B-02 | Dòng có lỗi format | Mark INVALID; highlight lỗi; Maker re-upload |
+| EX-B-03 | Tổng tiền > số dư | Reject toàn batch |
+| EX-B-04 | Một dòng thất bại | Mark FAILED; tiếp tục các dòng còn lại |
+| EX-B-05 | Batch timeout 30 phút | Dừng; báo cáo tiến độ |
+
+---
+
+## 6. Business Rules Tổng Hợp
+
+| ID | Quy tắc | Áp dụng tại |
+|---|---|---|
+| BR-UC-01 | GD tức thì, không hoàn sau confirm | UC-01, UC-03, UC-04 |
+| BR-UC-02 | Idempotency key bắt buộc mọi debit | UC-01, UC-03, UC-04 |
+| BR-UC-03 | Maker ≠ Checker (enforce tại DB) | UC-03, UC-04 |
+| BR-UC-04 | Business account: PIN + OTP mọi GD | UC-03, UC-04 |
+| BR-UC-05 | Log đầy đủ cho audit/NHNN | Tất cả UC |
+| BR-UC-06 | Hiển thị tên Recipient trước khi confirm | UC-01, UC-03 |
+| BR-UC-07 | Timeout 30 giây Wallet Core; không retry | UC-01, UC-03, UC-04 |
