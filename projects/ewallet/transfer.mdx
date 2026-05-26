@@ -461,7 +461,7 @@ sequenceDiagram
 | BR-TRANS-07 | Atomic debit/credit: cả hai xảy ra cùng lúc hoặc không xảy ra | Wallet Core (DB transaction) |
 | BR-TRANS-08 | Timeout Wallet Core > 30 giây: không retry tự động; trả PENDING status | Transfer Service |
 | BR-TRANS-09 | Nếu status = PENDING sau timeout: log; kiểm tra bằng idempotency khi user mở lại | Idempotency layer |
-| BR-TRANS-10 | Hạn mức ngày reset 00:00 UTC+7; hạn mức tháng reset ngày 1 UTC+7 | Limit Engine |
+| BR-TRANS-10 | Hạn mức ngày reset 00:00 UTC+7; hạn mức tháng reset ngày 1 UTC+7. **Hạn mức TRANSFER và QR_PAY dùng chung 1 bucket "DEBIT"** — cộng gộp vào nhau; xem BR-WALLET-14 và BR-QR-08 | Limit Engine |
 | BR-TRANS-11 | Thông tin recipient hiển thị: chỉ tên đầy đủ và avatar — không lộ SĐT đầy đủ, email | Privacy |
 | BR-TRANS-12 | Log đầy đủ mọi GD: sender_id, recipient_id, amount, tx_id, auth_level, ip, device_id, timestamp | Audit Logger |
 | BR-TRANS-13 | Rate limit chuyển tiền: tối đa 5 GD/phút/user (sliding window tại API Gateway); vượt ngưỡng → 429 TRANS_013; không tính GD failed hoặc timeout vào counter | API Gateway, LimitEngine |
