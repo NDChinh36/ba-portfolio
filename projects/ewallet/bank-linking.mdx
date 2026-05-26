@@ -237,7 +237,7 @@ sequenceDiagram
 | Component | Loại | Nội dung | Điều kiện | Action |
 |---|---|---|---|---|
 | Page title | Text H1 | "Ngân hàng liên kết" | Always | — |
-| Bank card list | List | Logo + Tên ngân hàng + {3-4 số TK cuối} + Tag "Mặc định" (nếu có) | Per linked bank | Tap → SCR-BANK-07 |
+| Bank card list | List | Logo + Tên ngân hàng + [3-4 số TK cuối] + Tag "Mặc định" (nếu có) | Per linked bank | Tap → SCR-BANK-07 |
 | "Mặc định" badge | Badge (green) | "Mặc định" | Trên ngân hàng default | — |
 | Empty state | Illustration + Text | "Chưa có ngân hàng liên kết. Thêm ngay để nạp/rút tiền." | Khi list rỗng | — |
 | "Thêm ngân hàng" | Primary button | "+ Thêm ngân hàng" | Khi count < 3 | Sang SCR-BANK-02 |
@@ -441,13 +441,13 @@ sequenceDiagram
 
 | Method | Endpoint | Request | Response | Mô tả |
 |---|---|---|---|---|
-| GET | `/bank-link/banks` | — | `[{bank_code, bank_name, logo_url, supports_oauth}]` | Danh sách ngân hàng hỗ trợ |
-| POST | `/bank-link/initiate` | `{user_id, bank_code}` | `{oauth_url, state, expires_in}` | Khởi tạo OAuth flow; trả URL redirect |
-| POST | `/bank-link/callback` | `{code, state, user_id}` | `{status, otp_token?}` | Xử lý OAuth callback; gửi OTP ngân hàng |
-| POST | `/bank-link/verify-otp` | `{user_id, otp_token, otp_code}` | `{bank_account_id, account_name, masked_account}` | Xác thực OTP; lưu ngân hàng |
-| GET | `/bank-link/accounts` | — (header: token) | `[{bank_account_id, bank_name, masked_account, is_default}]` | Lấy danh sách ngân hàng đã liên kết |
-| PUT | `/bank-link/accounts/{id}/default` | — | `{success: true}` | Đặt làm ngân hàng mặc định |
-| DELETE | `/bank-link/accounts/{id}` | `{pin_hash}` | `{success: true, remaining_banks}` | Hủy liên kết ngân hàng |
+| GET | `/bank-link/banks` | — | `[[bank_code, bank_name, logo_url, supports_oauth]]` | Danh sách ngân hàng hỗ trợ |
+| POST | `/bank-link/initiate` | `[user_id, bank_code]` | `[oauth_url, state, expires_in]` | Khởi tạo OAuth flow; trả URL redirect |
+| POST | `/bank-link/callback` | `[code, state, user_id]` | `[status, otp_token?]` | Xử lý OAuth callback; gửi OTP ngân hàng |
+| POST | `/bank-link/verify-otp` | `[user_id, otp_token, otp_code]` | `[bank_account_id, account_name, masked_account]` | Xác thực OTP; lưu ngân hàng |
+| GET | `/bank-link/accounts` | — (header: token) | `[[bank_account_id, bank_name, masked_account, is_default]]` | Lấy danh sách ngân hàng đã liên kết |
+| PUT | `/bank-link/accounts/{id}/default` | — | `[success: true]` | Đặt làm ngân hàng mặc định |
+| DELETE | `/bank-link/accounts/{id}` | `{pin_hash}` | `[success: true, remaining_banks]` | Hủy liên kết ngân hàng |
 
 ---
 

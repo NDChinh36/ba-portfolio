@@ -388,7 +388,7 @@ sequenceDiagram
 
 | Component | Loại | Nội dung | Action |
 |---|---|---|---|
-| Summary card | Card | Nguồn: {bank name} — {masked account} | — |
+| Summary card | Card | Nguồn: [bank name] — [masked account] | — |
 | | | Số tiền: **{amount}** | — |
 | | | Phí: **Miễn phí** | — |
 | | | Ước tính nhận: **{amount}** (trong vòng vài giây) | — |
@@ -432,9 +432,9 @@ sequenceDiagram
 | Instruction | Text | "Dùng app ngân hàng bất kỳ để quét QR hoặc chuyển đến số TK bên dưới" | — |
 | QR Code | Image | QR chứa thông tin Virtual Account | — |
 | Virtual account info | Card | **Số TK ảo:** {virtual_account_number} | Copy to clipboard |
-| | | **Tên thụ hưởng:** {Tên công ty / App Name} | — |
+| | | **Tên thụ hưởng:** [Tên công ty / App Name] | — |
 | | | **Nội dung CK:** {user_code} — *Bắt buộc nhập đúng* | — |
-| | | **Ngân hàng:** {Bank name} | — |
+| | | **Ngân hàng:** [Bank name] | — |
 | Min amount note | Text | "Tối thiểu 5,000 đ" | — |
 | Warning | Banner (orange) | "Nhập đúng nội dung chuyển khoản. Sai nội dung, tiền có thể không được cộng tự động." | — |
 | Status | Auto-refresh | "Đang chờ giao dịch..." → "✅ Nhận được {X} đ!" | Poll `/wallet/topup/status` mỗi 5s |
@@ -469,11 +469,11 @@ sequenceDiagram
 
 | Component | Loại | Nội dung | Action |
 |---|---|---|---|
-| Summary card | Card | Đến: {bank name} — {masked account} — {owner name} | — |
+| Summary card | Card | Đến: [bank name] — [masked account] — [owner name] | — |
 | | | Số tiền: **{amount}** | — |
 | | | Phí: **Miễn phí** | — |
 | | | Thời gian nhận: **Ngay lập tức (NAPAS 247)** | — |
-| Available balance | Text | "Số dư sau khi rút: {available - amount} đ" | — |
+| Available balance | Text | "Số dư sau khi rút: [available - amount] đ" | — |
 | Irreversible warning | Banner (red) | "⚠ Giao dịch không thể hoàn sau khi xác nhận." | — |
 | "Xác nhận rút" | Primary button (red) | "Xác nhận rút tiền" | Sang PIN screen |
 | "Hủy" | Text link | "Hủy" | Về SCR-WALLET-10 |
@@ -532,7 +532,7 @@ sequenceDiagram
 | Rút tiền đang xử lý (timeout) | Push + In-app | "⏳ Lệnh rút {amount} đ đang được xử lý. Chúng tôi sẽ thông báo khi hoàn tất." | Khi timeout |
 | Rút tiền thất bại + hoàn tiền | Push + In-app | "❌ Rút tiền thất bại. {amount} đ đã được hoàn lại vào ví. Mã lỗi: {code}" | Khi rollback hoàn tất |
 | Gần đạt hạn mức tháng (80%) | Push + In-app | "⚠ Bạn đã dùng 80% hạn mức giao dịch tháng. Còn {X} đ. Nâng tier để tăng hạn mức." | Khi vượt 80% |
-| Đạt hạn mức tháng (100%) | Push + In-app | "🔴 Hạn mức tháng đã hết. Chờ đến {ngày 1 tháng sau} để tiếp tục giao dịch." | Khi đạt 100% |
+| Đạt hạn mức tháng (100%) | Push + In-app | "🔴 Hạn mức tháng đã hết. Chờ đến [ngày 1 tháng sau] để tiếp tục giao dịch." | Khi đạt 100% |
 | Push top-up bị hoàn tiền | SMS + Push | "Chuyển khoản {amount} đ vào ví bị hoàn: {reason}. Tiền sẽ về TK ngân hàng trong 30 phút." | Khi refund initiated |
 
 ---
@@ -541,13 +541,13 @@ sequenceDiagram
 
 | Method | Endpoint | Request | Response | Mô tả |
 |---|---|---|---|---|
-| GET | `/wallet/balance` | — (header: token) | `{total, available, locked, currency, tier}` | Lấy số dư; gọi mỗi khi mở app / sau mỗi GD |
-| POST | `/wallet/topup/pull` | `{bank_account_id, amount, idempotency_key, pin_hash}` | `{tx_id, status, new_balance}` | Kéo tiền từ ngân hàng liên kết |
-| GET | `/wallet/topup/virtual-account` | — | `{virtual_account_no, bank_name, account_name, user_code, qr_content}` | Lấy thông tin STK ảo để hiển thị QR push |
-| GET | `/wallet/topup/status?tx_id=` | — | `{status, amount?, credited_at?}` | Poll trạng thái push top-up |
-| POST | `/wallet/withdraw` | `{bank_account_id, amount, idempotency_key, pin_hash}` | `{tx_id, status, new_balance}` | Rút tiền về ngân hàng |
-| GET | `/wallet/limits` | — | `{per_tx_max, daily_remaining, monthly_remaining, max_balance}` | Lấy hạn mức realtime |
-| POST | `/webhooks/napas/credit` | `{virtual_account, amount, bank_ref, ...}` *(internal)* | `{success: true}` | NAPAS gửi webhook khi push top-up đến |
+| GET | `/wallet/balance` | — (header: token) | `[total, available, locked, currency, tier]` | Lấy số dư; gọi mỗi khi mở app / sau mỗi GD |
+| POST | `/wallet/topup/pull` | `[bank_account_id, amount, idempotency_key, pin_hash]` | `[tx_id, status, new_balance]` | Kéo tiền từ ngân hàng liên kết |
+| GET | `/wallet/topup/virtual-account` | — | `[virtual_account_no, bank_name, account_name, user_code, qr_content]` | Lấy thông tin STK ảo để hiển thị QR push |
+| GET | `/wallet/topup/status?tx_id=` | — | `[status, amount?, credited_at?]` | Poll trạng thái push top-up |
+| POST | `/wallet/withdraw` | `[bank_account_id, amount, idempotency_key, pin_hash]` | `[tx_id, status, new_balance]` | Rút tiền về ngân hàng |
+| GET | `/wallet/limits` | — | `[per_tx_max, daily_remaining, monthly_remaining, max_balance]` | Lấy hạn mức realtime |
+| POST | `/webhooks/napas/credit` | `[virtual_account, amount, bank_ref, ...]` *(internal)* | `[success: true]` | NAPAS gửi webhook khi push top-up đến |
 
 ---
 

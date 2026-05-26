@@ -265,7 +265,7 @@ sequenceDiagram
 |---|---|---|---|---|
 | Avatar | Image (large) | Ảnh đại diện recipient (hoặc initials placeholder) | Always | — |
 | Tên đầy đủ | Text H2 | Họ tên đầy đủ của recipient | Always | — |
-| SĐT | Text | {SĐT — ẩn 3 số giữa: 09xx xxx x23} | Always | — |
+| SĐT | Text | [SĐT — ẩn 3 số giữa: 09xx xxx x23] | Always | — |
 | Confirm button | Primary button | "Đúng, tiếp tục" | Always | Sang SCR-TRANS-03 |
 | Cancel button | Secondary | "Không phải người này" | Always | Về SCR-TRANS-01; xóa SĐT |
 
@@ -344,7 +344,7 @@ sequenceDiagram
 | Title | Text H2 | "Xác nhận chuyển tiền" | Always | — |
 | Recipient | Row | Avatar + Tên + SĐT ẩn | Always | — |
 | Amount | Row (large) | **{amount} đ** | Always | — |
-| Description | Row | "{nội dung}" hoặc "—" nếu không nhập | Always | — |
+| Description | Row | "[nội dung]" hoặc "—" nếu không nhập | Always | — |
 | Fee | Row | "Phí: **Miễn phí**" | Always | — |
 | Irreversible note | Banner (orange) | "⚠ Giao dịch không thể hoàn sau khi xác nhận." | Always | — |
 | "Xác nhận chuyển" | Primary button | "Xác nhận chuyển {amount} đ" | Always | Sang SCR-TRANS-05 |
@@ -383,7 +383,7 @@ sequenceDiagram
 | Amount | Text H1 | "−{amount} đ" (màu xanh) | Always | — |
 | To | Text | "Đến: {recipient_name}" | Always | — |
 | Transaction ID | Text (small) | "Mã GD: {tx_id}" | Always | Copy to clipboard |
-| Timestamp | Text (small) | "{HH:mm DD/MM/YYYY}" | Always | — |
+| Timestamp | Text (small) | "[HH:mm DD/MM/YYYY]" | Always | — |
 | New balance | Text | "Số dư hiện tại: {new_balance} đ" | Always | — |
 | "Chia sẻ biên lai" | Secondary | "Chia sẻ" | Always | Share receipt |
 | "Chuyển tiếp" | Text link | "Chuyển tiếp cho người khác" | Always | Về SCR-TRANS-01 |
@@ -487,12 +487,12 @@ sequenceDiagram
 
 | Method | Endpoint | Request | Response | Mô tả |
 |---|---|---|---|---|
-| GET | `/users/lookup?phone={phone}` | — | `{user_id, full_name, avatar_url, account_status}` | Tìm user theo SĐT |
-| POST | `/transfer/p2p` | `{sender_id, recipient_id, amount, description?, idempotency_key, pin_hash}` | `{tx_id, status, new_balance, timestamp}` | Thực hiện chuyển tiền P2P |
-| GET | `/transfer/status?idempotency_key=` | — | `{tx_id, status, amount, ...}` | Kiểm tra trạng thái GD (khi timeout) |
-| GET | `/users/me/qr` | — | `{qr_content, qr_image_url}` | Lấy QR cá nhân của user |
-| GET | `/users/me/qr?amount={amount}` | — | `{qr_content, qr_image_url, expires_at}` | QR với số tiền cụ thể (expire 10 phút) |
-| GET | `/transfer/limits` | — | `{per_tx_max, daily_remaining, monthly_remaining}` | Lấy hạn mức realtime |
+| GET | `/users/lookup?phone={phone}` | — | `[user_id, full_name, avatar_url, account_status]` | Tìm user theo SĐT |
+| POST | `/transfer/p2p` | `[sender_id, recipient_id, amount, description?, idempotency_key, pin_hash]` | `[tx_id, status, new_balance, timestamp]` | Thực hiện chuyển tiền P2P |
+| GET | `/transfer/status?idempotency_key=` | — | `[tx_id, status, amount, ...]` | Kiểm tra trạng thái GD (khi timeout) |
+| GET | `/users/me/qr` | — | `[qr_content, qr_image_url]` | Lấy QR cá nhân của user |
+| GET | `/users/me/qr?amount={amount}` | — | `[qr_content, qr_image_url, expires_at]` | QR với số tiền cụ thể (expire 10 phút) |
+| GET | `/transfer/limits` | — | `[per_tx_max, daily_remaining, monthly_remaining]` | Lấy hạn mức realtime |
 
 ---
 
