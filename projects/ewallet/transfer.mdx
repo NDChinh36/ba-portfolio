@@ -317,6 +317,28 @@ sequenceDiagram
 
 ### SCR-TRANS-04 — Xác nhận giao dịch
 
+```
+┌─────────────────────────────────┐
+│  ←       Xác nhận chuyển tiền  │
+│                                 │
+│  ┌───────────────────────────┐  │
+│  │ Đến        NGUYEN VAN AN  │  │
+│  │ SĐT            090*** 123 │  │
+│  │ Số tiền     500,000 đ     │  │
+│  │ Nội dung    Tien an sang  │  │
+│  │ Phí               Miễn phí│  │
+│  └───────────────────────────┘  │
+│                                 │
+│  ╔═══════════════════════════╗  │
+│  ║ ⚠ Giao dịch không thể    ║  │
+│  ║    hoàn sau khi xác nhận  ║  │
+│  ╚═══════════════════════════╝  │
+│                                 │
+│  [ Xác nhận chuyển 500,000 đ ] │
+│           Hủy giao dịch         │
+└─────────────────────────────────┘
+```
+
 | Component | Loại | Nội dung | Điều kiện | Action |
 |---|---|---|---|---|
 | Title | Text H2 | "Xác nhận chuyển tiền" | Always | — |
