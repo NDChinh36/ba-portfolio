@@ -574,7 +574,8 @@ sequenceDiagram
 | Gửi OTP đăng ký | SMS | "Mã xác thực [APP] của bạn: {OTP}. Hiệu lực 3 phút. Không chia sẻ mã này." | Ngay khi gửi OTP |
 | Gửi OTP đặt lại PIN | SMS | "Mã đặt lại PIN [APP]: {OTP}. Hiệu lực 3 phút. Nếu không phải bạn, bỏ qua." | Ngay khi gửi OTP |
 | Đăng nhập thành công | Push (thiết bị hiện tại) | "Đăng nhập thành công lúc {time}." | Mỗi lần đăng nhập |
-| Thiết bị mới | Push (thiết bị cũ) + Email | Push: "Phát hiện đăng nhập mới từ {device} lúc {time}. Không phải bạn? Đổi PIN ngay." Email: Chi tiết device info, IP, thời gian, link đổi PIN | Khi phát hiện device mới |
+| Yêu cầu xác nhận thiết bị mới | Push (Device A — thiết bị đang active) | "📱 Thiết bị mới yêu cầu đăng nhập: {device_name} · {OS} · {location}. Cho phép hay từ chối? Hết hạn sau 5 phút." → Tap để mở SCR-SETTINGS-05 | Khi Device B gửi login request và có Device A đang active |
+| Kết quả login Device B | Push (Device B) | Nếu được duyệt: "Đăng nhập thành công." Nếu bị từ chối / timeout: "Yêu cầu đăng nhập bị từ chối. Liên hệ CSKH nếu cần hỗ trợ." | Sau khi Device A phản hồi hoặc approval_token timeout |
 | Tài khoản bị khóa | SMS + Push | "Tài khoản bị tạm khóa do nhập sai PIN nhiều lần. Mở khóa lúc {time}." | Khi lock xảy ra |
 | Tài khoản mở khóa | Push | "Tài khoản đã mở khóa. Bạn có thể đăng nhập bình thường." | Khi hết thời gian lock |
 | Đổi PIN thành công | Push + Email | "Mã PIN đã thay đổi lúc {time}. Nếu không phải bạn, liên hệ CSKH ngay." | Sau khi đổi PIN thành công |
