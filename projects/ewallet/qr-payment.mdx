@@ -523,6 +523,34 @@ sequenceDiagram
 
 ### SCR-QR-05 — Xác nhận thanh toán
 
+```
+┌─────────────────────────────────┐
+│  ←  Quay lại                   │
+│    Xác nhận thanh toán QR       │
+│                                 │
+│  ┌───────────────────────────┐  │
+│  │ [Logo]  MBBank            │  │
+│  │ **** 1234 · NGUYEN VAN A  │  │
+│  └───────────────────────────┘  │
+│                                 │
+│  Số tiền          150,000 VND   │
+│  Nội dung     Thanh toan an uong│
+│  Phí                  Miễn phí  │
+│  ─────────────────────────────  │
+│  Tổng cộng        150,000 VND   │
+│                                 │
+│  Xác thực bằng                  │
+│  ○ PIN   ● Vân tay / Khuôn mặt  │
+│                                 │
+│  ╔═══════════════════════════╗  │
+│  ║ ⚠ Giao dịch không thể    ║  │
+│  ║    hoàn tác sau xác nhận ║  │
+│  ╚═══════════════════════════╝  │
+│                                 │
+│  [    Xác nhận & Thanh toán   ] │
+└─────────────────────────────────┘
+```
+
 | Component | Chi tiết |
 |-----------|---------|
 | Header | "Xác nhận thanh toán QR" |
