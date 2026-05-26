@@ -636,7 +636,8 @@ sequenceDiagram
 | PATCH | `/notifications/{id}/read` | Đánh dấu 1 thông báo đã đọc | JWT |
 | PATCH | `/notifications/read-all` | Đánh dấu tất cả đã đọc | JWT |
 | GET | `/settings/profile` | Lấy thông tin hồ sơ hiện tại | JWT |
-| PATCH | `/settings/profile` | Cập nhật avatar, nickname, email, language | JWT |
+| POST | `/settings/avatar/presign` | Lấy S3 presigned URL để upload avatar (TTL 5 phút); client upload trực tiếp lên S3, sau đó gọi PATCH /settings/profile với `avatar_key` | JWT |
+| PATCH | `/settings/profile` | Cập nhật nickname, email, language; và `avatar_key` (sau khi upload S3 thành công); **không nhận file multipart trực tiếp** | JWT |
 | PATCH | `/settings/biometric` | Bật/tắt biometric | JWT + PIN |
 | GET | `/settings/device` | Thông tin thiết bị đang đăng nhập | JWT |
 | DELETE | `/auth/session` | Đăng xuất thiết bị hiện tại | JWT |
