@@ -297,6 +297,19 @@ sequenceDiagram
     end
 ```
 
+<Note>
+  **Schema: `device_B_info`** — payload truyền từ Auth Service → Notification Service → Device A và hiển thị tại SCR-SETTINGS-05:
+
+  | Field | Kiểu | Mô tả | Ví dụ |
+  |---|---|---|---|
+  | `device_name` | string | Tên model thiết bị | "Samsung Galaxy S24" |
+  | `os` | string | Hệ điều hành + phiên bản | "Android 14" |
+  | `city` | string | Thành phố từ GeoIP (best-effort) | "Hồ Chí Minh" |
+  | `ip_address` | string | IPv4 (ẩn 2 octet cuối trong UI) | "27.65.xxx.xxx" |
+  | `requested_at` | ISO8601 | Thời điểm gửi login request | "2026-05-26T20:15:00+07:00" |
+  | `login_request_id` | string (UUID) | ID để Device B poll status | "a3f7..." |
+</Note>
+
 ---
 
 ## 5. Screen Specifications
