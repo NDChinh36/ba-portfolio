@@ -518,7 +518,7 @@ sequenceDiagram
 | BR-WALLET-11 | Hạn mức ngày reset vào 00:00 mỗi ngày (UTC+7) | Limit Engine |
 | BR-WALLET-12 | Push top-up: Nếu amount vượt hạn mức → hoàn tiền ngay trong 30 phút qua NAPAS | Webhook handler |
 | BR-WALLET-13 | Cảnh báo khi user nạp vượt 80% hạn mức tháng: banner thông báo | Limit Engine |
-| BR-WALLET-14 | **LimitEngine bucket riêng per operation type:** TOPUP, WITHDRAWAL, TRANSFER, QR_PAY mỗi loại có counter ngày/tháng riêng biệt; không cộng gộp. Ví dụ: user chuyển 90M (gần limit TRANSFER) vẫn có thể nạp thêm 100M (bucket TOPUP còn nguyên) | Limit Engine |
+| BR-WALLET-14 | **LimitEngine bucket theo nhóm:** (1) TOPUP có bucket riêng; (2) WITHDRAWAL có bucket riêng; (3) **TRANSFER + QR_PAY dùng chung bucket** "DEBIT" — cộng gộp với nhau theo ngày/tháng (xem BR-QR-08). Ví dụ: Tier 2 limit ngày 100M; chuyển 70M + QR 40M = 110M → QR_PAY bị từ chối dù limit TRANSFER chưa đầy | Limit Engine, Transfer Service, QR Service |
 
 ---
 
