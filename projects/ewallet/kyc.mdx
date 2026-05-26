@@ -361,6 +361,27 @@ sequenceDiagram
 
 ### SCR-KYC-05 — Đọc Chip NFC
 
+```
+┌─────────────────────────────────┐
+│  ① ② ③ NFC ④                  │
+│                                 │
+│    [Illustration: phone + CCCD  │
+│     mặt sau chạm nhau]          │
+│                                 │
+│  Đặt CCCD tiếp xúc             │
+│  mặt sau điện thoại             │
+│  Giữ yên trong 5 giây          │
+│                                 │
+│         ◌◌◌●●● (progress)       │  ← vòng tròn tiến độ
+│                                 │
+│  ✅ Đọc chip thành công!        │  ← khi thành công
+│  ─── hoặc ───                   │
+│  ❌ Không đọc được (lần 2/3)    │  ← khi fail
+│                                 │
+│       [ Bỏ qua bước này ]       │  ← sau 3 lần fail
+└─────────────────────────────────┘
+```
+
 | Component | Loại | Nội dung | Điều kiện | Action |
 |---|---|---|---|---|
 | NFC instruction | Illustration | Hình điện thoại đặt sau lưng CCCD | Always | — |
