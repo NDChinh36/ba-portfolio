@@ -517,12 +517,55 @@ sequenceDiagram
 
 ---
 
-## 12. Open Questions
+## 12. Roadmap — Tính năng phát triển
 
-| # | Câu hỏi | Ảnh hưởng | Target |
-|---|---|---|---|
-| 1 | Giới hạn 6 tháng: nếu user muốn xem GD cũ hơn, có cần tính năng "Yêu cầu sao kê email" không? | CS ops + compliance; async export job | Sprint 9 |
-| 2 | Push notification deep link: tap notification → mở thẳng SCR-HIST-04 với `tx_id`? | Deep link routing cần `tx_id` trong notification payload | Sprint 7 — confirm với Notif module |
-| 3 | Search có cần filter kết hợp không? (vd: search "Nguyen" trong loại "Chuyển tiền") | UX improvement — search + filter combo | Sprint 9 |
-| 4 | Hiển thị "Số dư sau GD" trên list row hay chỉ trên detail? | Nếu list → cần thêm field; tốn bandwidth | UX decision |
-| 5 | Khi mở app sau khi có nhiều GD mới (từ push notification) — có badge số GD mới không? | UX — badge trên bottom tab "Lịch sử" | Sprint 8 |
+<Info>
+  Các tính năng dưới đây bổ sung cho phạm vi MVP hiện tại (xem chi tiết, lọc, tìm kiếm cơ bản). Phân loại theo Sprint dự kiến — cần Product và UX xác nhận trước khi đưa vào backlog.
+</Info>
+
+<AccordionGroup>
+  <Accordion title="[Sprint 7] Deep Link — Tap Notification mở thẳng Chi tiết GD" icon="link">
+    **Team:** Tech + Product · **Ưu tiên:** High
+
+    Khi user tap vào push notification liên quan đến giao dịch (ví dụ: "Nhận 500,000đ từ Minh"), app điều hướng thẳng đến **SCR-HIST-04** của GD đó mà không qua màn danh sách. Cải thiện đáng kể UX từ notification.
+
+    **Yêu cầu chính:** Notification payload chứa `tx_id`; deep link router xử lý scheme `finpay://history/{tx_id}`; fallback về SCR-HIST-01 nếu tx_id không tồn tại hoặc đã hơn 6 tháng.  
+    **Phụ thuộc:** Xác nhận deep link scheme với Notifications module (PRD-EW-NOTIF-001); iOS Universal Links + Android App Links cần cấu hình.
+  </Accordion>
+
+  <Accordion title="[Sprint 8] Badge số GD mới trên Tab Lịch sử" icon="bell">
+    **Team:** UX + Tech · **Ưu tiên:** Medium
+
+    Hiển thị **badge số đếm** trên bottom tab "Lịch sử" khi có giao dịch mới kể từ lần mở màn cuối. Tương tự unread badge notification — giúp user biết có GD mới mà không cần chủ động vào tab.
+
+    **Yêu cầu chính:** Redis counter tăng khi có GD mới cho user đó; reset về 0 khi user mở SCR-HIST-01; hiển thị tối đa "99+" nếu vượt ngưỡng; sync khi app về foreground.  
+    **Phụ thuộc:** Wallet Core phải emit event khi GD completed; UX xác nhận vị trí và style badge trên bottom tab bar.
+  </Accordion>
+
+  <Accordion title="[Sprint 8] Hiển thị Số dư sau GD trên danh sách" icon="wallet">
+    **Team:** UX + Product · **Ưu tiên:** Low
+
+    Thêm trường **"Số dư sau GD"** hiển thị trực tiếp trên mỗi row trong danh sách lịch sử. Cho phép user theo dõi lịch sử thay đổi số dư ngay trên list view mà không cần mở từng GD.
+
+    **Yêu cầu chính:** DB thêm field `balance_after` vào bảng transactions tại thời điểm record GD; API `/transactions` trả thêm field; UX cập nhật row layout SCR-HIST-01.  
+    **Phụ thuộc:** Data migration cho GD cũ không có `balance_after` (hiển thị "—"); đánh giá tăng payload size và ảnh hưởng bandwidth.
+  </Accordion>
+
+  <Accordion title="[Sprint 9] Yêu cầu Sao kê — Export GD quá 6 tháng qua Email" icon="file-export">
+    **Team:** Product + CS Ops · **Ưu tiên:** Medium
+
+    Khi user cần xem lịch sử GD **quá 6 tháng** (app không hiển thị), cho phép gửi **yêu cầu sao kê** ngay trong app. Hệ thống tạo file PDF/CSV (async job) và gửi về email đăng ký. Tuân thủ nghĩa vụ cung cấp lịch sử 5 năm theo Nghị định 52/2024.
+
+    **Yêu cầu chính:** Entry point trên SCR-HIST-05 (empty state khi search > 6 tháng); async export job; email PDF với đầy đủ thông tin GD; giới hạn 1 yêu cầu / tháng / user để tránh abuse.  
+    **Phụ thuộc:** CS Ops thiết lập SLA xử lý (đề xuất trong 24 giờ); email service hỗ trợ gửi attachment PDF lớn.
+  </Accordion>
+
+  <Accordion title="[Sprint 9] Tìm kiếm kết hợp — Search Text + Filter loại GD đồng thời" icon="magnifying-glass">
+    **Team:** Product · **Ưu tiên:** Low
+
+    Mở rộng tính năng tìm kiếm để hỗ trợ **kết hợp search text + filter loại GD** cùng lúc (ví dụ: tìm "Nguyen" trong loại "Chuyển tiền"). Hiện tại khi filter active, thanh search bị ẩn và ngược lại.
+
+    **Yêu cầu chính:** Cập nhật SCR-HIST-02 và SCR-HIST-03 để hai điều kiện coexist; API `/transactions/search` nhận thêm tham số `type` filter; UX thiết kế lại filter panel để không conflict với search bar.  
+    **Phụ thuộc:** Tech đánh giá performance combined FTS query + type filter trên dataset 6 tháng; cần load test trước khi release.
+  </Accordion>
+</AccordionGroup>
