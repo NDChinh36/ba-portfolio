@@ -422,6 +422,9 @@ sequenceDiagram
 | BR-BANK-10 | Khi hủy ngân hàng mặc định và còn ngân hàng khác: tự động chọn ngân hàng liên kết sớm nhất làm mặc định mới | Post-unlink |
 | BR-BANK-11 | bank_access_token phải được revoke ở phía ngân hàng khi hủy liên kết | Bank OAuth API |
 | BR-BANK-12 | bank_access_token lưu encrypted tại server (không lưu client-side) | Security |
+| BR-BANK-13 | Hủy liên kết ngân hàng **không xóa** lịch sử giao dịch liên quan — transaction records là audit log bất biến và vẫn hiển thị trong Transaction History với tên ngân hàng gốc | Transaction History, Audit |
+| BR-BANK-14 | Khi STK tài khoản ngân hàng thay đổi (ngân hàng cấp STK mới): user phải unlink rồi re-link lại — hệ thống không hỗ trợ update STK in-place | Bank Linking Flow |
+| BR-BANK-15 | Fuzzy name match score 75–84%: hiển thị cảnh báo "Tên tài khoản không khớp hoàn toàn — {matched_name}. Tiếp tục?" và yêu cầu user xác nhận tường minh (tap "Xác nhận dù khác tên") trước khi liên kết | SCR-BANK-04, Name Validation |
 
 ---
 
