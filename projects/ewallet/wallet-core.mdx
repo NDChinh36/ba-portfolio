@@ -326,6 +326,29 @@ sequenceDiagram
 
 ### SCR-WALLET-03 — Nạp qua Ngân hàng (Pull)
 
+```
+┌─────────────────────────────────┐
+│  ←              Nạp tiền       │
+│                                 │
+│  Nguồn tiền                     │
+│  ┌───────────────────────────┐  │
+│  │ [Logo MB] MBBank ****1234 │  │  ← dropdown chọn bank
+│  └───────────────────────────┘  │
+│  + Thêm ngân hàng mới           │
+│                                 │
+│  Số tiền                        │
+│  ┌───────────────────────────┐  │
+│  │     0 đ                   │  │
+│  └───────────────────────────┘  │
+│  ⚠ Tối thiểu 5,000 đ            │  ← inline error
+│  [50K]  [100K]  [500K]  [1M]   │
+│                                 │
+│  Hạn mức ngày còn: 95,000,000 đ │
+│                                 │
+│       [      Tiếp tục     ]     │
+└─────────────────────────────────┘
+```
+
 | Component | Loại | Nội dung | Điều kiện | Action |
 |---|---|---|---|---|
 | "Chọn ngân hàng" | Label | "Nguồn tiền" | Always | — |
