@@ -172,7 +172,7 @@ sequenceDiagram
     App->>TransferSvc: POST /transfer/p2p\n{sender_id, recipient_phone,\namount, description, idempotency_key, pin_hash}
 
     TransferSvc->>TransferSvc: Verify PIN hash
-    TransferSvc->>UserSvc: GET /users/phone/{recipient_phone}
+    TransferSvc->>UserSvc: GET /users/lookup?phone={recipient_phone}
     UserSvc-->>TransferSvc: {user_id, full_name, avatar, account_status}
 
     Note over TransferSvc: Kiểm tra: recipient active, sender ≠ recipient
