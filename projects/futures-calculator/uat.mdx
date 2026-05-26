@@ -1,0 +1,920 @@
+---
+title: "UAT Test Cases — Futures Position Calculator"
+description: "UAT-FUTURES-CALC-001 | User Acceptance Testing"
+icon: "clipboard-check"
+---
+
+## Document Header
+
+| Trường | Giá trị |
+|---|---|
+| **ID** | UAT-FUTURES-CALC-001 |
+| **Phiên bản** | 1.0 |
+| **Trạng thái** | Draft |
+| **Ngày tạo** | 2026-05-26 |
+| **Author** | BA Team |
+| **Reviewer** | QA Lead / Product Manager |
+| **Approver** | Head of Product |
+| **Tài liệu liên quan** | BRD-FUTURES-CALC-001, FRD-FUTURES-CALC-001, FRD-FEE-TOKEN-001 |
+
+---
+
+## Người đọc dự kiến
+
+| Vai trò | Mục đích đọc |
+|---|---|
+| QA Tester | Thực thi test case, ghi nhận kết quả thực tế |
+| QA Lead | Review coverage, phê duyệt test plan |
+| Product Manager | Xác nhận scope test đủ đáp ứng acceptance criteria |
+| Developer | Tra cứu expected behavior khi debug |
+| Business Analyst | Đảm bảo test case phản ánh đúng yêu cầu nghiệp vụ |
+
+---
+
+## Lịch sử thay đổi
+
+| Phiên bản | Ngày | Người thực hiện | Nội dung thay đổi |
+|---|---|---|---|
+| 1.0 | 2026-05-26 | BA Team | Tạo mới toàn bộ test suite — 8 nhóm, 36 test cases |
+
+---
+
+## 1. Test Scope
+
+### 1.1 Phạm vi UAT
+
+UAT này kiểm thử toàn bộ tính năng **Futures Position Calculator**, bao gồm:
+
+| Nhóm tính năng | Phạm vi |
+|---|---|
+| **PnL Calculator** | Tính PnL, ROI, phí giao dịch cho Long / Short |
+| **Target Price Calculator** | Tính giá mục tiêu từ PnL mong muốn (tuyệt đối hoặc %) |
+| **Liquidation Price Calculator** | Tính giá thanh lý theo 2 mode: có / không có số lượng |
+| **Tab Switch & Default Params** | Dữ liệu mặc định được giữ nguyên khi chuyển tab |
+| **Copy & Fill** | Điền thông số từ Calculator lên Order Form |
+| **Fee Token Handling** | Xử lý logic phí khi dùng Native Token / Stablecoin |
+| **Size Validation** | Kiểm tra ràng buộc số lượng và khối lượng lệnh |
+| **Tutorial & Onboarding** | Intro tooltip và tutorial 5 bước lần đầu sử dụng |
+
+**Ngoài phạm vi:**
+- Luồng đặt lệnh sau khi Copy & Fill (thuộc Order Form UAT)
+- Quản lý vị thế, margin, funding rate
+- API / Backend performance testing
+
+### 1.2 Môi trường test
+
+| Môi trường | Giá trị |
+|---|---|
+| **Môi trường** | Staging / UAT |
+| **Platform** | Web (desktop), Mobile Web, Mobile App (iOS & Android) |
+| **Browser** | Chrome ≥ 120, Safari ≥ 17, Firefox ≥ 121 |
+| **Độ phân giải desktop** | 1440×900, 1920×1080 |
+| **Độ phân giải mobile** | 390×844 (iPhone 14), 412×915 (Android) |
+
+### 1.3 Dữ liệu test chuẩn
+
+Xem chi tiết tại **Mục 5 — Test Data**. Dữ liệu được thiết lập trên môi trường Staging trước khi bắt đầu UAT.
+
+---
+
+## 2. Test Summary
+
+### 2.1 Tổng quan số lượng test case
+
+| Nhóm | ID Nhóm | Số TC | Critical | High | Medium | Low |
+|---|---|---|---|---|---|---|
+| PnL Calculator | TC-PNL | 8 | 2 | 3 | 2 | 1 |
+| Target Price Calculator | TC-TARGET | 6 | 2 | 2 | 1 | 1 |
+| Liquidation Price Calculator | TC-LIQ | 4 | 2 | 1 | 1 | 0 |
+| Tab Switch & Default Params | TC-TAB | 3 | 1 | 2 | 0 | 0 |
+| Copy & Fill | TC-COPY | 5 | 2 | 2 | 1 | 0 |
+| Fee Token Handling | TC-FEE | 6 | 2 | 2 | 2 | 0 |
+| Size Validation | TC-SIZE | 4 | 2 | 1 | 1 | 0 |
+| Tutorial & Onboarding | TC-TUTOR | 4 | 0 | 1 | 2 | 1 |
+| **Tổng** | | **40** | **13** | **14** | **10** | **2** |
+
+<Note>
+**Quy ước Priority:**
+- **Critical** — Lỗi khiến tính năng hoàn toàn không sử dụng được, hoặc tính toán sai kết quả
+- **High** — Lỗi ảnh hưởng luồng chính nhưng có workaround
+- **Medium** — Lỗi ảnh hưởng UX hoặc edge case ít gặp
+- **Low** — Vấn đề giao diện nhỏ, không ảnh hưởng chức năng
+</Note>
+
+### 2.2 Điều kiện nghiệm thu (Exit Criteria)
+
+- 100% test case **Critical** và **High** Pass
+- Không có bug mức Critical hoặc High chưa được resolve
+- Tối thiểu 90% test case **Medium** Pass
+- Tất cả test case **Blocked** phải có lý do ghi nhận rõ ràng
+
+---
+
+## 3. Test Cases
+
+### Group 1: PnL Calculator (TC-PNL)
+
+---
+
+#### TC-PNL-001 — Long Position Happy Path
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-PNL-001 |
+| **Feature** | PnL Calculator |
+| **Tên** | Tính PnL Long position — kết quả dương |
+| **Priority** | Critical |
+| **Type** | Functional |
+| **Pre-condition** | Đang ở tab PnL Calculator. Chọn cặp BTC/USDT, hướng Long. |
+| **Steps** | 1. Nhập **Giá mở**: `40,000` USDT<br/>2. Nhập **Giá đóng**: `42,000` USDT<br/>3. Nhập **Số lượng**: `0.1` BTC<br/>4. Đặt **Leverage**: `10x`<br/>5. Xác nhận **Fee rate**: `0.07%` (0.0007)<br/>6. Nhấn **Tính toán** |
+| **Expected Result** | Hiển thị kết quả:<br/>• **Phí giao dịch**: `5.74 USDT` *(= 0.1 × (40,000 + 42,000) × 0.0007)*<br/>• **PnL**: `+194.26 USDT` *(= 0.1 × (42,000 − 40,000) − 5.74)*<br/>• **Margin ban đầu**: `400 USDT` *(= 0.1 × 40,000 / 10)*<br/>• **ROI**: `+48.57%` *(= 194.26 / 400)*<br/>• PnL hiển thị màu xanh lá |
+| **Actual Result** | *(Để trống — QA điền sau khi test)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-PNL-002 — Short Position Happy Path
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-PNL-002 |
+| **Feature** | PnL Calculator |
+| **Tên** | Tính PnL Short position — kết quả dương |
+| **Priority** | Critical |
+| **Type** | Functional |
+| **Pre-condition** | Đang ở tab PnL Calculator. Chọn cặp BTC/USDT, hướng **Short**. |
+| **Steps** | 1. Nhập **Giá mở**: `50,000` USDT<br/>2. Nhập **Giá đóng**: `48,000` USDT<br/>3. Nhập **Số lượng**: `0.05` BTC<br/>4. Đặt **Leverage**: `5x`<br/>5. Xác nhận **Fee rate**: `0.07%` (0.0007)<br/>6. Nhấn **Tính toán** |
+| **Expected Result** | Hiển thị kết quả:<br/>• **Phí giao dịch**: `3.43 USDT` *(= 0.05 × (50,000 + 48,000) × 0.0007)*<br/>• **PnL**: `+96.57 USDT` *(= 0.05 × (50,000 − 48,000) − 3.43)*<br/>• **Margin ban đầu**: `500 USDT` *(= 0.05 × 50,000 / 5)*<br/>• **ROI**: `+19.31%` *(= 96.57 / 500)*<br/>• PnL hiển thị màu xanh lá |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-PNL-003 — Tính phí bằng Native Token
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-PNL-003 |
+| **Feature** | PnL Calculator — Fee Token |
+| **Tên** | Bật checkbox "Tính phí bằng Native Token" — phí hiển thị đơn vị Native Token |
+| **Priority** | High |
+| **Type** | Functional |
+| **Pre-condition** | Đang ở tab PnL Calculator với dữ liệu TC-PNL-001 (BTC/USDT, Long, 40,000→42,000, size 0.1). |
+| **Steps** | 1. Tích chọn checkbox **"Tính phí bằng Native Token"**<br/>2. Hệ thống hiển thị trường nhập / tỷ giá quy đổi Native Token<br/>3. Nhấn **Tính toán** |
+| **Expected Result** | • Phần phí giao dịch hiển thị thêm cột / dòng đơn vị Native Token<br/>• Giá trị USDT quy đổi tương đương với `5.74 USDT` (chênh lệch do tỷ giá tại thời điểm test)<br/>• PnL và ROI vẫn tính trên cơ sở USDT, phí được trừ đúng<br/>• Label phí rõ ràng: `X [NativeToken] ≈ 5.74 USDT` |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-PNL-004 — Nhập số lượng bằng Stablecoin (Khối lượng)
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-PNL-004 |
+| **Feature** | PnL Calculator — Input Mode |
+| **Tên** | Switch input mode sang Stablecoin (nhập theo khối lượng notional) |
+| **Priority** | High |
+| **Type** | Functional |
+| **Pre-condition** | Đang ở tab PnL Calculator, cặp BTC/USDT, Long, Giá mở 40,000. |
+| **Steps** | 1. Chuyển input mode sang **Khối lượng (USDT)**<br/>2. Nhập **Khối lượng**: `4,000` USDT *(tương đương 0.1 BTC tại giá 40,000)*<br/>3. Nhập **Giá đóng**: `42,000` USDT<br/>4. Nhấn **Tính toán** |
+| **Expected Result** | • Hệ thống quy đổi: Số lượng = 4,000 / 40,000 = `0.1 BTC`<br/>• Kết quả **PnL** = `194.26 USDT`, **ROI** = `48.57%` — khớp với TC-PNL-001<br/>• Hiển thị số lượng quy đổi: `≈ 0.1 BTC` |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-PNL-005 — PnL âm (Long thua lỗ)
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-PNL-005 |
+| **Feature** | PnL Calculator |
+| **Tên** | Long position — giá đóng thấp hơn giá mở → PnL âm |
+| **Priority** | High |
+| **Type** | Functional |
+| **Pre-condition** | Đang ở tab PnL Calculator. Cặp BTC/USDT, hướng Long. |
+| **Steps** | 1. Nhập **Giá mở**: `40,000` USDT<br/>2. Nhập **Giá đóng**: `38,000` USDT<br/>3. Nhập **Số lượng**: `0.1` BTC<br/>4. Leverage: `10x`, Fee rate: `0.07%`<br/>5. Nhấn **Tính toán** |
+| **Expected Result** | • **Phí**: `0.1 × (40,000 + 38,000) × 0.0007 = 5.46 USDT`<br/>• **PnL**: `0.1 × (38,000 − 40,000) − 5.46 = −200 − 5.46 = −205.46 USDT`<br/>• **ROI**: `−205.46 / 400 = −51.37%`<br/>• PnL và ROI hiển thị màu đỏ với dấu trừ<br/>• Không hiện cảnh báo "gần thanh lý" (trừ khi giá đóng gần liquidation price) |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-PNL-006 — Chưa nhập Giá đóng → Nút bị vô hiệu hóa
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-PNL-006 |
+| **Feature** | PnL Calculator — Validation |
+| **Tên** | Thiếu Giá đóng — nút Tính toán disabled |
+| **Priority** | Medium |
+| **Type** | Negative |
+| **Pre-condition** | Đang ở tab PnL Calculator. Đã nhập Giá mở, Số lượng, Leverage. |
+| **Steps** | 1. Nhập **Giá mở**: `40,000` USDT<br/>2. Nhập **Số lượng**: `0.1` BTC<br/>3. **Bỏ trống** trường **Giá đóng**<br/>4. Quan sát nút **Tính toán** |
+| **Expected Result** | • Nút **Tính toán** ở trạng thái disabled (mờ, không thể nhấn)<br/>• Không hiển thị thông báo lỗi inline (chỉ disable nút)<br/>• Khi hover vào nút: tooltip hoặc không có hành động |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-PNL-007 — Chưa nhập Số lượng → Nút bị vô hiệu hóa
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-PNL-007 |
+| **Feature** | PnL Calculator — Validation |
+| **Tên** | Thiếu Số lượng — nút Tính toán disabled |
+| **Priority** | Medium |
+| **Type** | Negative |
+| **Pre-condition** | Đang ở tab PnL Calculator. Đã nhập Giá mở, Giá đóng, Leverage. |
+| **Steps** | 1. Nhập **Giá mở**: `40,000` USDT<br/>2. Nhập **Giá đóng**: `42,000` USDT<br/>3. **Bỏ trống** trường **Số lượng**<br/>4. Quan sát nút **Tính toán** |
+| **Expected Result** | • Nút **Tính toán** ở trạng thái disabled<br/>• Không có kết quả nào được hiển thị<br/>• Trường Số lượng không bị highlight lỗi khi chưa tương tác (no premature validation) |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-PNL-008 — Nhập Số lượng = 0 → Validation error
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-PNL-008 |
+| **Feature** | PnL Calculator — Validation |
+| **Tên** | Số lượng bằng 0 — lỗi validation inline |
+| **Priority** | Low |
+| **Type** | Boundary |
+| **Pre-condition** | Đang ở tab PnL Calculator. Đã nhập đủ Giá mở, Giá đóng. |
+| **Steps** | 1. Nhập **Giá mở**: `40,000`, **Giá đóng**: `42,000`<br/>2. Nhập **Số lượng**: `0`<br/>3. Click ra ngoài trường nhập hoặc nhấn **Tính toán** |
+| **Expected Result** | • Hiển thị thông báo lỗi inline dưới trường Số lượng: *"Số lượng phải lớn hơn 0"* hoặc tương đương<br/>• Nút **Tính toán** disabled hoặc không thực hiện tính toán<br/>• Không crash, không hiển thị kết quả NaN hoặc Infinity |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+### Group 2: Target Price Calculator (TC-TARGET)
+
+---
+
+#### TC-TARGET-001 — Nhập PnL tuyệt đối + Số lượng → Giá mục tiêu
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-TARGET-001 |
+| **Feature** | Target Price Calculator |
+| **Tên** | Tính giá mục tiêu từ PnL tuyệt đối (có Số lượng) |
+| **Priority** | Critical |
+| **Type** | Functional |
+| **Pre-condition** | Chuyển sang tab **Target Price Calculator**. Cặp BTC/USDT, hướng Long, Leverage 10x, Fee rate 0.07%. |
+| **Steps** | 1. Nhập **Giá mở**: `40,000` USDT<br/>2. Nhập **Số lượng**: `0.1` BTC<br/>3. Chọn input mode **PnL tuyệt đối**<br/>4. Nhập **PnL mong muốn**: `200` USDT<br/>5. Nhấn **Tính toán** |
+| **Expected Result** | • **Giá mục tiêu** ≈ `42,058 USDT`<br/>  *Kiểm chứng: (200 + 40,000 × (0.1 + 0.1 × 0.0007)) / (0.1 − 0.1 × 0.0007) = 4,202.8 / 0.09993 ≈ 42,058 USDT*<br/>• **Tỷ lệ phí** (Fee rate) hiển thị: `0.07%`<br/>• **Phí tuyệt đối** hiển thị: giá trị tính toán tương ứng với giá mục tiêu<br/>• Kết quả làm tròn đến đơn vị USDT phù hợp với tick size của cặp |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-TARGET-002 — Nhập %PnL + Số lượng → Giá mục tiêu
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-TARGET-002 |
+| **Feature** | Target Price Calculator |
+| **Tên** | Tính giá mục tiêu từ % PnL mong muốn (có Số lượng) |
+| **Priority** | Critical |
+| **Type** | Functional |
+| **Pre-condition** | Tab Target Price Calculator, BTC/USDT Long, Leverage 10x, Fee 0.07%. |
+| **Steps** | 1. Nhập **Giá mở**: `40,000` USDT<br/>2. Nhập **Số lượng**: `0.1` BTC<br/>3. Chọn input mode **% PnL**<br/>4. Nhập **% PnL**: `50%`<br/>5. Nhấn **Tính toán** |
+| **Expected Result** | • Hệ thống quy đổi: PnL tuyệt đối = 50% × 400 (margin) = `200 USDT`<br/>• **Giá mục tiêu** ≈ `42,058 USDT` — khớp với TC-TARGET-001<br/>• Hiển thị cả % PnL và PnL tuyệt đối trong kết quả để cross-check |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-TARGET-003 — Nhập %PnL, KHÔNG nhập Số lượng → Chỉ hiển thị Tỷ lệ phí
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-TARGET-003 |
+| **Feature** | Target Price Calculator — Partial Input |
+| **Tên** | Không có Số lượng — ẩn Phí tuyệt đối, chỉ hiện Tỷ lệ phí |
+| **Priority** | High |
+| **Type** | Functional |
+| **Pre-condition** | Tab Target Price Calculator, BTC/USDT Long, Leverage 10x, Fee 0.07%. |
+| **Steps** | 1. Nhập **Giá mở**: `40,000` USDT<br/>2. **Bỏ trống** trường Số lượng<br/>3. Chọn input mode **% PnL**, nhập `50%`<br/>4. Nhấn **Tính toán** |
+| **Expected Result** | • **Giá mục tiêu** vẫn được tính và hiển thị (không cần size để tính giá theo %)<br/>• **Tỷ lệ phí** hiển thị: `0.07%`<br/>• **Phí tuyệt đối** (USDT) **bị ẩn** — vì không có size để tính giá trị tuyệt đối<br/>• Không hiển thị placeholder "—" ở chỗ phí tuyệt đối, hoặc hiện với tooltip giải thích |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-TARGET-004 — Nhập PnL tuyệt đối, KHÔNG nhập Số lượng → Validation error
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-TARGET-004 |
+| **Feature** | Target Price Calculator — Validation |
+| **Tên** | PnL tuyệt đối không thể tính thiếu Số lượng — lỗi bắt buộc |
+| **Priority** | High |
+| **Type** | Negative |
+| **Pre-condition** | Tab Target Price Calculator, BTC/USDT Long, Leverage 10x. |
+| **Steps** | 1. Nhập **Giá mở**: `40,000` USDT<br/>2. **Bỏ trống** trường Số lượng<br/>3. Chọn input mode **PnL tuyệt đối**, nhập `200` USDT<br/>4. Nhấn **Tính toán** |
+| **Expected Result** | • Hiển thị lỗi validation tại trường Số lượng: *"Số lượng là bắt buộc khi nhập PnL tuyệt đối"* (hoặc tương đương)<br/>• Nút **Tính toán** disabled hoặc không thực hiện tính<br/>• Không hiển thị kết quả |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-TARGET-005 — Mobile: Nhập %PnL âm → Validation error
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-TARGET-005 |
+| **Feature** | Target Price Calculator — Mobile Constraint |
+| **Tên** | Mobile không hỗ trợ %PnL âm — validation error |
+| **Priority** | Medium |
+| **Type** | Negative |
+| **Pre-condition** | Đang dùng **Mobile** (iOS hoặc Android). Tab Target Price Calculator, BTC/USDT Long. |
+| **Steps** | 1. Nhập **Giá mở**: `40,000` USDT<br/>2. Chọn input mode **% PnL**<br/>3. Nhập **% PnL**: `-20%`<br/>4. Nhấn **Tính toán** |
+| **Expected Result** | • Hiển thị thông báo lỗi: *"% PnL phải là số dương trên mobile"* hoặc trường không cho nhập ký tự âm<br/>• Nút **Tính toán** disabled<br/>• Không có kết quả được hiển thị |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-TARGET-006 — Web: Nhập %PnL âm → Hợp lệ
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-TARGET-006 |
+| **Feature** | Target Price Calculator — Web vs Mobile Diff |
+| **Tên** | Web hỗ trợ %PnL âm — tính toán thành công |
+| **Priority** | Low |
+| **Type** | Functional |
+| **Pre-condition** | Đang dùng **Web desktop**. Tab Target Price Calculator, BTC/USDT Long, Leverage 10x, Open 40,000. |
+| **Steps** | 1. Nhập **Giá mở**: `40,000` USDT<br/>2. Nhập **Số lượng**: `0.1` BTC<br/>3. Chọn input mode **% PnL**<br/>4. Nhập **% PnL**: `-20%`<br/>5. Nhấn **Tính toán** |
+| **Expected Result** | • Trường **% PnL** chấp nhận giá trị âm<br/>• **Giá mục tiêu** được tính toán và hiển thị (giá thấp hơn Giá mở với Long)<br/>• Không có thông báo lỗi<br/>• Kết quả hợp lý: giá mục tiêu < 40,000 USDT |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+### Group 3: Liquidation Price Calculator (TC-LIQ)
+
+---
+
+#### TC-LIQ-001 — Có Số lượng → Giá thanh lý đầy đủ
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-LIQ-001 |
+| **Feature** | Liquidation Price Calculator |
+| **Tên** | Tính giá thanh lý Long — mode đầy đủ (có Số lượng) |
+| **Priority** | Critical |
+| **Type** | Functional |
+| **Pre-condition** | Chuyển sang tab **Liquidation Price Calculator**. Cặp BTC/USDT, hướng Long. |
+| **Steps** | 1. Nhập **Giá mở**: `40,000` USDT<br/>2. Nhập **Số lượng**: `0.1` BTC<br/>3. Đặt **Leverage**: `10x`<br/>4. Fee rate: `0.07%`<br/>5. Nhấn **Tính toán** |
+| **Expected Result** | • **Giá thanh lý** hiển thị — được tính theo công thức đầy đủ có tính phí và margin<br/>• Giá trị xấp xỉ vùng `36,000 USDT` (sẽ thấp hơn TC-LIQ-002 do margin bù phí)<br/>• Hiển thị **Khoảng cách đến giá thanh lý**: `%` so với Giá mở<br/>• Hiển thị **Margin ban đầu**: `400 USDT` |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-LIQ-002 — KHÔNG có Số lượng → Giá thanh lý rút gọn
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-LIQ-002 |
+| **Feature** | Liquidation Price Calculator — Simplified Mode |
+| **Tên** | Tính giá thanh lý Long — mode rút gọn (không có Số lượng) |
+| **Priority** | Critical |
+| **Type** | Functional |
+| **Pre-condition** | Tab Liquidation Price Calculator, BTC/USDT Long. |
+| **Steps** | 1. Nhập **Giá mở**: `40,000` USDT<br/>2. **Bỏ trống** trường Số lượng<br/>3. Đặt **Leverage**: `10x`<br/>4. Fee rate: `0.07%`<br/>5. Nhấn **Tính toán** |
+| **Expected Result** | • **Giá thanh lý** ≈ `36,053 USDT`<br/>  *Kiểm chứng: 40,000 × (1 + 0.0007 − 0.1) / (1 − 0.0007) = 40,000 × 0.9007 / 0.9993 ≈ 36,053 USDT*<br/>• **Không hiển thị** Margin ban đầu (thiếu size)<br/>• UI ghi rõ đây là ước tính rút gọn (simplified estimate) |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-LIQ-003 — Short position liquidation price
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-LIQ-003 |
+| **Feature** | Liquidation Price Calculator |
+| **Tên** | Tính giá thanh lý Short — giá thanh lý cao hơn giá mở |
+| **Priority** | High |
+| **Type** | Functional |
+| **Pre-condition** | Tab Liquidation Price Calculator, BTC/USDT hướng **Short**. |
+| **Steps** | 1. Nhập **Giá mở**: `40,000` USDT<br/>2. Nhập **Số lượng**: `0.1` BTC<br/>3. Đặt **Leverage**: `10x`<br/>4. Nhấn **Tính toán** |
+| **Expected Result** | • **Giá thanh lý** > 40,000 USDT (vì Short bị thanh lý khi giá tăng)<br/>• Khoảng cách thanh lý hiển thị với chiều tăng giá<br/>• Logic đúng hướng: nếu giá mở = 40,000, giá thanh lý Short ≈ `43,947 USDT`<br/>  *Kiểm chứng gần đúng: 40,000 × (1 − 0.0007 + 0.1) / (1 + 0.0007) ≈ 43,947 USDT* |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-LIQ-004 — Leverage cao (100x) — Giá thanh lý rất gần giá mở
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-LIQ-004 |
+| **Feature** | Liquidation Price Calculator — Edge Case |
+| **Tên** | Leverage 100x — giá thanh lý cách giá mở dưới 1% |
+| **Priority** | Medium |
+| **Type** | Boundary |
+| **Pre-condition** | Tab Liquidation Price Calculator, BTC/USDT Long. |
+| **Steps** | 1. Nhập **Giá mở**: `40,000` USDT<br/>2. Đặt **Leverage**: `100x`<br/>3. Fee rate: `0.07%`<br/>4. Nhấn **Tính toán** |
+| **Expected Result** | • **Giá thanh lý** rất gần 40,000 USDT — khoảng cách ≈ `0.93%`<br/>  *Ước tính: 40,000 × (1 − 1/100) ≈ 39,600 USDT (chưa tính phí)*<br/>• Hệ thống hiển thị **cảnh báo rủi ro cao**: *"Leverage cao, khoảng cách thanh lý rất nhỏ"* hoặc tương đương<br/>• Không crash, kết quả chính xác dù khoảng cách rất nhỏ |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+### Group 4: Tab Switch & Default Params (TC-TAB)
+
+---
+
+#### TC-TAB-001 — Switch tab giữ nguyên Default Params
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-TAB-001 |
+| **Feature** | Tab Switch — Parameter Persistence |
+| **Tên** | Chuyển từ PnL sang Target Price — Leverage và Open Price không reset |
+| **Priority** | Critical |
+| **Type** | Functional |
+| **Pre-condition** | Đang ở tab PnL Calculator. |
+| **Steps** | 1. Tại tab PnL: nhập **Giá mở** `40,000`, **Leverage** `10x`<br/>2. Chuyển sang tab **Target Price Calculator**<br/>3. Quan sát giá trị các trường Giá mở và Leverage |
+| **Expected Result** | • Trường **Giá mở** vẫn hiển thị `40,000 USDT`<br/>• Trường **Leverage** vẫn là `10x`<br/>• Chỉ các trường input riêng của từng tab (PnL, Giá đóng) bị reset — không ảnh hưởng shared params |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-TAB-002 — Thay đổi Leverage ở một tab → Tab khác kế thừa
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-TAB-002 |
+| **Feature** | Tab Switch — Parameter Persistence |
+| **Tên** | Thay Leverage tại PnL tab → Liquidation tab kế thừa giá trị mới |
+| **Priority** | High |
+| **Type** | Functional |
+| **Pre-condition** | Đang ở tab PnL Calculator với Leverage mặc định. |
+| **Steps** | 1. Tại tab PnL: thay đổi **Leverage** từ `10x` → `20x`<br/>2. Chuyển sang tab **Liquidation Price Calculator**<br/>3. Quan sát giá trị Leverage |
+| **Expected Result** | • Trường **Leverage** tại tab Liquidation hiển thị `20x` (giá trị vừa thay đổi)<br/>• Không cần nhập lại Leverage<br/>• Nếu đã có kết quả trước đó ở tab Liquidation, kết quả được làm mới hoặc hiển thị outdated indicator |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-TAB-003 — Thay đổi Pair → Giá thị trường và Open Price cập nhật
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-TAB-003 |
+| **Feature** | Tab Switch — Market Price Update |
+| **Tên** | Đổi cặp giao dịch → Giá thị trường fetch lại, Open Price gợi ý reset |
+| **Priority** | High |
+| **Type** | Functional |
+| **Pre-condition** | Đang ở bất kỳ tab nào của Calculator. Cặp hiện tại: BTC/USDT. |
+| **Steps** | 1. Thay đổi **Cặp giao dịch** sang `ETH/USDT`<br/>2. Quan sát trường **Giá mở** và giá thị trường tham chiếu |
+| **Expected Result** | • Giá thị trường tham chiếu hiển thị giá ETH/USDT hiện tại (fetch từ API)<br/>• Trường **Giá mở** được reset về giá thị trường mới hoặc xóa trắng (không giữ giá BTC)<br/>• Fee rate cập nhật theo cấu hình của cặp mới (nếu khác BTC/USDT)<br/>• Các kết quả tính toán cũ bị xóa |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+### Group 5: Copy & Fill (TC-COPY)
+
+---
+
+#### TC-COPY-001 — Đã login, Giá mở < Giá thị trường (Long) → LIMIT order
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-COPY-001 |
+| **Feature** | Copy & Fill |
+| **Tên** | Copy khi login, giá mở thấp hơn thị trường → điền vào LIMIT order |
+| **Priority** | Critical |
+| **Type** | Functional |
+| **Pre-condition** | Đã đăng nhập. Tab PnL Calculator, BTC/USDT Long. Giá thị trường BTC ≈ 42,000 USDT. |
+| **Steps** | 1. Nhập **Giá mở**: `40,000` USDT *(thấp hơn thị trường)*<br/>2. Nhập **Số lượng**: `0.1` BTC<br/>3. Leverage: `10x`<br/>4. Nhấn **Copy & Fill** |
+| **Expected Result** | • Hệ thống nhận diện: Giá mở (40,000) < Giá thị trường (≈42,000) → đây là LIMIT Buy<br/>• Order Form mở / được focus với:<br/>  - **Loại lệnh**: LIMIT<br/>  - **Hướng**: Long (Buy)<br/>  - **Giá**: `40,000`<br/>  - **Số lượng**: `0.1` BTC<br/>  - **Leverage**: `10x`<br/>• Không yêu cầu user chọn loại lệnh thủ công |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-COPY-002 — Đã login, Giá mở > Giá thị trường (Long) → STOP order
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-COPY-002 |
+| **Feature** | Copy & Fill |
+| **Tên** | Copy khi login, giá mở cao hơn thị trường → điền vào STOP order |
+| **Priority** | Critical |
+| **Type** | Functional |
+| **Pre-condition** | Đã đăng nhập. Tab PnL Calculator, BTC/USDT Long. Giá thị trường BTC ≈ 42,000 USDT. |
+| **Steps** | 1. Nhập **Giá mở**: `45,000` USDT *(cao hơn thị trường)*<br/>2. Nhập **Số lượng**: `0.1` BTC<br/>3. Leverage: `10x`<br/>4. Nhấn **Copy & Fill** |
+| **Expected Result** | • Hệ thống nhận diện: Giá mở (45,000) > Giá thị trường (≈42,000) → STOP Buy<br/>• Order Form được điền với:<br/>  - **Loại lệnh**: STOP (hoặc Stop Limit)<br/>  - **Trigger price**: `45,000`<br/>  - **Số lượng**: `0.1` BTC<br/>  - **Leverage**: `10x` |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-COPY-003 — Chưa login → Redirect, sau login điền thông số
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-COPY-003 |
+| **Feature** | Copy & Fill — Auth Flow |
+| **Tên** | Chưa đăng nhập nhấn Copy & Fill — redirect login, sau đăng nhập thông số được giữ |
+| **Priority** | High |
+| **Type** | Functional |
+| **Pre-condition** | **Chưa đăng nhập**. Đã nhập đủ thông số ở Calculator (Giá mở 40,000, Size 0.1, Long, 10x). |
+| **Steps** | 1. Nhấn **Copy & Fill**<br/>2. Hệ thống redirect sang trang đăng nhập<br/>3. Đăng nhập thành công<br/>4. Quan sát trạng thái Calculator và Order Form |
+| **Expected Result** | • Sau khi đăng nhập: redirect trở lại màn Calculator<br/>• Thông số đã nhập (**Giá mở**, **Số lượng**, **Leverage**) vẫn còn nguyên<br/>• Order Form được tự động điền với thông số đã lưu<br/>• Không mất dữ liệu do redirect |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-COPY-004 — Chưa nhập Số lượng → Ô Quantity trên Order Form trống
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-COPY-004 |
+| **Feature** | Copy & Fill — Partial Fill |
+| **Tên** | Copy không có Số lượng — Order Form điền giá nhưng Quantity trống |
+| **Priority** | High |
+| **Type** | Functional |
+| **Pre-condition** | Đã đăng nhập. Tab PnL Calculator, BTC/USDT Long. Chỉ nhập Giá mở, chưa nhập Số lượng. |
+| **Steps** | 1. Nhập **Giá mở**: `40,000` USDT<br/>2. **Bỏ trống** Số lượng<br/>3. Nhấn **Copy & Fill** |
+| **Expected Result** | • Order Form mở với **Giá** được điền: `40,000`<br/>• **Quantity** (Số lượng) trên Order Form **để trống** — không điền giá trị mặc định<br/>• **Leverage** được điền: `10x`<br/>• User phải tự nhập Quantity trước khi đặt lệnh<br/>• Không có lỗi hoặc crash |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-COPY-005 — Sau khi Copy, user chuyển loại lệnh → Thông số bị xóa
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-COPY-005 |
+| **Feature** | Copy & Fill — Order Form Behavior |
+| **Tên** | Đổi loại lệnh sau khi Copy & Fill — thông số bị clear |
+| **Priority** | Medium |
+| **Type** | Functional |
+| **Pre-condition** | Đã đăng nhập. Đã thực hiện Copy & Fill thành công — Order Form đang có LIMIT order với giá 40,000, size 0.1. |
+| **Steps** | 1. Tại Order Form: chuyển loại lệnh từ **LIMIT** sang **MARKET**<br/>2. Quan sát các trường đã được điền từ Copy & Fill |
+| **Expected Result** | • Khi chuyển loại lệnh, **Giá (Price)** bị xóa (MARKET không có price)<br/>• **Số lượng** có thể giữ nguyên hoặc bị reset — hành vi nhất quán với logic Order Form hiện tại<br/>• Hệ thống không crash<br/>• User được thông báo rõ ràng nếu dữ liệu bị mất |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+### Group 6: Fee Token Handling (TC-FEE)
+
+---
+
+#### TC-FEE-001 — Native Token đủ → Copy & Fill thành công với fee preference
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-FEE-001 |
+| **Feature** | Fee Token Handling |
+| **Tên** | Ví Native Token đủ số dư — Copy & Fill thành công, fee = Native Token |
+| **Priority** | Critical |
+| **Type** | Functional |
+| **Pre-condition** | Đã đăng nhập. Ví **Native Token** có đủ số dư để trả phí (ví dụ: ≥ 10 USDT tương đương). Đã nhập đủ thông số Calculator. |
+| **Steps** | 1. Nhấn **Copy & Fill**<br/>2. Quan sát Order Form và fee preference |
+| **Expected Result** | • Copy & Fill thành công, không xuất hiện modal nào<br/>• Order Form được điền đầy đủ<br/>• Fee preference trên Order Form hiển thị: **Native Token** (hoặc icon Native Token được chọn)<br/>• Không có bước xác nhận thêm |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-FEE-002 — Native Token thiếu, ví khác đủ → Modal Transfer Wallet xuất hiện
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-FEE-002 |
+| **Feature** | Fee Token Handling |
+| **Tên** | Native Token không đủ, có ví khác dự phòng — hiện modal chuyển ví |
+| **Priority** | Critical |
+| **Type** | Functional |
+| **Pre-condition** | Đã đăng nhập. **Ví Native Token gần cạn** (dưới mức phí tối thiểu). **Ví Stablecoin** (hoặc ví khác) đủ số dư. Đã nhập đủ thông số. |
+| **Steps** | 1. Nhấn **Copy & Fill** |
+| **Expected Result** | • Modal **Transfer Wallet** xuất hiện<br/>• Modal thông báo: Native Token không đủ, có thể dùng Stablecoin làm phí<br/>• Hiển thị 2 lựa chọn: **"Đồng ý"** (dùng Stablecoin) và **"Chuyển ví"** (nạp thêm Native Token)<br/>• Order Form chưa được điền (pending user choice) |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-FEE-003 — Modal Transfer Wallet → Chọn "Đồng ý" → Dùng Stablecoin
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-FEE-003 |
+| **Feature** | Fee Token Handling — Modal Action |
+| **Tên** | Xác nhận dùng Stablecoin làm phí — Fill thành công |
+| **Priority** | High |
+| **Type** | Functional |
+| **Pre-condition** | Modal Transfer Wallet đang hiển thị (từ TC-FEE-002). |
+| **Steps** | 1. Trong modal, nhấn **"Đồng ý"** |
+| **Expected Result** | • Modal đóng lại<br/>• Order Form được điền đầy đủ thông số từ Calculator<br/>• Fee preference chuyển sang **Stablecoin** (hoặc loại ví khả dụng)<br/>• Thông báo thành công (toast hoặc trạng thái trực quan) |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-FEE-004 — Modal Transfer Wallet → Chọn "Chuyển ví" → Màn Transfer mở
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-FEE-004 |
+| **Feature** | Fee Token Handling — Modal Action |
+| **Tên** | Chọn nạp thêm Native Token — điều hướng sang màn Transfer |
+| **Priority** | High |
+| **Type** | Functional |
+| **Pre-condition** | Modal Transfer Wallet đang hiển thị. |
+| **Steps** | 1. Trong modal, nhấn **"Chuyển ví"** |
+| **Expected Result** | • Điều hướng sang màn hình **Transfer / Nạp ví**<br/>• Calculator và thông số đã nhập được lưu (pending)<br/>• Màn Transfer hiển thị đúng cặp ví cần chuyển (sang Futures wallet)<br/>• Sau khi transfer xong và quay lại, thông số Calculator vẫn còn (xem TC-FEE-006) |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-FEE-005 — Toàn bộ ví thiếu Native Token → Modal Swap xuất hiện
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-FEE-005 |
+| **Feature** | Fee Token Handling |
+| **Tên** | Tất cả ví đều không đủ Native Token — hiện modal Swap (không phải Transfer) |
+| **Priority** | Medium |
+| **Type** | Functional |
+| **Pre-condition** | Đã đăng nhập. **Tất cả ví** (Futures, Spot, v.v.) đều thiếu Native Token. Đã nhập đủ thông số Calculator. |
+| **Steps** | 1. Nhấn **Copy & Fill** |
+| **Expected Result** | • Modal **Swap** xuất hiện (không phải modal Transfer Wallet)<br/>• Modal hướng dẫn mua / swap Native Token<br/>• Không nhầm lẫn giữa Transfer Modal và Swap Modal<br/>• Thông điệp rõ ràng: *"Bạn cần mua thêm [Native Token] để trả phí"* |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-FEE-006 — Mobile: Sau Transfer/Swap, quay lại → Thông số Order Form vẫn còn
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-FEE-006 |
+| **Feature** | Fee Token Handling — Mobile State Persistence |
+| **Tên** | Mobile — thông số không mất sau khi rời sang màn Transfer/Swap |
+| **Priority** | Medium |
+| **Type** | Functional |
+| **Pre-condition** | Đang dùng **Mobile**. Modal Transfer hoặc Swap đã xuất hiện (từ TC-FEE-004 hoặc TC-FEE-005). User điều hướng sang màn Transfer/Swap và hoàn thành. |
+| **Steps** | 1. Tại màn Transfer/Swap: hoàn thành giao dịch<br/>2. Nhấn **Back** hoặc **Quay lại** về Calculator<br/>3. Thực hiện **Copy & Fill** lần nữa |
+| **Expected Result** | • Thông số Calculator (**Giá mở**, **Số lượng**, **Leverage**) vẫn còn nguyên<br/>• Copy & Fill lần 2 thành công (Native Token đã đủ)<br/>• Order Form được điền đúng thông số<br/>• Không phải nhập lại từ đầu |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+### Group 7: Size Validation (TC-SIZE)
+
+---
+
+#### TC-SIZE-001 — Nhập Số lượng < min → Lỗi "Số lượng tối thiểu"
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-SIZE-001 |
+| **Feature** | Size Validation |
+| **Tên** | Số lượng nhỏ hơn LOT_SIZE min — lỗi validation rõ ràng |
+| **Priority** | Critical |
+| **Type** | Boundary |
+| **Pre-condition** | Tab PnL Calculator, BTC/USDT. LOT_SIZE min của BTC/USDT = `0.001 BTC` (kiểm tra cấu hình staging). |
+| **Steps** | 1. Nhập **Số lượng**: `0.0001` BTC *(dưới mức tối thiểu)*<br/>2. Nhấn **Tính toán** hoặc click ra ngoài trường |
+| **Expected Result** | • Hiển thị lỗi inline: *"Số lượng tối thiểu là 0.001 BTC"* (giá trị thực tế theo cấu hình)<br/>• Nút **Tính toán** disabled hoặc không tính<br/>• Thông báo lỗi rõ ràng số tối thiểu là bao nhiêu để user biết cần nhập gì |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-SIZE-002 — Nhập Số lượng > max → Lỗi "Số lượng tối đa"
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-SIZE-002 |
+| **Feature** | Size Validation |
+| **Tên** | Số lượng vượt quá LOT_SIZE max — lỗi validation rõ ràng |
+| **Priority** | Critical |
+| **Type** | Boundary |
+| **Pre-condition** | Tab PnL Calculator, BTC/USDT. LOT_SIZE max của BTC/USDT = `1000 BTC` (kiểm tra cấu hình staging). |
+| **Steps** | 1. Nhập **Số lượng**: `9999` BTC *(vượt quá tối đa)*<br/>2. Nhấn **Tính toán** hoặc click ra ngoài |
+| **Expected Result** | • Hiển thị lỗi inline: *"Số lượng tối đa là 1,000 BTC"* (giá trị thực tế theo cấu hình)<br/>• Nút **Tính toán** disabled<br/>• Không tính toán với giá trị vượt giới hạn |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-SIZE-003 — Nhập Khối lượng (stablecoin) < min_notional → Lỗi "Khối lượng tối thiểu"
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-SIZE-003 |
+| **Feature** | Size Validation — Notional |
+| **Tên** | Khối lượng stablecoin dưới ngưỡng MIN_NOTIONAL — lỗi khối lượng tối thiểu |
+| **Priority** | High |
+| **Type** | Boundary |
+| **Pre-condition** | Tab PnL Calculator, BTC/USDT. Đang dùng input mode **Khối lượng (USDT)**. MIN_NOTIONAL = 5 USDT. |
+| **Steps** | 1. Chuyển sang input mode **Khối lượng (USDT)**<br/>2. Nhập **Khối lượng**: `3` USDT *(dưới MIN_NOTIONAL)*<br/>3. Nhấn **Tính toán** hoặc click ra ngoài |
+| **Expected Result** | • Hiển thị lỗi inline: *"Khối lượng tối thiểu là 5 USDT"*<br/>• Nút **Tính toán** disabled<br/>• Thông báo đúng đơn vị (USDT hoặc đồng stablecoin tương ứng) |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-SIZE-004 — Pair không có LOT_SIZE config → Fallback rule áp dụng
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-SIZE-004 |
+| **Feature** | Size Validation — Fallback |
+| **Tên** | Cặp giao dịch thiếu cấu hình LOT_SIZE — fallback rule USDT>5 / VNST>100K |
+| **Priority** | Medium |
+| **Type** | Functional |
+| **Pre-condition** | Chọn một cặp giao dịch **không có LOT_SIZE trong config** (cần QA xác nhận cặp cụ thể trên staging). Dùng input mode Khối lượng. |
+| **Steps** | 1. Chọn cặp không có LOT_SIZE config<br/>2. Nhập **Khối lượng**: `3 USDT` (dưới fallback min 5 USDT)<br/>3. Nhấn **Tính toán** |
+| **Expected Result** | • Fallback rule được áp dụng: min notional = `5 USDT` (hoặc `100,000 VNST` nếu cặp VNST)<br/>• Hiển thị lỗi: *"Khối lượng tối thiểu là 5 USDT"*<br/>• Không crash hoặc bỏ qua validation vì thiếu config<br/>• Log / debug mode (nếu có) ghi nhận "using fallback rule" |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+### Group 8: Tutorial & Onboarding (TC-TUTOR)
+
+---
+
+#### TC-TUTOR-001 — Lần đầu vào Futures → Feature intro tooltip xuất hiện
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-TUTOR-001 |
+| **Feature** | Tutorial & Onboarding |
+| **Tên** | Lần đầu truy cập Futures — tooltip giới thiệu tính năng Calculator xuất hiện |
+| **Priority** | High |
+| **Type** | UX |
+| **Pre-condition** | Tài khoản **chưa từng** vào trang Futures (tài khoản mới hoặc đã reset onboarding state). |
+| **Steps** | 1. Đăng nhập<br/>2. Điều hướng vào trang **Futures** lần đầu tiên<br/>3. Quan sát giao diện |
+| **Expected Result** | • Tooltip / Banner giới thiệu tính năng **Futures Position Calculator** xuất hiện<br/>• Có nút **"Trải nghiệm ngay"** (hoặc tương đương) dẫn tới Calculator<br/>• Có nút **"Bỏ qua"** hoặc đóng tooltip<br/>• Tooltip không chặn toàn bộ giao diện (không phải fullscreen modal) |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-TUTOR-002 — Lần đầu mở Calculator → Tutorial 5 bước xuất hiện
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-TUTOR-002 |
+| **Feature** | Tutorial & Onboarding |
+| **Tên** | Mở Calculator lần đầu — tutorial hướng dẫn 5 bước tự động hiện |
+| **Priority** | Medium |
+| **Type** | UX |
+| **Pre-condition** | Tài khoản **chưa từng** mở Calculator. |
+| **Steps** | 1. Mở **Futures Position Calculator** lần đầu tiên (click vào icon hoặc nút Calculator)<br/>2. Quan sát giao diện |
+| **Expected Result** | • Tutorial dạng step-by-step xuất hiện tự động với **5 bước**<br/>• Mỗi bước highlight đúng phần tử UI liên quan (tooltip overlay)<br/>• Có nút **"Tiếp"** để sang bước kế và **"Bỏ qua"** để thoát<br/>• Tutorial không làm mất dữ liệu đã nhập (nếu có)<br/>• Thứ tự các bước logic: Tab PnL → Nhập liệu → Kết quả → Copy & Fill → Done |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-TUTOR-003 — Lần 2 mở Calculator → Tutorial KHÔNG xuất hiện lại
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-TUTOR-003 |
+| **Feature** | Tutorial & Onboarding |
+| **Tên** | Mở Calculator lần thứ 2 — tutorial không lặp lại |
+| **Priority** | Medium |
+| **Type** | UX |
+| **Pre-condition** | Đã xem (hoặc bỏ qua) tutorial ở lần mở Calculator đầu tiên. |
+| **Steps** | 1. Đóng Calculator<br/>2. Mở lại **Calculator** lần thứ hai<br/>3. Quan sát giao diện |
+| **Expected Result** | • Tutorial **không** tự động xuất hiện lại<br/>• Calculator mở bình thường với giao diện đầy đủ<br/>• Nếu có nút "Xem lại hướng dẫn", nút này chỉ xuất hiện khi user chủ động tìm |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+#### TC-TUTOR-004 — Nhấn "Trải nghiệm ngay" trong intro → Calculator mở
+
+| Field | Giá trị |
+|---|---|
+| **TC ID** | TC-TUTOR-004 |
+| **Feature** | Tutorial & Onboarding — CTA |
+| **Tên** | CTA "Trải nghiệm ngay" trong feature intro tooltip → điều hướng mở Calculator |
+| **Priority** | Low |
+| **Type** | UX |
+| **Pre-condition** | Feature intro tooltip đang hiển thị (từ TC-TUTOR-001). |
+| **Steps** | 1. Nhấn nút **"Trải nghiệm ngay"** trong intro tooltip |
+| **Expected Result** | • Calculator mở ngay lập tức (không cần thao tác thêm)<br/>• Tutorial 5 bước xuất hiện (nếu đây là lần đầu mở Calculator)<br/>• Intro tooltip biến mất sau khi nhấn<br/>• Không có màn hình loading trống hoặc lỗi điều hướng |
+| **Actual Result** | *(Để trống)* |
+| **Status** | [ ] Pass &nbsp;&nbsp; [ ] Fail &nbsp;&nbsp; [ ] Blocked |
+
+---
+
+## 4. Traceability Matrix
+
+| TC ID | User Story ID | Use Case ID | Feature | Priority |
+|---|---|---|---|---|
+| TC-PNL-001 | US-CALC-001 | UC-PNL-001 | PnL Calculator — Long | Critical |
+| TC-PNL-002 | US-CALC-001 | UC-PNL-002 | PnL Calculator — Short | Critical |
+| TC-PNL-003 | US-CALC-002 | UC-FEE-001 | Native Token Fee Display | High |
+| TC-PNL-004 | US-CALC-003 | UC-PNL-003 | Input Mode — Stablecoin | High |
+| TC-PNL-005 | US-CALC-001 | UC-PNL-004 | PnL âm | High |
+| TC-PNL-006 | US-CALC-001 | UC-VAL-001 | Validation — Giá đóng | Medium |
+| TC-PNL-007 | US-CALC-001 | UC-VAL-002 | Validation — Số lượng | Medium |
+| TC-PNL-008 | US-CALC-001 | UC-VAL-003 | Validation — Size = 0 | Low |
+| TC-TARGET-001 | US-CALC-004 | UC-TARGET-001 | Target Price — PnL abs | Critical |
+| TC-TARGET-002 | US-CALC-004 | UC-TARGET-002 | Target Price — % PnL | Critical |
+| TC-TARGET-003 | US-CALC-004 | UC-TARGET-003 | Target Price — No Size | High |
+| TC-TARGET-004 | US-CALC-004 | UC-VAL-004 | Validation — PnL abs no size | High |
+| TC-TARGET-005 | US-CALC-005 | UC-TARGET-004 | Mobile — % PnL âm | Medium |
+| TC-TARGET-006 | US-CALC-005 | UC-TARGET-005 | Web — % PnL âm | Low |
+| TC-LIQ-001 | US-CALC-006 | UC-LIQ-001 | Liquidation Price — Full | Critical |
+| TC-LIQ-002 | US-CALC-006 | UC-LIQ-002 | Liquidation Price — Simplified | Critical |
+| TC-LIQ-003 | US-CALC-006 | UC-LIQ-003 | Liquidation Price — Short | High |
+| TC-LIQ-004 | US-CALC-006 | UC-LIQ-004 | Liquidation Price — 100x | Medium |
+| TC-TAB-001 | US-CALC-007 | UC-TAB-001 | Tab Switch — Params giữ nguyên | Critical |
+| TC-TAB-002 | US-CALC-007 | UC-TAB-002 | Tab Switch — Leverage kế thừa | High |
+| TC-TAB-003 | US-CALC-007 | UC-TAB-003 | Pair Switch — Price update | High |
+| TC-COPY-001 | US-COPY-001 | UC-COPY-001 | Copy & Fill — LIMIT | Critical |
+| TC-COPY-002 | US-COPY-001 | UC-COPY-002 | Copy & Fill — STOP | Critical |
+| TC-COPY-003 | US-COPY-002 | UC-COPY-003 | Copy & Fill — Auth redirect | High |
+| TC-COPY-004 | US-COPY-001 | UC-COPY-004 | Copy & Fill — No Size | High |
+| TC-COPY-005 | US-COPY-001 | UC-COPY-005 | Order Type Switch clear | Medium |
+| TC-FEE-001 | US-FEE-001 | UC-FEE-001 | Fee — Native Token đủ | Critical |
+| TC-FEE-002 | US-FEE-002 | UC-FEE-002 | Fee — Transfer Modal | Critical |
+| TC-FEE-003 | US-FEE-002 | UC-FEE-003 | Fee — Đồng ý dùng Stablecoin | High |
+| TC-FEE-004 | US-FEE-002 | UC-FEE-004 | Fee — Chuyển ví | High |
+| TC-FEE-005 | US-FEE-003 | UC-FEE-005 | Fee — Swap Modal | Medium |
+| TC-FEE-006 | US-FEE-004 | UC-FEE-006 | Fee — Mobile state persist | Medium |
+| TC-SIZE-001 | US-VAL-001 | UC-SIZE-001 | Size < min | Critical |
+| TC-SIZE-002 | US-VAL-001 | UC-SIZE-002 | Size > max | Critical |
+| TC-SIZE-003 | US-VAL-002 | UC-SIZE-003 | Notional < min | High |
+| TC-SIZE-004 | US-VAL-003 | UC-SIZE-004 | Size — Fallback rule | Medium |
+| TC-TUTOR-001 | US-UX-001 | UC-TUTOR-001 | Intro tooltip | High |
+| TC-TUTOR-002 | US-UX-001 | UC-TUTOR-002 | Tutorial 5 bước | Medium |
+| TC-TUTOR-003 | US-UX-001 | UC-TUTOR-003 | Tutorial không lặp | Medium |
+| TC-TUTOR-004 | US-UX-001 | UC-TUTOR-004 | CTA Trải nghiệm ngay | Low |
+
+---
+
+## 5. Test Data
+
+### 5.1 Bộ dữ liệu test chính
+
+Bộ dữ liệu chuẩn dưới đây được dùng xuyên suốt toàn bộ UAT. QA cần xác nhận các giá trị cấu hình (LOT_SIZE, fee rate) với môi trường Staging trước khi bắt đầu.
+
+| ID | Cặp | Hướng | Giá mở | Giá đóng | Size | Leverage | Fee Rate | PnL kỳ vọng | ROI kỳ vọng |
+|---|---|---|---|---|---|---|---|---|---|
+| TD-001 | BTC/USDT | Long | 40,000 | 42,000 | 0.1 BTC | 10x | 0.07% | +194.26 USDT | +48.57% |
+| TD-002 | BTC/USDT | Short | 50,000 | 48,000 | 0.05 BTC | 5x | 0.07% | +96.57 USDT | +19.31% |
+| TD-003 | BTC/USDT | Long | 40,000 | 38,000 | 0.1 BTC | 10x | 0.07% | -205.46 USDT | -51.37% |
+| TD-004 | BTC/USDT | Long | 40,000 | — | 0.1 BTC | 10x | 0.07% | Target ≈ 42,058 (PnL=200) | — |
+| TD-005 | BTC/USDT | Long | 40,000 | — | — | 10x | 0.07% | Liq ≈ 36,053 USDT | — |
+| TD-006 | BTC/USDT | Short | 40,000 | — | 0.1 BTC | 10x | 0.07% | Liq ≈ 43,947 USDT | — |
+| TD-007 | ETH/USDT | Long | *(giá thị trường)* | — | 1 ETH | 5x | 0.07% | *(dùng cho TC-TAB-003)* | — |
+
+### 5.2 Tài khoản test
+
+| Loại tài khoản | Mô tả | Dùng cho |
+|---|---|---|
+| **Account-A** | Đã đăng nhập, Native Token đủ phí | TC-FEE-001, TC-COPY-001~005 |
+| **Account-B** | Đã đăng nhập, Native Token thiếu — Stablecoin đủ | TC-FEE-002, TC-FEE-003, TC-FEE-004 |
+| **Account-C** | Đã đăng nhập, tất cả ví thiếu Native Token | TC-FEE-005 |
+| **Account-D** | Chưa đăng nhập (guest / logged out) | TC-COPY-003 |
+| **Account-E** | Mới, chưa từng vào Futures | TC-TUTOR-001~004 |
+
+### 5.3 Công thức kiểm chứng nhanh
+
+| Công thức | Dùng cho |
+|---|---|
+| `Fee = Size × (OpenPrice + ClosePrice) × feeRate` | TC-PNL-001, TC-PNL-002, TC-PNL-005 |
+| `PnL Long = Size × (ClosePrice − OpenPrice) − Fee` | TC-PNL-001, TC-PNL-005 |
+| `PnL Short = Size × (OpenPrice − ClosePrice) − Fee` | TC-PNL-002 |
+| `Margin = Size × OpenPrice / Leverage` | TC-PNL-001, TC-PNL-002 |
+| `ROI = PnL / Margin` | TC-PNL-001, TC-PNL-002 |
+| `TargetPrice (Long) = (PnL + OpenPrice × Size × (1 + f)) / (Size × (1 − f))` | TC-TARGET-001, TC-TARGET-002 |
+| `LiqPrice (Long, no size) = OpenPrice × (1 + f − 1/L) / (1 − f)` | TC-LIQ-002 |
+
+<Note>
+**Lưu ý cho QA Tester:**
+
+1. **Làm tròn số**: Kết quả tính toán có thể chênh lệch ±0.01 USDT do làm tròn theo tick size. Chấp nhận sai số ≤ 0.02 USDT.
+2. **Fee rate**: Xác nhận fee rate thực tế trên môi trường Staging trước khi test — có thể khác 0.07% nếu cấu hình staging khác production.
+3. **Giá thị trường**: Các test case dùng giá thị trường thực (TC-TAB-003, TC-COPY-001~002) — ghi nhận giá tại thời điểm test vào cột Actual Result.
+4. **Mobile vs Web**: Các TC có note Mobile cần test trên cả iOS và Android. Ghi rõ thiết bị và OS version.
+5. **Onboarding state**: Reset `localStorage` / app state trước khi chạy TC-TUTOR-001 và TC-TUTOR-002.
+</Note>
