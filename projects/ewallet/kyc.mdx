@@ -320,6 +320,27 @@ sequenceDiagram
 
 ### SCR-KYC-03 — Quét CCCD Mặt Trước
 
+```
+┌─────────────────────────────────┐
+│  ① Mặt trước ② Mặt sau ③ NFC ④ Selfie│
+│                                 │
+│  ┌─────────────────────────┐   │
+│  │                         │   │
+│  │  ┌───────────────────┐  │   │
+│  │  │                   │  │   │
+│  │  │  [ CCCD FRAME ]   │  │   │  ← khung tỷ lệ CCCD
+│  │  │                   │  │   │
+│  │  └───────────────────┘  │   │
+│  │                         │   │
+│  └─────────────────────────┘   │
+│                                 │
+│  Đặt CCCD vào trong khung      │
+│  Giữ cách 20–30cm              │
+│                                 │
+│  ⚡ [flash]   [Chụp ngay]       │  ← "Chụp ngay" sau 10s
+└─────────────────────────────────┘
+```
+
 | Component | Loại | Nội dung | Điều kiện | Action |
 |---|---|---|---|---|
 | Camera viewfinder | Camera | Live camera feed | Always | — |
