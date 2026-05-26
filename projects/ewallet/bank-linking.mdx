@@ -314,6 +314,27 @@ sequenceDiagram
 
 ### SCR-BANK-04 — OTP từ ngân hàng
 
+```
+┌─────────────────────────────────┐
+│  ←                             │
+│         [ Logo MBBank ]         │
+│                                 │
+│   Nhập mã xác nhận từ MBBank   │
+│                                 │
+│  Mã OTP đã được gửi đến số     │
+│  điện thoại đăng ký tại MBBank  │
+│                                 │
+│   ┌──┐ ┌──┐ ┌──┐ ┌──┐ ┌──┐ ┌──┐│
+│   │  │ │  │ │  │ │  │ │  │ │  ││
+│   └──┘ └──┘ └──┘ └──┘ └──┘ └──┘│
+│                                 │
+│  ⚠ Mã không đúng. Còn 2 lần.  │  ← sau lần sai đầu
+│                                 │
+│         Gửi lại sau 45s         │
+│       Chọn ngân hàng khác       │
+└─────────────────────────────────┘
+```
+
 | Component | Loại | Nội dung | Điều kiện | Action |
 |---|---|---|---|---|
 | Bank logo | Image | Logo ngân hàng | Always | — |
