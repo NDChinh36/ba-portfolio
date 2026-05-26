@@ -548,6 +548,7 @@ sequenceDiagram
 | POST | `/wallet/withdraw` | `[bank_account_id, amount, idempotency_key, pin_hash]` | `[tx_id, status, new_balance]` | Rút tiền về ngân hàng |
 | GET | `/wallet/limits` | — | `[per_tx_max, daily_remaining, monthly_remaining, max_balance]` | Lấy hạn mức realtime |
 | POST | `/webhooks/napas/credit` | `[virtual_account, amount, bank_ref, ...]` *(internal)* | `[success: true]` | NAPAS gửi webhook khi push top-up đến |
+| POST | `/internal/wallet/atomic-transfer` | `{sender_wallet_id, recipient_wallet_id, amount, idempotency_key, caller: "TRANSFER_SVC"}` *(internal — không phơi ra public API Gateway)* | `{tx_id, status: "COMPLETED"/"FAILED", sender_new_balance, timestamp}` | **Internal API** dành cho Transfer Service: thực hiện atomic debit/credit trong 1 DB transaction (BEGIN → debit → credit → COMMIT); gọi bởi Transfer Service sau khi limit check pass; row-lock theo thứ tự wallet_id nhỏ → lớn để tránh deadlock; kết quả ghi vào Transaction DB đồng thời |
 
 ---
 
