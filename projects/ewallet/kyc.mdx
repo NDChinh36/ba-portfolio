@@ -398,6 +398,29 @@ sequenceDiagram
 
 ### SCR-KYC-06 — Xác Nhận Thông Tin OCR/NFC
 
+```
+┌─────────────────────────────────┐
+│  ←     Kiểm tra thông tin CCCD  │
+│                                 │
+│  Họ và tên                      │
+│  NGUYEN DUC CHINH               │  ← read-only
+│                                 │
+│  Số CCCD                        │
+│  079 **** **** 36               │  ← che 4 số giữa
+│                                 │
+│  Ngày sinh        01/01/1999    │
+│  Ngày hết hạn     15/08/2030    │
+│                                 │
+│  ╔══════════════════════════╗   │
+│  ║ ⚠ CCCD còn hạn đến      ║   │  ← nếu < 90 ngày
+│  ║   15/08/2026. Cần gia hạn║   │
+│  ╚══════════════════════════╝   │
+│                                 │
+│  [ Thông tin chính xác, tiếp ] │
+│  [ Thông tin sai, chụp lại   ] │
+└─────────────────────────────────┘
+```
+
 | Component | Loại | Nội dung | Điều kiện | Action |
 |---|---|---|---|---|
 | Title | Text | "Kiểm tra thông tin CCCD" | Always | — |
