@@ -606,3 +606,50 @@ sequenceDiagram
 | OQ-AUTH-04 | Sau khi tài khoản bị lock 5 lần, user có thể reset qua "Quên PIN" ngay không hay phải chờ hết 30 phút? | Product + Security | Sprint 1 |
 | OQ-AUTH-05 | Đăng xuất tất cả thiết bị có cần xác thực PIN lại không (phòng trường hợp session bị chiếm)? | Security | Sprint 2 |
 | OQ-AUTH-06 | Thời gian inactive trước khi auto-logout là 30 phút — có cần cấu hình per user không? | Product | Sprint 2 |
+
+---
+
+## 17. Non-Functional Requirements (NFR)
+
+### Performance
+
+| Chỉ số | Target | Ghi chú |
+|---|---|---|
+| Login API (PIN) — response time | P95 < 500ms | Đo tại server; không tính SMS delivery |
+| OTP send — API accept time | P95 < 2,000ms | Đo đến khi API trả response; SMS delivery ngoài control |
+| Token refresh — response time | P95 < 200ms | Redis lookup; không cần DB query |
+| Biometric verify | P95 < 300ms | LocalAuthentication on-device |
+| App cold start → Login screen | < 2s | React Native cold start trên mid-range device |
+| PIN verification (server-side bcrypt) | P95 < 150ms | bcrypt cost factor 12 |
+
+### Bảo mật (Security)
+
+| Yêu cầu | Mô tả |
+|---|---|
+| PIN storage | bcrypt với cost factor ≥ 12; không lưu plaintext, MD5 hay SHA-1 |
+| Token storage trên thiết bị | Secure Enclave (iOS) / Android Keystore; tuyệt đối không dùng AsyncStorage |
+| Rate limiting | Áp dụng cả per-IP và per-SĐT: OTP ≤ 3 lần/giờ/SĐT; PIN sai ≤ 5 lần/30 phút |
+| Session invalidation | Đổi PIN → revoke tất cả refresh token; thiết bị mới → push cảnh báo ngay lập tức |
+| Transport security | TLS 1.2 tối thiểu; Certificate Pinning trên mobile client |
+| Biometric | LocalAuthentication on-device; không gửi biometric hash lên server |
+| OTP entropy | 6 chữ số ngẫu nhiên từ CSPRNG; không dùng timestamp-based OTP |
+
+### Tính sẵn sàng & Độ tin cậy
+
+| Chỉ số | Target | Ghi chú |
+|---|---|---|
+| Auth Service uptime | ≥ 99.9% | ≤ 8.7 giờ downtime/năm |
+| OTP Gateway (SMS) uptime | ≥ 99.5% | Tự động fallback sang Zalo OA sau 60s không delivery |
+| Recovery Time Objective (RTO) | < 5 phút | Auto-restart + health check; không cần manual intervention |
+| Recovery Point Objective (RPO) | 0 | Redis Cluster với persistence; không mất token/session |
+| Concurrent login sessions | Hỗ trợ đồng thời ≥ 10,000 sessions | Load test trước launch |
+
+### Lưu trữ & Compliance
+
+| Loại dữ liệu | Thời gian lưu | Cơ sở pháp lý |
+|---|---|---|
+| Login audit logs (thành công + thất bại) | 5 năm | Nghị định 52/2024 — lưu trữ log giao dịch |
+| Refresh tokens | 30 ngày (tự expire) | Session management policy |
+| Failed PIN attempt logs | 90 ngày | Security audit & fraud investigation |
+| OTP send/verify logs | 30 ngày | Troubleshooting & CS support |
+| Device registry | 24 tháng không active hoặc khi user xóa | Privacy — Nghị định 13/2023/NĐ-CP |
