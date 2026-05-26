@@ -292,6 +292,23 @@ sequenceDiagram
 
 ### SCR-AUTH-03 — Nhập SĐT (Đăng ký)
 
+```
+┌─────────────────────────────────┐
+│  ←           Đăng ký           │
+│         [●──○──○]  Bước 1/3    │
+│                                 │
+│   Số điện thoại                 │
+│  ┌───────────────────────────┐  │
+│  │ +84 │ Nhập số điện thoại  │  │
+│  └───────────────────────────┘  │
+│  ⚠ Số điện thoại không hợp lệ  │  ← chỉ hiện khi lỗi
+│                                 │
+│       [      Tiếp tục     ]     │  ← disabled nếu trống
+│                                 │
+│    Đã có tài khoản? Đăng nhập   │
+└─────────────────────────────────┘
+```
+
 | Component | Loại | Label / Placeholder | Điều kiện hiển thị | Action |
 |---|---|---|---|---|
 | Header title | Text | "Đăng ký tài khoản" | Always | — |
