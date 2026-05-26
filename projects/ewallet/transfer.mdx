@@ -181,7 +181,9 @@ sequenceDiagram
     TransferSvc->>LimitEngine: CheckLimit(sender_id, amount, "TRANSFER")
     LimitEngine-->>TransferSvc: {allowed: true, remaining_daily, remaining_monthly}
 
-    TransferSvc->>WalletCore: AtomicTransfer\n{sender_wallet_id, recipient_wallet_id, amount, idempotency_key}
+    TransferSvc->>UserSvc: GET /users/lookup?phone={recipient_phone} (resolved recipient wallet_id)
+    Note over TransferSvc: user_id → wallet_id resolution:\nTransfer Service gọi UserService để lấy wallet_id\ntương ứng với sender_id và recipient_id trước khi\ngọi WalletCore.AtomicTransfer
+    TransferSvc->>WalletCore: POST /internal/wallet/atomic-transfer\n{sender_wallet_id, recipient_wallet_id, amount, idempotency_key}
 
     Note over WalletCore: BEGIN TRANSACTION\nDebit sender wallet\nCredit recipient wallet\nCOMMIT (hoặc ROLLBACK nếu fail)
 
