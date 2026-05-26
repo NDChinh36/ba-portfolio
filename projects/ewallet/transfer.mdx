@@ -174,15 +174,13 @@ sequenceDiagram
 
     TransferSvc->>TransferSvc: Verify PIN hash
     TransferSvc->>UserSvc: GET /users/lookup?phone={recipient_phone}
-    UserSvc-->>TransferSvc: {user_id, full_name, avatar, account_status}
+    UserSvc-->>TransferSvc: {user_id, wallet_id, full_name, avatar, account_status}
 
-    Note over TransferSvc: Kiểm tra: recipient active, sender ≠ recipient
+    Note over TransferSvc: Kiểm tra: recipient active, sender ≠ recipient\nUserService trả wallet_id cùng với user_id để\nTransferSvc gọi AtomicTransfer mà không cần lookup thêm
 
     TransferSvc->>LimitEngine: CheckLimit(sender_id, amount, "TRANSFER")
     LimitEngine-->>TransferSvc: {allowed: true, remaining_daily, remaining_monthly}
 
-    TransferSvc->>UserSvc: GET /users/lookup?phone={recipient_phone} (resolved recipient wallet_id)
-    Note over TransferSvc: user_id → wallet_id resolution:\nTransfer Service gọi UserService để lấy wallet_id\ntương ứng với sender_id và recipient_id trước khi\ngọi WalletCore.AtomicTransfer
     TransferSvc->>WalletCore: POST /internal/wallet/atomic-transfer\n{sender_wallet_id, recipient_wallet_id, amount, idempotency_key}
 
     Note over WalletCore: BEGIN TRANSACTION\nDebit sender wallet\nCredit recipient wallet\nCOMMIT (hoặc ROLLBACK nếu fail)
