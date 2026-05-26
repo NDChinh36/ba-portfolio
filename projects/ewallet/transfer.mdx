@@ -128,9 +128,9 @@ flowchart TD
     A[SCR-TRANS-01\nNhập người nhận] -- Chọn "Quét QR" --> B[SCR-TRANS-09\nQR Scanner]
     B --> C[User quét QR\ncủa người nhận]
     C --> D{QR hợp lệ?}
-    D -- Hết hạn / Hỏng --> E[Toast: "Mã QR không hợp lệ.\nVui lòng thử lại."]
+    D -- Hết hạn / Hỏng --> E[Toast: 'Mã QR không hợp lệ.\nVui lòng thử lại.']
     E --> B
-    D -- Không phải QR ví --> F[Toast: "Mã QR không\nđược hỗ trợ."]
+    D -- Không phải QR ví --> F[Toast: 'Mã QR không\nđược hỗ trợ.']
     F --> B
     D -- Hợp lệ --> G[Parse: user_id\ntừ QR content]
     G --> H[API: Lấy thông tin\nngười nhận]

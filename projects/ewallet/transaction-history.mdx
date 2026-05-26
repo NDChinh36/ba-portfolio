@@ -139,7 +139,7 @@ flowchart TD
 flowchart TD
     A([Vào Transaction History]) --> B[GET /transactions\ncursor=null · page_size=20]
     B --> C{Có GD không?}
-    C -->|Không| D[SCR-HIST-04 — Empty State\n"Chưa có giao dịch nào"]
+    C -->|Không| D[SCR-HIST-04 — Empty State\n'Chưa có giao dịch nào']
     C -->|Có| E[SCR-HIST-01 — Danh sách GD\nGroup theo ngày, desc]
     E --> F{Người dùng thao tác}
     F -->|Scroll gần cuối| G[Load thêm 20 GD\nGET /transactions?cursor=next_token]
@@ -149,7 +149,7 @@ flowchart TD
     I --> J[Áp dụng filter]
     J --> K[GET /transactions với params filter\ncursor reset về null]
     K -->|Kết quả| E
-    K -->|Không có kết quả| L[SCR-HIST-04 — "Không tìm thấy GD\nthỏa mãn điều kiện lọc"]
+    K -->|Không có kết quả| L[SCR-HIST-04 — 'Không tìm thấy GD\nthỏa mãn điều kiện lọc']
     F -->|Tap vào 1 GD| M[SCR-HIST-03 — Chi tiết]
     F -->|Reset filter| N[Xóa filter → load lại từ đầu]
     N --> B
@@ -160,7 +160,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     A[Tap GD trong SCR-HIST-01] --> B[GET /transactions/{tx_id}]
-    B -->|Không tìm thấy| C[Lỗi HIST_002 — "Giao dịch không tồn tại"]
+    B -->|Không tìm thấy| C[Lỗi HIST_002 — 'Giao dịch không tồn tại']
     B -->|Thành công| D[SCR-HIST-03 — Chi tiết GD\nĐầy đủ thông tin]
     D --> E{Người dùng muốn?}
     E -->|Chia sẻ biên lai| F[Render receipt image\nWatermark logo ứng dụng]

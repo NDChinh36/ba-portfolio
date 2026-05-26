@@ -156,7 +156,7 @@ flowchart TD
     H -->|Thành công| I[PATCH /settings/biometric\nenable=true, store bio_token]
     I --> J[Trạng thái: BẬT ✅]
     H -->|User cancel / lỗi thiết bị| K[Không thay đổi\nThông báo: Không thể kích hoạt]
-    C -->|Tắt Biometric| L[Popup xác nhận\n"Tắt sẽ yêu cầu PIN mỗi lần thanh toán"]
+    C -->|Tắt Biometric| L[Popup xác nhận\n'Tắt sẽ yêu cầu PIN mỗi lần thanh toán']
     L --> M{User confirm?}
     M -->|Hủy| B
     M -->|Xác nhận| N[Yêu cầu PIN\nhành động nhạy cảm]
@@ -175,7 +175,7 @@ flowchart TD
     B --> C[SCR-SET-10 — Danh sách\nMỗi thiết bị: tên · OS · Lần cuối active · Current badge]
     C --> D{User chọn 1 thiết bị}
     D -->|Thiết bị hiện tại| E[Không cho đăng xuất\nTooltip: Đây là thiết bị bạn đang dùng]
-    D -->|Thiết bị khác| F[Popup xác nhận\n"Đăng xuất [tên thiết bị]?"]
+    D -->|Thiết bị khác| F[Popup xác nhận\n'Đăng xuất [tên thiết bị]?']
     F --> G{Xác nhận?}
     G -->|Hủy| C
     G -->|Tiếp tục| H[SCR-SET-11 — Nhập PIN]
@@ -205,7 +205,7 @@ flowchart TD
     G --> E
     F -->|Đúng| H[POST /account/lock]
     H --> I[Tài khoản locked\nĐăng xuất tất cả phiên\nGửi SMS thông báo]
-    I --> J[Mở app lại: Màn hình\n"Tài khoản tạm khóa"\nNút: Mở khóa qua OTP]
+    I --> J[Mở app lại: Màn hình\n'Tài khoản tạm khóa'\nNút: Mở khóa qua OTP]
     J --> K[Gửi OTP đến SĐT]
     K --> L[Nhập OTP 6 số]
     L --> M{OTP đúng?}
@@ -230,7 +230,7 @@ flowchart TD
     G -->|Không| I{KYC Tier có transaction đang pending?}
     I -->|Có| J[Chặn: Chờ GD pending]
     I -->|Không| K[SCR-SET-14 — Xác nhận cuối\nLiệt kê tất cả dữ liệu sẽ bị xóa]
-    K --> L[User gõ xác nhận text\n"XÁC NHẬN ĐÓNG TÀI KHOẢN"]
+    K --> L[User gõ xác nhận text\n'XÁC NHẬN ĐÓNG TÀI KHOẢN']
     L --> M[Nhập PIN]
     M --> N{PIN đúng?}
     N -->|Sai| O[Lỗi PIN]

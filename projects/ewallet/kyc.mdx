@@ -48,26 +48,26 @@ Module KYC xác minh danh tính người dùng để:
 
 ```mermaid
 flowchart LR
-    subgraph App["Mobile App"]
-        NFC["NFC Reader\n(CCCD Chip)"]
-        CAM["Camera\n(CCCD + Selfie)"]
+    subgraph App['Mobile App']
+        NFC['NFC Reader\n(CCCD Chip)']
+        CAM['Camera\n(CCCD + Selfie)']
     end
 
-    subgraph KYCSvc["KYC Service (Internal)"]
-        OCR["OCR Engine"]
-        ORCH["KYC Orchestrator"]
-        REVIEW["Manual Review\nQueue"]
+    subgraph KYCSvc['KYC Service (Internal)']
+        OCR['OCR Engine']
+        ORCH['KYC Orchestrator']
+        REVIEW['Manual Review\nQueue']
     end
 
-    subgraph Providers["External Providers"]
-        VNP["VNPTeID\n(Cục Cư dân)\nChip Verification"]
-        iPROOV["iProov\nFace Liveness\n(Genuine Presence)"]
+    subgraph Providers['External Providers']
+        VNP['VNPTeID\n(Cục Cư dân)\nChip Verification']
+        iPROOV['iProov\nFace Liveness\n(Genuine Presence)']
     end
 
-    subgraph Internal["Internal Systems"]
-        USER["User Service\n(Tier upgrade)"]
-        NOTIF["Notification Service"]
-        AUDIT["Audit Logger"]
+    subgraph Internal['Internal Systems']
+        USER['User Service\n(Tier upgrade)']
+        NOTIF['Notification Service']
+        AUDIT['Audit Logger']
     end
 
     NFC -->|NFC Data| ORCH

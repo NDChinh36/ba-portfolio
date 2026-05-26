@@ -27,29 +27,29 @@ Tài liệu được viết theo format **Hybrid PRD** — mỗi module là mộ
 
 ```mermaid
 flowchart TB
-    subgraph Core["Core Services"]
-        AuthService["Auth Service"]
-        WalletCore["Wallet Core"]
-        TxEngine["Transaction Engine"]
-        LimitEngine["Limit Engine"]
+    subgraph Core['Core Services']
+        AuthService['Auth Service']
+        WalletCore['Wallet Core']
+        TxEngine['Transaction Engine']
+        LimitEngine['Limit Engine']
     end
 
-    subgraph External["External Integrations"]
-        OTPGw["OTP Gateway\n(SMS/ZALO)"]
-        KYCProvider["eKYC Provider\n(VNPTeID / FPT.AI)"]
-        NAPASGw["NAPAS Gateway\n(Interbank)"]
-        PushGw["Push Notification\n(FCM/APNs)"]
+    subgraph External['External Integrations']
+        OTPGw['OTP Gateway\n(SMS/ZALO)']
+        KYCProvider['eKYC Provider\n(VNPTeID / FPT.AI)']
+        NAPASGw['NAPAS Gateway\n(Interbank)']
+        PushGw['Push Notification\n(FCM/APNs)']
     end
 
-    subgraph Modules["Application Modules"]
-        AUTH["01. Authentication"]
-        KYC["02. KYC"]
-        WALLET["03. Wallet Core"]
-        BANK["04. Bank Linking"]
-        TRANSFER["05. Transfer"]
-        QR["06. QR Payment"]
-        HISTORY["07. Transaction History"]
-        NOTIF["08. Notifications & Settings"]
+    subgraph Modules['Application Modules']
+        AUTH['01. Authentication']
+        KYC['02. KYC']
+        WALLET['03. Wallet Core']
+        BANK['04. Bank Linking']
+        TRANSFER['05. Transfer']
+        QR['06. QR Payment']
+        HISTORY['07. Transaction History']
+        NOTIF['08. Notifications & Settings']
     end
 
     AUTH --> AuthService

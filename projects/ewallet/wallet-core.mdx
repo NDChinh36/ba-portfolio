@@ -138,7 +138,7 @@ flowchart TD
     G -- Có --> I{Số tiền trong\nhạn mức?}
     I -- Vượt hạn mức --> J[Reject; hoàn tiền\nngược lại user\nqua NAPAS]
     I -- Hợp lệ --> K[Credit vào ví]
-    K --> L[Push notification\n"Nạp {amount} thành công"]
+    K --> L[Push notification\n'Nạp {amount} thành công']
     L --> M([Balance tự cập nhật\nkhi user mở app])
 ```
 
@@ -149,7 +149,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     A([User nhấn\n"Rút tiền"]) --> B{Tier ≥ Tier 2?}
-    B -- Tier 1 --> C[Thông báo:\n"Cần xác minh danh tính\ntrước khi rút tiền"]
+    B -- Tier 1 --> C[Thông báo:\n'Cần xác minh danh tính\ntrước khi rút tiền']
     C --> D[Link đến KYC Module]
     B -- Tier 2+ --> E[SCR-WALLET-09\nChọn ngân hàng nhận]
 

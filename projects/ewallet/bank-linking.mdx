@@ -104,9 +104,9 @@ flowchart TD
 ```mermaid
 flowchart TD
     A([User chọn\n"Hủy liên kết"]) --> B{Có lệnh rút\npending với TK này?}
-    B -- Có --> C[Block hủy:\n"Có lệnh rút đang xử lý.\nVui lòng đợi hoàn tất."]
+    B -- Có --> C[Block hủy:\n'Có lệnh rút đang xử lý.\nVui lòng đợi hoàn tất.']
     B -- Không --> D{Đây là ngân hàng\nduy nhất còn lại\nvà Tier 2+?}
-    D -- Có --> E[Block hủy:\n"Cần ít nhất 1 ngân hàng\nliên kết để rút tiền."]
+    D -- Có --> E[Block hủy:\n'Cần ít nhất 1 ngân hàng\nliên kết để rút tiền.']
     D -- Không --> F[SCR-BANK-08\nXác nhận hủy liên kết\nHiện thị tên bank + số TK]
 
     F --> G{User xác nhận?}
