@@ -365,6 +365,27 @@ sequenceDiagram
 
 ### SCR-WALLET-04 — Xác nhận Nạp (Pull)
 
+```
+┌─────────────────────────────────┐
+│  ←          Xác nhận nạp tiền  │
+│                                 │
+│  ┌───────────────────────────┐  │
+│  │ Nguồn      MBBank ****1234│  │
+│  │ Số tiền     1,000,000 đ   │  │
+│  │ Phí               Miễn phí│  │
+│  │ ───────────────────────   │  │
+│  │ Nhận được   1,000,000 đ   │  │
+│  │ Ước tính        vài giây  │  │
+│  └───────────────────────────┘  │
+│                                 │
+│  Giao dịch không thể hoàn sau   │
+│  khi xác nhận.                  │
+│                                 │
+│     [ Xác nhận nạp tiền ]       │
+│            Hủy                  │
+└─────────────────────────────────┘
+```
+
 | Component | Loại | Nội dung | Action |
 |---|---|---|---|
 | Summary card | Card | Nguồn: {bank name} — {masked account} | — |
