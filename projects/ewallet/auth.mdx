@@ -591,7 +591,7 @@ sequenceDiagram
 | POST | `/auth/otp/send` | `{phone, purpose}` | `{otp_id, expires_in, resend_after}` | Gửi OTP; purpose: REGISTER / RESET_PIN / VERIFY_DEVICE |
 | POST | `/auth/otp/verify` | `{otp_id, code}` | `{verified: true, token}` | Verify OTP; trả short-lived token |
 | POST | `/users/register` | `{phone, pin_hash, full_name, dob, register_token}` | `{user_id, wallet_id}` | Tạo user + ví |
-| POST | `/auth/login` | `{phone, pin_hash, device_id, device_info}` | `{access_token, refresh_token, new_device?}` | Đăng nhập PIN |
+| POST | `/auth/login` | `{phone, pin_hash, device_id, device_info}` | 200: `{access_token, refresh_token}` · 202: `{status: "PENDING_APPROVAL", login_request_id, expires_in: 300}` | Đăng nhập PIN; 202 khi cần Device A xác nhận theo 1-device policy |
 | POST | `/auth/login/biometric` | `{user_id, biometric_token, device_id}` | `{access_token, refresh_token}` | Đăng nhập Biometric |
 | POST | `/auth/token/refresh` | `{refresh_token}` | `{access_token, refresh_token}` | Refresh token; rotate refresh |
 | POST | `/auth/pin/reset` | `{phone, new_pin_hash, reset_token}` | `{success: true}` | Đặt lại PIN |
