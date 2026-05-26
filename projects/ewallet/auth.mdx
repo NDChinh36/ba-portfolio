@@ -636,7 +636,8 @@ sequenceDiagram
 | SMS OTP không đến (SMS service down) | Sau 60s, hiện "Gửi lại OTP"; sau 3 lần fail gọi OTP Gateway → fallback Zalo OA; alert ops |
 | Biometric thay đổi (user thêm vân tay mới trên điện thoại) | OS invalidate biometric key → App tự phát hiện → yêu cầu đăng nhập PIN → re-enroll biometric |
 | Tài khoản bị lock đúng lúc token refresh | Token refresh thành công nhưng các API tiếp theo trả `AUTH_010`; App hiển thị lock screen |
-| Hai thiết bị đăng nhập cùng lúc | Cả hai session đều hợp lệ; không force logout thiết bị cũ (chỉ cảnh báo) |
+| Hai thiết bị gửi login request gần như cùng lúc | Hệ thống xử lý theo thứ tự nhận request; chỉ 1 approval request active tại 1 thời điểm; request thứ 2 nhận lỗi "đã có pending approval request" → phải chờ request đầu tiên resolve (approve / deny / timeout) rồi mới được gửi lại |
+| Device A mất mạng sau khi nhận push approval notification | Device A không thể phản hồi; sau 5 phút approval_token hết hạn → auto-deny → Device B nhận AUTH_016; khuyến nghị liên hệ CSKH để revoke session Device A và thực hiện lại đăng nhập |
 | User click "Đây là tôi" nhưng thực ra là hacker | Case này xử lý bởi Security Team (fraud detection); ngoài scope Auth module |
 | Network mất kết nối khi đang nhập OTP | Giữ nguyên OTP đã nhập; retry khi reconnect; OTP vẫn còn hạn |
 | User uninstall + reinstall app | Device ID mới → coi như thiết bị mới; cần PIN lại; cảnh báo thiết bị mới được gửi |
