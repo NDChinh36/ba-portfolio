@@ -593,6 +593,8 @@ sequenceDiagram
 | User click "Đây là tôi" nhưng thực ra là hacker | Case này xử lý bởi Security Team (fraud detection); ngoài scope Auth module |
 | Network mất kết nối khi đang nhập OTP | Giữ nguyên OTP đã nhập; retry khi reconnect; OTP vẫn còn hạn |
 | User uninstall + reinstall app | Device ID mới → coi như thiết bị mới; cần PIN lại; cảnh báo thiết bị mới được gửi |
+| Admin / Security team force-reset PIN (sau security incident) | Account được flag `force_pin_reset = true`; lần đăng nhập kế tiếp bắt buộc đặt lại PIN trước khi vào Home; không thể bỏ qua |
+| SĐT user bị carrier tái phân bổ cho người khác (số được tái dùng) | Người mới đăng ký với SĐT đó → hệ thống phát hiện SĐT đã tồn tại → hiển thị "SĐT đã đăng ký, đăng nhập?" → chủ tài khoản cũ phải chứng minh quyền sở hữu qua email (OQ cần resolve: có email không?) |
 
 ---
 
