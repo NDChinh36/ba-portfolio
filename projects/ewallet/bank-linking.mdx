@@ -209,6 +209,31 @@ sequenceDiagram
 
 ### SCR-BANK-01 — Danh sách ngân hàng liên kết
 
+```
+┌─────────────────────────────────┐
+│  ←       Ngân hàng liên kết    │
+│                                 │
+│  ┌───────────────────────────┐  │
+│  │ [Logo MB] MBBank ****1234 │  │
+│  │              [Mặc định ✓] │  │
+│  └───────────────────────────┘  │
+│  ┌───────────────────────────┐  │
+│  │ [Logo VCB] Vietcombank    │  │
+│  │                 ****5678  │  │
+│  └───────────────────────────┘  │
+│                                 │
+│  ─── hoặc (khi list rỗng) ───   │
+│  [Illustration: no bank]        │
+│  Chưa có ngân hàng liên kết    │
+│                                 │
+│       [ + Thêm ngân hàng ]      │  ← disabled khi = 3
+│                                 │
+│  ╔═══════════════════════════╗  │
+│  ║ Xác minh KYC để liên kết ║  │  ← Tier 1 only
+│  ╚═══════════════════════════╝  │
+└─────────────────────────────────┘
+```
+
 | Component | Loại | Nội dung | Điều kiện | Action |
 |---|---|---|---|---|
 | Page title | Text H1 | "Ngân hàng liên kết" | Always | — |
