@@ -753,3 +753,49 @@ sequenceDiagram
 | 3 | Giới hạn số Dynamic QR tạo trong ngày? | Chống abuse — đề xuất max 20 QR động/ngày/user | Sprint 7 |
 | 4 | Lưu "QR merchant gần đây" để quét lại nhanh? | UX improvement — scan quán quen không cần quét lại | Sprint 8 |
 | 5 | NAPAS callback webhook vs polling: kiến trúc nào? | Webhook cần expose public endpoint + xác thực IP whitelist NAPAS. Polling đơn giản hơn nhưng chậm hơn | Sprint 7 tech design |
+
+---
+
+## 16. Non-Functional Requirements (NFR)
+
+### Performance
+
+| Chỉ số | Target | Ghi chú |
+|---|---|---|
+| QR parse API (raw string → structured data) | P99 < 300ms | CPU-bound CRC + string parsing; không cần DB |
+| QR Payment API (end-to-end) | P95 < 5s | Phụ thuộc NAPAS SLA; P99 < 10s |
+| Personal QR image generation | P95 < 200ms | Cached per user; chỉ regenerate khi profile thay đổi |
+| Dynamic QR generation (với amount) | P95 < 500ms | Cần ký server-side + lưu DB |
+| Bank BIN → name/logo lookup | P99 < 50ms | In-memory cache; không gọi NAPAS mỗi scan |
+| QR dynamic status poll | P95 < 100ms | Redis key check; không DB query |
+
+### Bảo mật (Security)
+
+| Yêu cầu | Mô tả |
+|---|---|
+| CRC-16 validation bắt buộc | Mọi QR raw string phải pass CRC-16/CCITT; fail → reject ngay, không hiển thị bank info |
+| Dynamic QR server-signed | QR động được ký với HMAC-SHA256 server-side; client không thể tự tạo dynamic QR hợp lệ |
+| One-time use enforcement | Dynamic QR: DB flag `used = true` sau khi payment success; concurrent scan dùng DB transaction với SELECT FOR UPDATE |
+| Rate limiting | Tối đa 5 payment/phút/user; implement sliding window tại API Gateway |
+| Amount immutability | Server từ chối bất kỳ request `/qr/pay` gửi amount khác với giá trị embed trong dynamic QR |
+| NAPAS webhook authentication | HMAC-SHA256 signature verify + IP whitelist NAPAS; reject request không hợp lệ ngay tại gateway |
+
+### Tính sẵn sàng & Độ tin cậy
+
+| Chỉ số | Target | Ghi chú |
+|---|---|---|
+| QR Payment Service uptime | ≥ 99.9% | Payment-critical |
+| NAPAS dependency | ≥ 99.5% | SLA theo hợp đồng NAPAS 247 |
+| Circuit breaker (NAPAS) | Mở sau 5 lỗi NACK/timeout liên tiếp | Hiển thị banner "Tính năng tạm gián đoạn"; tự đóng sau 60s check |
+| QR generation (personal/dynamic) | Hoạt động độc lập với NAPAS | Nếu payment down, user vẫn tạo/xem được QR |
+| Dynamic QR expiry enforcement | Server-side; không tin client-side countdown | Client countdown chỉ là UX; server vẫn check expiry khi `/qr/pay` |
+
+### Lưu trữ & Compliance
+
+| Loại dữ liệu | Thời gian lưu | Cơ sở pháp lý |
+|---|---|---|
+| QR payment transaction records | 5 năm | Nghị định 52/2024 |
+| QR payment audit logs (auth, device, IP, NAPAS ref) | 5 năm | AML & dispute resolution |
+| Dynamic QR records (content, amount, expiry, status) | 1 năm | Dispute resolution; QR đã expired/used vẫn cần trace |
+| NAPAS ACK/NACK raw response | 1 năm | Dispute với NAPAS; reconciliation |
+| BIN registry cache | Refresh 24h; lưu vĩnh viễn phiên bản cuối | Rollback nếu cần |
