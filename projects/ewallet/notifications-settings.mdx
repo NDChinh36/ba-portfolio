@@ -597,6 +597,7 @@ sequenceDiagram
 | BR-SET-10 | Thông báo lưu 90 ngày | Notification records tự expire sau 90 ngày; không lưu vĩnh viễn |
 | BR-SET-11 | Đăng xuất: revoke token | Tap "Đăng xuất" → DELETE /auth/session → revoke access + refresh token ngay lập tức |
 | BR-SET-12 | Push permission: server opt-in | Dù user tắt push trên OS hay trong app đều set `push_opt_in = false` tại server; không unregister FCM token |
+| BR-SET-13 | Device A từ chối (deny) approval request → Device B bị block đăng nhập 30 phút; Auth Service trả `403 {retry_after: 1800}`; không thể gửi login request mới trong thời gian này | Auth Service — xem BR-AUTH-17 |
 
 ---
 
