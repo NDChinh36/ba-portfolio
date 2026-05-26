@@ -493,3 +493,47 @@ sequenceDiagram
 | OQ-BANK-03 | bank_access_token và refresh_token lưu ở đâu? HSM (Hardware Security Module) hay encrypted DB? | Security | Sprint 1 |
 | OQ-BANK-04 | Nếu ngân hàng chưa hỗ trợ OAuth: có fallback về phương thức nhập STK + NAPAS lookup không? | Product | Sprint 2 |
 | OQ-BANK-05 | Khi bank_refresh_token expire và user phải re-link: có cần notify trước không? Bao lâu trước? | Product + Tech | Sprint 2 |
+
+---
+
+## 15. Non-Functional Requirements (NFR)
+
+### Performance
+
+| Chỉ số | Target | Ghi chú |
+|---|---|---|
+| Danh sách ngân hàng hỗ trợ load | P95 < 500ms | Server-side cache; invalidate mỗi 24h |
+| OAuth redirect (App → Bank) | < 1s | Chỉ là redirect; không xử lý business logic |
+| OAuth callback processing | P95 < 1s | Validate state, exchange code lấy token |
+| OTP verify response | P95 < 500ms | So sánh OTP; không gọi external service |
+| Bank list refresh | Tối đa 1 lần/ngày | Không real-time; cache chấp nhận stale 24h |
+
+### Bảo mật (Security)
+
+| Yêu cầu | Mô tả |
+|---|---|
+| bank_access_token storage | Mã hóa tại KMS (Key Management Service) hoặc HSM; không lưu plaintext trong DB |
+| OAuth state parameter | GUID unique per session; single-use; expire sau 10 phút; ngăn CSRF attack |
+| OTP single-use | OTP hết hạn ngay sau khi verify thành công; không reuse |
+| bank_refresh_token rotation | Mỗi lần dùng refresh token → issue token mới + revoke token cũ |
+| Name verification | Fuzzy match chạy server-side; không expose score cho client; client chỉ nhận pass/fail/manual |
+| Unlink authorization | Bắt buộc PIN confirm; không cho phép unlink qua email/SMS (tránh social engineering) |
+
+### Tính sẵn sàng & Độ tin cậy
+
+| Chỉ số | Target | Ghi chú |
+|---|---|---|
+| Bank Linking Service uptime | ≥ 99.9% | Non-critical path; có thể chấp nhận planned downtime |
+| Bank OAuth endpoint dependency | Biến động theo từng ngân hàng | Có fallback message: "Ngân hàng đang bảo trì, thử lại sau" |
+| OAuth timeout | 10 phút | Sau đó state expire; user phải bắt đầu lại |
+| bank_access_token TTL | 90 ngày (điển hình) | Vary theo từng ngân hàng; hệ thống cần theo dõi expiry |
+
+### Lưu trữ & Compliance
+
+| Loại dữ liệu | Thời gian lưu | Ghi chú |
+|---|---|---|
+| Bank link audit logs (link/unlink/fail) | 5 năm | Dispute resolution & compliance |
+| Name matching audit (score + decision) | 5 năm | Có thể cần giải trình với Compliance |
+| bank_access_token | Đến khi expire hoặc user unlink | Xóa ngay khi unlink |
+| bank_refresh_token | Đến khi expire hoặc user unlink | Revoke ngay khi unlink |
+| OAuth authorization codes | 1 ngày (single-use, expire ngay) | Cleanup job hàng ngày |
