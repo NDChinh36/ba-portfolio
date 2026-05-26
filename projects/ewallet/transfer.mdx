@@ -239,6 +239,28 @@ sequenceDiagram
 
 ### SCR-TRANS-02 — Xác nhận người nhận
 
+```
+┌─────────────────────────────────┐
+│  ←                             │
+│                                 │
+│        [ Avatar 80px ]          │
+│                                 │
+│       NGUYEN VAN AN             │
+│         090*** 123              │
+│                                 │
+│  Đây có phải người bạn muốn     │
+│  chuyển tiền không?             │
+│                                 │
+│   [   Đúng, tiếp tục   ]       │
+│                                 │
+│      Không phải người này       │
+└─────────────────────────────────┘
+```
+
+<Warning>
+  **Bắt buộc hiển thị tên đầy đủ trước khi tiếp tục.** Đây là biện pháp chống chuyển nhầm tiền. User phải bấm "Đúng, tiếp tục" — không được auto-advance.
+</Warning>
+
 | Component | Loại | Nội dung | Điều kiện | Action |
 |---|---|---|---|---|
 | Avatar | Image (large) | Ảnh đại diện recipient (hoặc initials placeholder) | Always | — |
