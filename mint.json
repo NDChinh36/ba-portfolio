@@ -56,6 +56,20 @@
       ]
     },
     {
+      "group": "Tài liệu mẫu — Futures Calculator (Nâng cao)",
+      "pages": [
+        {
+          "group": "Futures Position Calculator",
+          "icon": "calculator",
+          "pages": [
+            "projects/futures-calculator/overview",
+            "projects/futures-calculator/calculator",
+            "projects/futures-calculator/copy-fill"
+          ]
+        }
+      ]
+    },
+    {
       "group": "Tài liệu mẫu — Ví điện tử (Cơ bản)",
       "pages": [
         {
