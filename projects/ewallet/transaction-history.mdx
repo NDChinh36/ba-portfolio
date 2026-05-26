@@ -417,6 +417,8 @@ sequenceDiagram
 | BR-HIST-09 | Search scope | Search chỉ tìm trong 6 tháng gần nhất; không full-history search |
 | BR-HIST-10 | Recent searches | Lưu tối đa 10 từ khóa gần nhất trên device (local storage); user có thể xóa |
 | BR-HIST-11 | GD PENDING timeout | GD `pending` > 24h không có update → system job tự chuyển `failed`; rollback nếu cần; update trong list ngay sau |
+| BR-HIST-12 | Pull-to-refresh khi đang có filter active: reload dữ liệu theo filter hiện tại — **không xóa filter**; chỉ xóa cursor và fetch lại từ đầu với cùng params | SCR-HIST-01 |
+| BR-HIST-13 | Pending GD poll: App gọi `GET /transactions/{tx_id}` mỗi 30 giây khi SCR-HIST-01 hoặc SCR-HIST-04 đang active; dừng poll khi status thay đổi khỏi `pending` hoặc user rời màn hình | App client |
 
 ---
 
