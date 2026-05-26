@@ -623,6 +623,8 @@ sequenceDiagram
 | `AUTH_012` | 401 | "Phiên đăng nhập hết hạn. Đăng nhập lại." | `SESSION_EXPIRED` — refresh token hết hạn |
 | `AUTH_013` | 400 | "Bạn phải đủ 15 tuổi để đăng ký." | Validate server-side lại |
 | `AUTH_014` | 400 | "Hai mã PIN không khớp." | Validate client-side trước khi gửi API |
+| `AUTH_015` | 403 | "Thiết bị hiện tại đã từ chối yêu cầu đăng nhập. Liên hệ CSKH nếu cần hỗ trợ." | Device A tapped "Từ chối" trên SCR-SETTINGS-05 |
+| `AUTH_016` | 408 | "Hết thời gian chờ xác nhận (5 phút). Vui lòng thử lại hoặc liên hệ CSKH nếu mất thiết bị." | approval_token expired; hệ thống tự động từ chối (auto-deny) |
 
 ---
 
