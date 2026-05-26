@@ -464,39 +464,50 @@ sequenceDiagram
 
 ---
 
-### SCR-AUTH-15 — Cảnh báo thiết bị mới
+### SCR-AUTH-15 — Chờ xác nhận đăng nhập (Device B)
+
+<Warning>
+  **Cập nhật v1.1 — 1-Device Policy:** Màn hình này thay thế hành vi cũ (chỉ cảnh báo sau khi login). Device B phải **chờ Device A xác nhận trước** khi session được cấp. Xem Device A approval modal tại SCR-SETTINGS-05 trong [Notifications & Settings](/projects/ewallet/notifications-settings).
+</Warning>
 
 ```
 ┌─────────────────────────────────┐
 │                                 │
-│           🛡️ !                  │
+│              🔐                 │
 │                                 │
-│    Đăng nhập từ thiết bị mới    │
+│  Đang chờ xác nhận đăng nhập   │
 │                                 │
 │  ┌───────────────────────────┐  │
-│  │ 📱 iPhone 15 Pro          │  │
-│  │ iOS 17.4 · Hà Nội         │  │
-│  │ 26/05/2026 lúc 14:30      │  │
+│  │  Thiết bị hiện tại của    │  │
+│  │  bạn sẽ nhận thông báo   │  │
+│  │  để xác nhận yêu cầu.    │  │
 │  └───────────────────────────┘  │
 │                                 │
-│  Nếu đây là bạn, không cần làm  │
-│  gì. Nếu không phải, đổi PIN    │
-│  ngay để bảo vệ tài khoản.      │
+│           ⏱ 04:32               │  ← đếm ngược từ 5:00
 │                                 │
-│     [     Đổi PIN ngay     ]    │
+│  Mở ứng dụng trên thiết bị     │
+│  hiện tại và nhấn "Cho phép"   │
 │                                 │
-│         Đây là tôi, tiếp tục    │
+│      [   Hủy yêu cầu    ]      │
+│                                 │
+│   Mất thiết bị? Liên hệ CSKH  │
 └─────────────────────────────────┘
 ```
 
 | Component | Loại | Nội dung | Action |
 |---|---|---|---|
-| Icon cảnh báo | Icon | Shield với dấu ! | — |
-| Title | Text | "Đăng nhập từ thiết bị mới" | — |
-| Device info | Card | Tên thiết bị · Hệ điều hành · Thời gian · Vị trí (IP geolocation) | — |
-| Mô tả | Text | "Nếu đây là bạn, không cần làm gì. Nếu không phải, hãy đổi PIN ngay." | — |
-| "Đổi PIN ngay" | Primary button | "Đổi PIN ngay" | Về SCR-AUTH-14 (Đổi PIN) |
-| "Đây là tôi" | Secondary button | "Đây là tôi, tiếp tục" | Đóng popup; vào Home |
+| Icon | Icon | 🔐 | — |
+| Title | Text | "Đang chờ xác nhận đăng nhập" | — |
+| Info box | Card | "Thiết bị hiện tại của bạn sẽ nhận thông báo để xác nhận yêu cầu." | — |
+| Countdown timer | Text (lớn, nổi bật) | Đếm ngược từ 5:00 → 0:00 | Về 0 → tự hiển thị toast AUTH_016 |
+| Hướng dẫn | Text (phụ) | "Mở ứng dụng trên thiết bị hiện tại và nhấn 'Cho phép'" | — |
+| "Hủy yêu cầu" | Secondary button | "Hủy yêu cầu" | DELETE `/auth/login/status/{login_request_id}`; về SCR-AUTH-08 |
+| "Liên hệ CSKH" | Text link | "Mất thiết bị? Liên hệ CSKH" | Mở màn hình CSKH (chat / hotline) |
+
+**Polling behavior (client):** App gọi `GET /auth/login/status?login_request_id={id}` mỗi **5 giây**.
+- `status: "APPROVED"` → nhận `access_token` + `refresh_token` → điều hướng về Home
+- `status: "DENIED"` → hiện toast AUTH_015; về SCR-AUTH-08
+- `status: "TIMEOUT"` hoặc countdown = 0 → hiện toast AUTH_016; về SCR-AUTH-08
 
 ---
 
