@@ -444,6 +444,29 @@ sequenceDiagram
 
 ### SCR-QR-03 — Kết quả parse VietQR động
 
+```
+┌─────────────────────────────────┐
+│  ←  Quét lại                   │
+│                                 │
+│  Thông tin thanh toán           │
+│  ┌───────────────────────────┐  │
+│  │ [Logo VCB]  Vietcombank   │  │
+│  │ STK: 001 234 567 890      │  │
+│  │ Chủ TK: NGUYEN VAN B      │  │
+│  └───────────────────────────┘  │
+│                                 │
+│  Số tiền   ⚠ Số tiền cố định   │
+│  ┌───────────────────────────┐  │
+│  │   150,000 VND          🔒 │  │
+│  └───────────────────────────┘  │
+│                                 │
+│  Nội dung: Thanh toan bua an   │
+│  Ref: ORDER_2026_001234         │
+│                                 │
+│   [   Thanh toán 150,000 VND  ] │
+└─────────────────────────────────┘
+```
+
 | Component | Chi tiết |
 |-----------|---------|
 | Bank logo + tên | Như trên |
