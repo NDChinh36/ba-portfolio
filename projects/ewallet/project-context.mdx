@@ -1,0 +1,288 @@
+---
+title: "Bối cảnh & Quyết định BA"
+description: "Tình huống giả định · Vai trò BA · Quyết định thiết kế · Phương pháp làm việc"
+icon: "lightbulb"
+---
+
+# Bối cảnh Dự án & Quá trình Ra Quyết định của BA
+
+<Warning>
+  **Tài liệu mẫu — Không phải dự án thực tế.** Bộ tài liệu Generic E-Wallet App được viết như một **sample project** để minh họa năng lực BA: thu thập yêu cầu, phân tích nghiệp vụ, viết PRD chuyên nghiệp và xử lý các ràng buộc kỹ thuật / pháp lý trong domain Fintech. Mọi tên tổ chức, số liệu và tình huống đều mang tính minh họa.
+</Warning>
+
+---
+
+## 1. Tình huống giả định
+
+### 1.1 Bối cảnh
+
+Một startup Fintech tại Việt Nam — **FinPay JSC** — nhận vòng đầu tư Series A (5 triệu USD) và quyết định ra mắt **ứng dụng ví điện tử di động** để cạnh tranh trực tiếp với phân khúc người dùng phổ thông (18–35 tuổi) tại 5 thành phố lớn. Sản phẩm cần xin giấy phép trung gian thanh toán từ NHNN và tuân thủ Nghị định 52/2024/NĐ-CP.
+
+**Mục tiêu kinh doanh:**
+
+| Mục tiêu | Chỉ số đo | Thời hạn |
+|---|---|---|
+| Đạt 50,000 MAU | Người dùng hoạt động hàng tháng | 3 tháng sau launch |
+| KYC rate ≥ 60% | Tỷ lệ user hoàn thành xác minh | 6 tháng |
+| Zero fraud trong 30 ngày đầu | Số sự cố gian lận báo cáo | Tháng 1 |
+| Thời gian xử lý GD < 5s | P95 end-to-end latency | Launch |
+
+### 1.2 Ràng buộc ban đầu
+
+<CardGroup cols={2}>
+  <Card title="Thời gian" icon="calendar">
+    **6 tháng** từ kick-off đến production launch. MVP gồm 6 module cốt lõi.
+  </Card>
+  <Card title="Ngân sách nhân sự" icon="users">
+    **6 người** — không có nguồn lực để build merchant portal hoặc tính năng nâng cao.
+  </Card>
+  <Card title="Pháp lý" icon="scale-balanced">
+    Phải có KYC hợp lệ trước launch. NHNN yêu cầu eKYC với CCCD gắn chip.
+  </Card>
+  <Card title="Kỹ thuật" icon="code">
+    React Native để ship iOS + Android cùng lúc. Backend microservice trên Go + Node.js.
+  </Card>
+</CardGroup>
+
+---
+
+## 2. Cấu trúc Team
+
+| Vai trò | Số người | Trách nhiệm chính |
+|---|---|---|
+| **Product Manager** | 1 | Định hướng sản phẩm, roadmap, stakeholder communication với investor |
+| **Business Analyst** | 1 (tác giả) | Thu thập yêu cầu, viết PRD, làm cầu nối Product–Tech–Legal |
+| **Mobile Developer** | 2 | React Native — iOS & Android |
+| **Backend Developer** | 1 | Microservices (Go), NAPAS integration, Kafka |
+| **QA Engineer** | 1 | Test cases, UAT, regression |
+
+<Note>
+  Với team 6 người, BA phải đảm nhận thêm: viết API contract sơ bộ, phối hợp với external vendors (VNPTeID, iProov), và tham gia compliance review với tư vấn pháp lý.
+</Note>
+
+---
+
+## 3. Timeline & Sprint Breakdown
+
+```
+Tháng 1    [Discovery & Planning]
+  ├── Week 1–2: Stakeholder interviews, competitive analysis (MoMo, ZaloPay, VNPay)
+  ├── Week 3: Regulatory review với tư vấn pháp lý (Nghị định 52/2024)
+  └── Week 4: PRD Draft v0.1 cho tất cả module; Tech feasibility review
+
+Tháng 2    [Sprint 1–2: Foundation]
+  ├── Sprint 1 (2 tuần): Auth module — Register, Login, PIN, Session
+  └── Sprint 2 (2 tuần): KYC module — CCCD scan, NFC, Face liveness
+
+Tháng 3    [Sprint 3–4: Core Wallet]
+  ├── Sprint 3 (2 tuần): Wallet Core — Balance, Topup (Pull + Push), Withdraw
+  └── Sprint 4 (2 tuần): Bank Linking — OAuth, OTP verify, Manage banks
+
+Tháng 4    [Sprint 5–6: Payments]
+  ├── Sprint 5 (2 tuần): Transfer P2P — SĐT, QR cá nhân, Limit engine
+  └── Sprint 6 (2 tuần): QR Payment — VietQR scan, Pay, Personal QR
+
+Tháng 5    [Sprint 7–8: Supporting Features]
+  ├── Sprint 7 (2 tuần): Transaction History — Filter, search, export, receipt
+  └── Sprint 8 (2 tuần): Notifications & Settings — Push, in-app, profile, security
+
+Tháng 6    [UAT, Hardening, Launch]
+  ├── Week 1–2: UAT với nhóm beta (200 users nội bộ + thân nhân)
+  ├── Week 3: Penetration testing, security audit
+  └── Week 4: Production launch + monitoring
+```
+
+---
+
+## 4. Vai trò & Trách nhiệm của BA
+
+### 4.1 Những gì BA đã làm trong dự án này
+
+<AccordionGroup>
+  <Accordion title="Thu thập & phân tích yêu cầu">
+    - Phỏng vấn **8 stakeholder** (PM, Tech Lead, Compliance, CS Lead, 2 Dev, QA, Legal advisor)
+    - Tổng hợp 47 yêu cầu ban đầu → phân loại Must-have / Should-have / Nice-to-have (MoSCoW)
+    - Loại bỏ 12 yêu cầu khỏi MVP scope sau khi xác nhận không đủ nguồn lực / không phù hợp timeline
+    - Conduct competitor analysis: MoMo, ZaloPay, VNPay — map feature parity
+  </Accordion>
+
+  <Accordion title="Viết tài liệu PRD">
+    - Viết **8 PRD đầy đủ** (6 module MVP + 2 supporting features), mỗi PRD gồm: User Flow, Sequence Diagram, Screen Spec, Validation Rules, Business Rules, Notification Spec, API Summary, Error Codes, Edge Cases
+    - Tổng cộng khoảng **500+ Business Rules và Validation Rules** được xác định và document
+    - Maintian **traceability matrix** — mỗi requirement link đến screen spec, business rule, và test case
+  </Accordion>
+
+  <Accordion title="Phối hợp với vendor eKYC">
+    - Đánh giá 3 vendor: **FPT.AI**, **VNPTeID**, **VNPT eKYC**
+    - Quyết định chọn VNPTeID + iProov (xem quyết định chi tiết bên dưới)
+    - Làm việc với VNPTeID để hiểu SDK limitation, sandbox environment, SLA cam kết
+    - Thiết kế fallback flow khi provider down (manual review queue)
+  </Accordion>
+
+  <Accordion title="Compliance & Regulatory">
+    - Đọc và extract requirement từ Nghị định 52/2024/NĐ-CP, Thông tư 39/2014/TT-NHNN
+    - Map compliance requirement vào từng Business Rule (BR-KYC-11: 5-year retention)
+    - Phối hợp với Legal advisor để confirm: KYC tier thresholds, hạn mức giao dịch, tuổi tối thiểu 15
+    - Đảm bảo CCCD chip NFC đúng theo yêu cầu NHNN về eKYC cấp ngân hàng
+  </Accordion>
+
+  <Accordion title="Hỗ trợ Sprint & UAT">
+    - Tham dự Sprint Planning: ưu tiên backlog, break down story, estimate complexity
+    - Viết 200+ test scenarios cho QA (happy path, edge case, negative case)
+    - Dẫn dắt UAT: tuyển beta users, viết UAT script, ghi nhận defect và triage
+    - Xử lý 34 change requests trong quá trình UAT; 8 requests defer sang Phase 2
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## 5. Các Quyết định Thiết kế Quan trọng
+
+### 5.1 Chọn VNPTeID + iProov thay vì FPT.AI
+
+| Tiêu chí | FPT.AI | VNPTeID + iProov | Quyết định |
+|---|---|---|---|
+| Nguồn dữ liệu chip CCCD | OCR only | Xác thực trực tiếp với CSDL Cục Cư dân | **VNPTeID** |
+| Liveness detection | FPT liveness (passive) | iProov Genuine Presence (active flash) | **iProov** — chống spoof tốt hơn |
+| Acceptance rate (internal test) | ~87% | ~94% | **VNPTeID + iProov** |
+| Chi phí per verification | Thấp hơn | Cao hơn ~30% | Trade-off chấp nhận được |
+| Được NHNN công nhận | Có | Có | Ngang nhau |
+
+**Rationale của BA:** Với sản phẩm fintech, fraud prevention quan trọng hơn chi phí per verification trong giai đoạn đầu. iProov's active liveness (flash sequence) khó spoof hơn passive liveness. VNPTeID connect thẳng đến CSDL chip của Cục Cư dân nên data accuracy cao hơn.
+
+---
+
+### 5.2 PIN bắt buộc — không dùng Biometric làm primary auth
+
+Quyết định ban đầu của PM là dùng **Biometric làm primary** (như nhiều app banking hiện đại). BA đề xuất giữ **PIN làm primary** với lý do:
+
+1. **Regulatory**: Nghị định 52 không công nhận biometric trên thiết bị cá nhân là phương thức xác thực mức ngân hàng. PIN là "something you know" — có thể audit.
+2. **Security**: Biometric trên thiết bị có thể bị bypass nếu thiết bị bị rooted/jailbroken. PIN được verify server-side (bcrypt).
+3. **Fallback**: Biometric fail (đổi vân tay, surgery) → user vẫn có PIN. Ngược lại không ổn.
+4. **UX research**: 73% user trong khảo sát không mind nhập PIN nếu thao tác dưới 5 giây.
+
+**Kết quả**: Biometric được giữ như **shortcut** (convenience layer), PIN là primary. Đây là approach của MoMo và nhiều ví lớn tại Việt Nam.
+
+---
+
+### 5.3 Scope limitation — loại bỏ khỏi MVP
+
+| Tính năng | Lý do loại | Kế hoạch |
+|---|---|---|
+| Merchant Portal (dynamic QR) | Cần thêm 1 backend dev; 3 tuần estimate — vượt timeline | Phase 2, Sprint 10 |
+| Refund / Reversal tự động | Phức tạp NAPAS; cần reconciliation team | Phase 2, cần thêm CS ops |
+| Chuyển tiền quốc tế / ngoại tệ | Cần giấy phép riêng (SWIFT, FX license) | Roadmap 2027 |
+| Utility bill payment | Cần integrate 5+ biller API; timeline không đủ | Phase 2, Sprint 11 |
+| Business disbursement | Cần KYB (Know Your Business) flow hoàn toàn mới | Phase 3 |
+| Scheduled / recurring transfer | Phức tạp về limit calculation, retry logic | Phase 2, Sprint 12 |
+
+**Tiêu chí loại bỏ của BA**: Một tính năng bị loại khỏi MVP nếu **(a)** estimate > 2 sprint AND không có dependency từ tính năng cốt lõi khác, hoặc **(b)** yêu cầu pháp lý bổ sung chưa được giải quyết.
+
+---
+
+### 5.4 Chọn VietQR thay vì proprietary QR format
+
+Một số startup xây dựng QR format riêng để "lock-in" merchant. BA khuyến nghị dùng **chuẩn VietQR (NAPAS / EMV)** vì:
+
+1. **Interoperability**: User scan QR của mọi ngân hàng Việt Nam — không cần merchant cài app riêng.
+2. **Regulatory alignment**: NAPAS và NHNN đang push VietQR adoption — đi theo chuẩn này an toàn về dài hạn.
+3. **Time-to-market**: Không phải build QR spec từ đầu; SDK và documentation từ NAPAS đã có.
+4. **Trust signal**: User tin tưởng hơn khi thấy logo VietQR thay vì QR lạ.
+
+**Trade-off**: Mất khả năng embed custom data (loyalty points, coupon codes) trong QR. Defer về Phase 2 bằng deep-link QR scheme nội bộ (`ewallet://`).
+
+---
+
+## 6. Phương pháp Làm việc của BA
+
+### 6.1 Quy trình viết PRD
+
+```
+Stakeholder Interview (1–2h)
+    ↓
+Draft User Story Map (FigJam)
+    ↓
+Clarification session với Tech Lead (30 phút)
+    ↓
+PRD Draft v0.1 (Markdown → MDX)
+    ↓
+Internal review: PM + Tech Lead (async comment)
+    ↓
+Compliance check với Legal (cho module Auth, KYC)
+    ↓
+PRD v1.0 — Approved & baselined
+    ↓
+Sprint Planning — BA present PRD, answer questions
+    ↓
+During Sprint — BA available for clarification, update PRD khi phát sinh
+    ↓
+QA Review — BA walk through test scenarios
+    ↓
+UAT — BA lead
+```
+
+### 6.2 Định dạng tài liệu: Hybrid PRD
+
+Thay vì viết PRD thuần business (không có diagram) hoặc thuần technical spec (không có business context), BA chọn **Hybrid PRD** — mỗi module bao gồm:
+
+| Thành phần | Dành cho | Mục đích |
+|---|---|---|
+| User Flow (Mermaid flowchart) | PM, Design, QA | Big picture — ai làm gì, khi nào |
+| Sequence Diagram | Tech Lead, Dev | Data flow — service nào gọi service nào |
+| Screen Spec + Wireframe | Dev, Design | Mỗi component, trạng thái, action |
+| Validation Rules | Dev, QA | Điều kiện chính xác cho mỗi field |
+| Business Rules | Tất cả | Quy tắc nghiệp vụ không thể vi phạm |
+| Notification Spec | Dev (Backend), Marketing | Nội dung, trigger, kênh gửi |
+| API Summary | Dev | Contract sơ bộ — không phải API spec đầy đủ |
+| Error Codes | Dev, QA, CS | Map lỗi → message người dùng |
+| Edge Cases | Dev, QA | Tình huống không thường gặp nhưng phải handle |
+| NFR | Tech Lead, DevOps | Performance, security, availability targets |
+| Open Questions | PM, Tech Lead | Items chưa resolve — track đến khi có quyết định |
+
+### 6.3 Công cụ sử dụng
+
+| Công cụ | Mục đích |
+|---|---|
+| **Mintlify** | Publish tài liệu với MDX — version control, search, team access |
+| **FigJam** | User Story Mapping, Impact/Effort matrix |
+| **Figma** | Xem và annotate wireframe từ Designer |
+| **Mermaid** | Flowchart, Sequence Diagram — as-code, dễ update |
+| **Jira** | Sprint tracking, bug triage, change request log |
+| **Confluence** | Meeting notes, decision log, ADR (Architecture Decision Record) |
+| **Postman** | Verify API contract với Backend (smoke test) |
+
+---
+
+## 7. Bài học Rút ra (Lessons Learned)
+
+<AccordionGroup>
+  <Accordion title="1. Define 'done' cho KYC sớm hơn">
+    Trong Sprint 2, Dev và QA có hiểu khác nhau về "KYC thành công" nghĩa là gì — Dev coi là khi API trả `approved`, QA coi là khi user nhận push notification và tier đã cập nhật trên màn hình. Tốn 1 ngày để align.
+
+    **Fix**: Từ Sprint 3 trở đi, mỗi feature có "Definition of Done" rõ ràng trong PRD, bao gồm cả notification và UI state cuối cùng.
+  </Accordion>
+
+  <Accordion title="2. NAPAS integration phức tạp hơn dự kiến">
+    Ban đầu estimate 3 ngày cho NAPAS integration (pull topup). Thực tế mất 8 ngày vì: sandbox environment không ổn định, tài liệu NAPAS không cập nhật, và cần IP whitelist từ NAPAS (mất 3 ngày business để approve).
+
+    **Fix**: Đưa third-party integration risk vào planning. Tạo mock server để Dev có thể test độc lập mà không phụ thuộc NAPAS sandbox.
+  </Accordion>
+
+  <Accordion title="3. Edge cases phát hiện muộn trong UAT">
+    Race condition giữa hai lệnh rút tiền đồng thời (Wallet Core edge case) phát hiện trong UAT Week 1, dẫn đến 3 ngày fix + regression test. Đây là edge case nên được phát hiện trong design phase.
+
+    **Fix**: BA bổ sung "Concurrency checklist" vào mỗi PRD trước khi handoff — liệt kê tất cả scenarios hai user/request cùng tác động một resource.
+  </Accordion>
+
+  <Accordion title="4. Notification spec hay bị bỏ qua trong sprint">
+    Backend dev thường code notification "theo cảm tính" (tên gọi, timing, nội dung) vì notification spec viết mơ hồ. Dẫn đến 12 notification defects trong UAT.
+
+    **Fix**: Notification Spec section trong PRD bây giờ luôn bao gồm: exact content string với biến rõ ràng, trigger condition cụ thể (sau event nào), delay (ngay lập tức hay delay?), kênh, và fallback khi kênh chính fail.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+<Note>
+  Trang này phản ánh **quá trình tư duy và quyết định** của BA trong một dự án Fintech điển hình. Tất cả số liệu, tên công ty và tình huống là giả định — nhưng các quyết định kỹ thuật và nghiệp vụ phản ánh best practice thực tế trong ngành.
+</Note>
