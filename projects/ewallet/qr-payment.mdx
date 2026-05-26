@@ -741,6 +741,8 @@ sequenceDiagram
 | 6 | NAPAS down diện rộng | Circuit breaker: sau 5 lỗi NACK/timeout liên tiếp → dừng nhận request QR pay, hiện banner "Tính năng tạm thời gián đoạn do sự cố hệ thống" |
 | 7 | Dynamic QR hết hạn trong khi user đang trên SCR-QR-05 | App poll mỗi 30s. Nếu expired: modal "QR đã hết hạn trong khi bạn xem xét — quay lại quét QR mới" |
 | 8 | Số tài khoản thụ hưởng bị NAPAS từ chối (NACK mã D05 — frozen) | Rollback balance + lỗi `QR_010` với gợi ý "Kiểm tra lại số tài khoản thụ hưởng với người nhận" |
+| 9 | User scan QR cá nhân của chính mình | QR parser nhận ra `user_id` trong payload trùng với `current_user_id` → redirect sang Transfer P2P flow với gợi ý "Đây là QR của bạn. Để chuyển tiền, nhập SĐT người nhận." (BR-QR-11) |
+| 10 | Hai người dùng scan cùng một Dynamic QR (one-time) đồng thời | DB transaction với SELECT FOR UPDATE trên QR record; người scan thứ nhất đặt `used = true` và commit → người scan thứ hai đọc `used = true` → trả `QR_014`. Race condition được xử lý tại DB level |
 
 ---
 
