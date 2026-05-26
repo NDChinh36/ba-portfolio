@@ -526,6 +526,8 @@ sequenceDiagram
 | Notification service down khi GD hoàn thành | GD vẫn COMPLETED và valid; retry notification async tối đa 3 lần; không rollback GD |
 | User nhập SĐT người thân rồi transfer nhiều lần nhanh (rapid fire) | Rate limit: tối đa 5 GD / phút / user; quá ngưỡng → trả 429 "Bạn đang thực hiện quá nhiều giao dịch. Vui lòng thử lại sau vài giây." |
 | QR cá nhân có amount bị chụp lại và dùng lại | Dynamic QR với amount expire sau 10 phút (server-side check khi scan); static QR không expire nhưng không có amount embed |
+| Transfer khởi tạo lúc 23:59, daily limit check pass, DB commit lúc 00:01 sang ngày mới | Daily limit tính theo thời điểm **LimitEngine deduct** (server timestamp lúc commit), không phải lúc nhập số tiền; GD này tính vào ngày mới — limit của ngày mới áp dụng |
+| Recipient vừa bị suspend đúng lúc GD đang atomic debit/credit | Transfer Service kiểm tra recipient status trước khi bắt đầu DB transaction; nếu suspend phát hiện trong transaction → rollback; trả TRANS_002. Race condition cực hiếm — chấp nhận bằng retry logic phía người dùng |
 
 ---
 
