@@ -580,6 +580,8 @@ sequenceDiagram
 | User thay đổi tier (KYC approved) trong khi có lệnh nạp đang pending | Lệnh pending dùng limit của tier cũ; sau approve tier mới áp dụng lệnh tiếp theo |
 | Virtual Account Number bị gửi tiền không có `user_code` | Webhook từ chối và hoàn tiền; log để CS xử lý thủ công nếu user claim |
 | Network mất kết nối sau khi PIN đúng, trước khi nhận kết quả | App hiển thị "Đang xử lý"; khi reconnect gọi `GET /wallet/topup/status?idempotency_key=`; idempotency đảm bảo không duplicate |
+| Giao dịch khởi tạo lúc 23:59:58 — limit check pass, nhưng DB commit lúc 00:00:02 (sang ngày mới) | Limit tính theo thời điểm **DB commit** (server timestamp); ngày reset 00:00 UTC+7; GD này tính vào ngày mới — developer phải dùng `now()` tại DB layer, không phải thời điểm request |
+| Tài khoản ngân hàng đã liên kết bị ngân hàng đóng (account closed) kể từ lần topup cuối | Pull topup API trả lỗi từ ngân hàng → WALLET_007 / WALLET_008; App hiển thị "Ngân hàng không thể xử lý lúc này. Vui lòng kiểm tra tài khoản ngân hàng hoặc chọn ngân hàng khác."; không tự động unlink |
 
 ---
 
