@@ -556,7 +556,7 @@ sequenceDiagram
 | BR-AUTH-06 | Tối đa 5 lần nhập sai PIN → khóa tài khoản 30 phút | SCR-AUTH-09 |
 | BR-AUTH-07 | Đặt lại PIN phải invalidate toàn bộ refresh token cũ | SCR-AUTH-13, SCR-AUTH-14 |
 | BR-AUTH-08 | Access token hết hạn sau 15 phút; Refresh token sau 30 ngày | Token Service |
-| BR-AUTH-09 | Đăng nhập thiết bị mới → gửi cảnh báo đến thiết bị cũ | SCR-AUTH-15, Notification |
+| BR-AUTH-09 | Chỉ 1 thiết bị mobile có active session tại 1 thời điểm; thiết bị mới phải được thiết bị hiện tại xác nhận trước khi session được cấp; khi Device B được approved, session của Device A bị revoke | SCR-AUTH-15, DeviceService |
 | BR-AUTH-10 | PIN hash dùng bcrypt với salt; không lưu plaintext | UserService DB |
 | BR-AUTH-11 | Biometric chỉ là shortcut; vẫn cần PIN khi re-enroll hoặc biometric fail 3 lần | SCR-AUTH-10 |
 | BR-AUTH-12 | Session timeout: tự động logout sau 30 phút inactive (app background) | App client |
