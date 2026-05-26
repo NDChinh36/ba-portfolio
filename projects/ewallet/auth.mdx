@@ -627,6 +627,7 @@ sequenceDiagram
 | `AUTH_014` | 400 | "Hai mã PIN không khớp." | Validate client-side trước khi gửi API |
 | `AUTH_015` | 403 | "Thiết bị hiện tại đã từ chối yêu cầu đăng nhập. Liên hệ CSKH nếu cần hỗ trợ." | Device A tapped "Từ chối" trên SCR-SETTINGS-05 |
 | `AUTH_016` | 408 | "Hết thời gian chờ xác nhận (5 phút). Vui lòng thử lại hoặc liên hệ CSKH nếu mất thiết bị." | approval_token expired; hệ thống tự động từ chối (auto-deny) |
+| `AUTH_017` | 429 | "Yêu cầu đăng nhập tạm bị khóa 30 phút do bị thiết bị hiện tại từ chối. Thử lại sau." | Device B bị block sau khi Device A deny; `retry_after` (giây) trong response body |
 
 ---
 
