@@ -444,6 +444,29 @@ sequenceDiagram
 
 ### SCR-WALLET-11 — Xác nhận Rút tiền
 
+```
+┌─────────────────────────────────┐
+│  ←          Xác nhận rút tiền  │
+│                                 │
+│  ┌───────────────────────────┐  │
+│  │ Đến      MBBank ****1234  │  │
+│  │ Chủ TK   NGUYEN DUC CHINH │  │
+│  │ Số tiền     500,000 đ     │  │
+│  │ Phí               Miễn phí│  │
+│  │ Thời gian      Ngay lập tức│  │
+│  │ Số dư còn  2,000,000 đ    │  │
+│  └───────────────────────────┘  │
+│                                 │
+│  ╔═══════════════════════════╗  │
+│  ║ ⚠ Giao dịch không thể    ║  │
+│  ║    hoàn sau khi xác nhận  ║  │
+│  ╚═══════════════════════════╝  │
+│                                 │
+│     [ Xác nhận rút tiền ]       │  ← màu đỏ
+│            Hủy                  │
+└─────────────────────────────────┘
+```
+
 | Component | Loại | Nội dung | Action |
 |---|---|---|---|
 | Summary card | Card | Đến: {bank name} — {masked account} — {owner name} | — |
