@@ -485,7 +485,7 @@ sequenceDiagram
 
 | Method | Endpoint | Request | Response | Mô tả |
 |---|---|---|---|---|
-| GET | `/users/lookup?phone={phone}` | — | `[user_id, full_name, avatar_url, account_status]` | Tìm user theo SĐT |
+| GET | `/users/lookup?phone={phone}` | — | `{user_id, wallet_id, full_name, avatar_url, account_status}` | Tìm user theo SĐT; trả `wallet_id` để Transfer Service truyền thẳng vào AtomicTransfer |
 | POST | `/transfer/p2p` | `[sender_id, recipient_id, amount, description?, idempotency_key, pin_hash]` | `[tx_id, status, new_balance, timestamp]` | Thực hiện chuyển tiền P2P |
 | GET | `/transfer/status?idempotency_key=` | — | `[tx_id, status, amount, ...]` | Kiểm tra trạng thái GD (khi timeout) |
 | GET | `/users/me/qr` | — | `[qr_content, qr_image_url]` | Lấy QR cá nhân của user |
