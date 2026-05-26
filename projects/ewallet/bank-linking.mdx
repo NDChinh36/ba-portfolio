@@ -248,6 +248,28 @@ sequenceDiagram
 
 ### SCR-BANK-02 — Chọn ngân hàng
 
+```
+┌─────────────────────────────────┐
+│  ←          Chọn ngân hàng     │
+│  ┌───────────────────────────┐  │
+│  │ 🔍 Tìm tên ngân hàng...   │  │
+│  └───────────────────────────┘  │
+│                                 │
+│  Phổ biến                       │
+│  [VCB] [TCB] [MB] [VPB] [ACB]  │
+│                                 │
+│  Tất cả                         │
+│  ┌───────────────────────────┐  │
+│  │ [Logo] Agribank           │  │
+│  │ [Logo] BIDV               │  │
+│  │ [Logo] Eximbank           │  │
+│  │ ...                       │  │
+│  └───────────────────────────┘  │
+│                                 │
+│   [ Liên kết với MBBank ]       │  ← sau khi chọn
+└─────────────────────────────────┘
+```
+
 | Component | Loại | Nội dung | Điều kiện | Action |
 |---|---|---|---|---|
 | Search bar | Text input | "Tìm tên ngân hàng" | Always | Filter list realtime |
