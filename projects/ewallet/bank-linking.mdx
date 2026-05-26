@@ -350,6 +350,30 @@ sequenceDiagram
 
 ### SCR-BANK-07 — Chi tiết ngân hàng liên kết
 
+```
+┌─────────────────────────────────┐
+│  ←                             │
+│         [ Logo MBBank ]         │
+│           MBBank                │
+│        [Ngân hàng mặc định ✓]  │
+│                                 │
+│  ┌───────────────────────────┐  │
+│  │ Chủ TK  NGUYEN DUC CHINH  │  │
+│  │ Số TK   **** **** 1234    │  │
+│  │ Chi nhánh  Hà Nội - Ba Đình│  │
+│  │ Liên kết   26/05/2026     │  │
+│  └───────────────────────────┘  │
+│                                 │
+│  [ Đặt làm mặc định ]          │  ← ẩn nếu đã là default
+│                                 │
+│  ╔═══════════════════════════╗  │
+│  ║ ⚠ Có lệnh rút đang xử lý ║  │  ← nếu có pending
+│  ╚═══════════════════════════╝  │
+│                                 │
+│  [ Hủy liên kết ngân hàng ]    │  ← màu đỏ; disabled nếu pending
+└─────────────────────────────────┘
+```
+
 | Component | Loại | Nội dung | Điều kiện | Action |
 |---|---|---|---|---|
 | Bank logo + name | Header | Logo + tên ngân hàng | Always | — |
