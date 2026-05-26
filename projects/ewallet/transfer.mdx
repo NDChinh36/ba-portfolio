@@ -204,6 +204,26 @@ sequenceDiagram
 
 ### SCR-TRANS-01 — Nhập người nhận
 
+```
+┌─────────────────────────────────┐
+│  ←           Chuyển tiền       │
+│                                 │
+│  ┌─────────────────────────┐   │
+│  │ 📱 Nhập số điện thoại  📷│   │  ← 📷 = scan QR
+│  └─────────────────────────┘   │
+│                                 │
+│  Đã chuyển gần đây              │
+│  [👤 An] [👤 Bình] [👤 Chi]    │
+│                                 │
+│  Thường xuyên chuyển            │
+│  [⭐ Mẹ]  [⭐ Bạn thân]        │
+│                                 │
+│      [      Tiếp tục      ]     │
+│                                 │
+│        Hiển thị QR của tôi      │
+└─────────────────────────────────┘
+```
+
 | Component | Loại | Nội dung | Điều kiện | Action |
 |---|---|---|---|---|
 | Header | Text H1 | "Chuyển tiền" | Always | — |
