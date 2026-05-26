@@ -585,15 +585,58 @@ sequenceDiagram
 
 ---
 
-## 16. Open Questions
+## 16. Roadmap — Tính năng phát triển
 
-| # | Câu hỏi | Owner | Sprint |
-|---|---|---|---|
-| OQ-WALLET-01 | Virtual Account Number: dùng 1 STK ảo cố định per user hay generate mới mỗi session? Sinh mới an toàn hơn nhưng phức tạp hơn. | Tech Lead | Sprint 1 |
-| OQ-WALLET-02 | Số lần retry NAPAS timeout (hiện thiết kế 3 lần): Risk Team có yêu cầu log thêm để phát hiện pattern giả GD không? | Risk | Sprint 1 |
-| OQ-WALLET-03 | Cảnh báo hạn mức 80%: push notification hay chỉ in-app? Tần suất: mỗi GD sau 80% hay chỉ 1 lần? | Product | Sprint 2 |
-| OQ-WALLET-04 | Khi NAPAS rút tiền bị timeout và đang retry: user có thể bắt đầu giao dịch khác không, hay lock toàn bộ ví? | Tech Lead + Risk | Sprint 1 |
-| OQ-WALLET-05 | Balance hiển thị có real-time push (WebSocket) không, hay chỉ pull khi mở app? | Tech Lead | Sprint 2 |
+<Info>
+  Các tính năng và quyết định kỹ thuật dưới đây cần Tech Lead và Risk Team làm rõ trước Sprint tương ứng. Một số mục ảnh hưởng đến kiến trúc cốt lõi của Wallet Core và không thể dễ dàng thay đổi sau launch.
+</Info>
+
+<AccordionGroup>
+  <Accordion title="[Sprint 1] Virtual Account Number — Fixed vs Rotating Strategy" icon="hashtag">
+    **Team:** Tech Lead · **Ưu tiên:** Critical
+
+    Quyết định chiến lược cấp **Số tài khoản ảo (STK ảo)** cho mỗi user khi nạp tiền từ ngân hàng: (A) **1 STK ảo cố định** per user — đơn giản, dễ dùng; hoặc (B) **STK ảo mới cho mỗi lần nạp** — an toàn hơn, giảm rủi ro track transaction pattern, nhưng phức tạp hơn về hạ tầng.
+
+    **Yêu cầu chính:** Tech Lead chọn phương án và cập nhật API spec; document vào ADR; cập nhật SCR-WALLET-03 (màn nạp tiền).  
+    **Phụ thuộc:** NAPAS / đối tác ngân hàng xác nhận khả năng cấp STK ảo dynamic.
+  </Accordion>
+
+  <Accordion title="[Sprint 1] Fraud Detection — Pattern Analysis NAPAS Timeout Retry" icon="shield">
+    **Team:** Risk · **Ưu tiên:** High
+
+    Bổ sung khả năng **phân tích pattern** cho chuỗi NAPAS timeout retry: phát hiện user cố tình trigger retry để khai thác race condition hoặc double-credit. Ghi log đầy đủ và alert Risk Team khi phát hiện pattern bất thường.
+
+    **Yêu cầu chính:** Thêm `retry_count` và `retry_reason` vào transaction audit log; xây dựng alert rule (ví dụ ≥ 3 retry trong 10 phút / 1 user); Risk Team thiết lập threshold.  
+    **Phụ thuộc:** Risk Team cung cấp fraud pattern ruleset; Tech Lead thiết kế log schema trước Sprint 1.
+  </Accordion>
+
+  <Accordion title="[Sprint 1] Policy Scope Lock khi NAPAS Đang Retry — Per-Wallet vs Global" icon="lock">
+    **Team:** Tech Lead + Risk · **Ưu tiên:** High
+
+    Xác định **phạm vi lock** khi đang xử lý NAPAS timeout retry: (A) **Lock toàn bộ ví** — an toàn nhưng block mọi giao dịch của user; hoặc (B) **Lock per-transaction** — cho phép GD độc lập chạy song song. Ảnh hưởng đến UX và tính nhất quán dữ liệu.
+
+    **Yêu cầu chính:** Document policy vào BR-WALLET; cập nhật transaction flow; thêm trạng thái hiển thị phù hợp trên UI khi ví đang bị lock.  
+    **Phụ thuộc:** Risk Team đánh giá nguy cơ double-spend của từng phương án; Tech Lead đánh giá complexity implement per-transaction lock.
+  </Accordion>
+
+  <Accordion title="[Sprint 2] Cảnh báo Hạn mức 80% — Channel & Frequency Policy" icon="bell">
+    **Team:** Product · **Ưu tiên:** Medium
+
+    Thiết kế chi tiết tính năng cảnh báo khi user đạt **80% hạn mức chi tiêu**: gửi qua **push notification** (cao priority) hay chỉ hiện **in-app banner** (ít intrusive)? Tần suất: cảnh báo mỗi GD sau 80% hay chỉ 1 lần duy nhất?
+
+    **Yêu cầu chính:** Product quyết định channel và frequency; BA cập nhật Notification spec của module; implement trigger trong LimitEngine khi vượt ngưỡng 80%.  
+    **Phụ thuộc:** User research về notification preference; cân nhắc notification fatigue nếu alert mỗi GD.
+  </Accordion>
+
+  <Accordion title="[Sprint 2] Real-time Balance Update — WebSocket / Server-Sent Events" icon="bolt">
+    **Team:** Tech Lead · **Ưu tiên:** Medium
+
+    Thêm cơ chế **real-time balance refresh** thay vì chỉ pull khi mở app. Khi nhận GD mới (chuyển tiền đến, nạp tiền thành công), số dư tự động cập nhật trên Home screen.
+
+    **Yêu cầu chính:** Tech Lead lựa chọn WebSocket vs SSE; thiết kế reconnect strategy và backoff policy; cập nhật Home screen để subscribe balance events.  
+    **Phụ thuộc:** Đánh giá impact lên battery / data consumption; infrastructure cần hỗ trợ persistent connection tại scale mục tiêu.
+  </Accordion>
+</AccordionGroup>
 
 ---
 
