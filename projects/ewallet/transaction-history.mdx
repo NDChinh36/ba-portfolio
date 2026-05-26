@@ -458,6 +458,8 @@ sequenceDiagram
 | `HIST_005` | 400 | "Từ khóa tìm kiếm quá ngắn" | query < 2 ký tự |
 | `HIST_006` | 500 | "Không thể tải lịch sử. Vui lòng thử lại" | DB query error |
 | `HIST_007` | 503 | "Dịch vụ tạm gián đoạn. Vui lòng thử lại sau" | Service unavailable |
+| `HIST_008` | 401 | "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại." | Access token expired hoặc invalid; App tự xử lý silent refresh trước, hiển thị nếu refresh cũng fail |
+| `HIST_009` | 429 | "Bạn đang truy cập quá nhanh. Vui lòng thử lại sau ít giây." | Rate limit exceeded: 60 req/phút cho list, 30 req/phút cho search; `retry_after` trong response header |
 
 ---
 
