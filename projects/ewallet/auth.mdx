@@ -600,6 +600,8 @@ sequenceDiagram
 | POST | `/auth/logout/all` | — | `{success: true}` | Đăng xuất tất cả thiết bị |
 | GET | `/devices` | — (header: access_token) | `[{device_id, device_name, last_seen}]` | Danh sách thiết bị đã đăng nhập |
 | DELETE | `/devices/{device_id}` | — | `{success: true}` | Đăng xuất một thiết bị cụ thể |
+| GET | `/auth/login/status` | — (query: `login_request_id`) | `{status: "PENDING" / "APPROVED" / "DENIED" / "TIMEOUT", access_token?, refresh_token?}` | Device B polling trạng thái approval request; poll mỗi 5 giây; hết hạn sau 5 phút |
+| DELETE | `/auth/login/status/{login_request_id}` | — | `{success: true}` | Device B hủy yêu cầu đăng nhập đang chờ |
 
 ---
 
