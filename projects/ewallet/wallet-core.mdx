@@ -400,6 +400,33 @@ sequenceDiagram
 
 ### SCR-WALLET-08 — Nạp qua QR (Push)
 
+```
+┌─────────────────────────────────┐
+│  ←           Nạp qua QR        │
+│                                 │
+│  Dùng app ngân hàng quét QR     │
+│  hoặc chuyển đến số TK bên dưới │
+│                                 │
+│  ┌─────────────────────────┐   │
+│  │    [ QR CODE IMAGE ]    │   │
+│  │       VietQR logo       │   │
+│  └─────────────────────────┘   │
+│                                 │
+│  Số TK ảo  9704038112341234 [📋]│
+│  Tên TH    Ví điện tử App       │
+│  Nội dung  NDC2026001  [📋]    │  ← bắt buộc đúng
+│  Ngân hàng MB Bank              │
+│                                 │
+│  ╔═══════════════════════════╗  │
+│  ║ ⚠ Nhập đúng nội dung CK  ║  │
+│  ╚═══════════════════════════╝  │
+│                                 │
+│  ⏳ Đang chờ giao dịch...       │  ← auto-refresh
+│                                 │
+│     [ Tôi đã chuyển xong ]      │
+└─────────────────────────────────┘
+```
+
 | Component | Loại | Nội dung | Action |
 |---|---|---|---|
 | Instruction | Text | "Dùng app ngân hàng bất kỳ để quét QR hoặc chuyển đến số TK bên dưới" | — |
