@@ -509,6 +509,7 @@ sequenceDiagram
 | `TRANS_010` | 504 | "Giao dịch đang xử lý. Kiểm tra lịch sử trước khi thử lại." | Wallet Core timeout |
 | `TRANS_011` | 409 | — (xử lý silent; trả kết quả GD cũ) | Duplicate idempotency_key |
 | `TRANS_012` | 400 | "Mã QR không hợp lệ hoặc đã hết hạn." | Invalid/expired QR |
+| `TRANS_013` | 429 | "Bạn đang thực hiện quá nhiều giao dịch. Vui lòng thử lại sau vài giây." | Rate limit 5 GD/phút exceeded (BR-TRANS-13); `retry_after` (giây) trong response |
 
 ---
 
