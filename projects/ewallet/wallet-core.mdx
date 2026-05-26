@@ -586,7 +586,47 @@ sequenceDiagram
 
 ---
 
-## 16. Roadmap — Tính năng phát triển
+## 16. Cross-Module Data Flow
+
+<Info>
+  Phần này mô tả cách Wallet Core ghi dữ liệu sang các module khác sau mỗi giao dịch. Cần đọc bởi Developer và QA khi implement Transaction History và Notifications.
+</Info>
+
+### Wallet Core → Transaction History
+
+Sau mỗi GD hoàn tất (COMPLETED hoặc FAILED), Wallet Core ghi bản ghi vào **transactions table** (chung với Transaction History module):
+
+| Field | Kiểu | Mô tả | Nguồn |
+|---|---|---|---|
+| `tx_id` | UUID | Unique transaction ID | Wallet Core generate |
+| `user_id` | UUID | Chủ ví (sender hoặc receiver) | Từ request |
+| `type` | enum | `topup_pull`, `topup_push`, `withdrawal`, `p2p_send`, `p2p_receive`, `qr_pay` | Wallet Core classify |
+| `direction` | enum | `credit` / `debit` | Wallet Core determine |
+| `amount` | bigint (VND) | Số tiền tuyệt đối (không âm) | Từ request |
+| `fee` | bigint | Phí GD (hiện tại = 0) | Fee engine |
+| `status` | enum | `success`, `pending`, `failed` | Wallet Core outcome |
+| `counterparty_name` | string | Tên đối tác (masked nếu cần) | User Service lookup |
+| `description` | string | Nội dung chuyển khoản (nếu có) | Từ request |
+| `napas_ref` | string? | Mã tham chiếu NAPAS (nullable — chỉ có với topup/rút/QR) | NAPAS response |
+| `balance_after` | bigint | Số dư ví sau khi GD commit | Wallet Core snapshot tại commit |
+| `created_at` | timestamp | Thời điểm GD khởi tạo | Server timestamp |
+| `completed_at` | timestamp? | Thời điểm GD hoàn tất (nullable) | Wallet Core timestamp |
+
+**Ghi chú cho các module khác:**
+- **Transfer module**: Sau khi `AtomicTransfer` COMMIT, Wallet Core ghi 2 records: `p2p_send` cho sender + `p2p_receive` cho recipient
+- **QR Payment module**: Ghi 1 record `qr_pay` cho buyer sau NAPAS credit confirm
+- **Transaction History module**: Chỉ READ — không ghi trực tiếp vào transactions table
+- **Cache invalidation**: Wallet Core emit event `WALLET_TX_CREATED` → Transaction Service bắt event → invalidate Redis cache `txlist_{user_id}_default`
+
+### Wallet Core → KYC Module
+
+Khi user KYC thành công và Tier thay đổi:
+- KYC Service gọi `PATCH /internal/wallet/tier` với `{user_id, new_tier}` để Wallet Core cập nhật limit engine
+- Wallet Core reload limit config cho user ngay lập tức (không cần restart)
+
+---
+
+## 17. Roadmap — Tính năng phát triển
 
 <Info>
   Các tính năng và quyết định kỹ thuật dưới đây cần Tech Lead và Risk Team làm rõ trước Sprint tương ứng. Một số mục ảnh hưởng đến kiến trúc cốt lõi của Wallet Core và không thể dễ dàng thay đổi sau launch.
