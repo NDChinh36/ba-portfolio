@@ -279,7 +279,7 @@ sequenceDiagram
         Auth-->>DevA: {logout: true}
         DevA->>UserA: Đăng xuất → màn Welcome
 
-        DevB->>Auth: GET /auth/login/status {approval_token} (polling mỗi 3s)
+        DevB->>Auth: GET /auth/login/status?login_request_id={id} (polling mỗi 5s)
         Auth-->>DevB: {status: approved, access_token, refresh_token}
         DevB->>UserB: Đăng nhập thành công → Home
 
