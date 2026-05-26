@@ -748,6 +748,37 @@ sequenceDiagram
 
 ---
 
+## 14. Cross-Module Handoff
+
+### QR Payment → Transfer P2P (BR-QR-11)
+
+Khi QR parser nhận ra đây là QR cá nhân nội bộ ví (`ewallet://transfer?user_id=xxx`), module redirect sang Transfer P2P. Bảng sau mô tả payload handoff để Developer Transfer module xử lý đúng:
+
+| Parameter | Kiểu | Giá trị | Ghi chú |
+|---|---|---|---|
+| `recipient_id` | UUID | `user_id` parse từ QR | Prefilled vào SCR-TRANS-02 |
+| `amount` | bigint? | Số tiền từ dynamic QR (nếu có) | Nullable — chỉ có khi QR động có embed amount; Transfer module hiển thị sẵn nhưng cho phép chỉnh sửa |
+| `source` | string | `"QR_SCAN"` | Để Transfer module biết entry point; không hiển thị cho user |
+
+**Deeplink scheme:** `ewallet://transfer?recipient_id={uuid}&amount={amount_optional}&source=QR_SCAN`
+
+**Transfer module behavior khi nhận:**
+- `recipient_id` prefilled → bỏ qua bước nhập SĐT; thẳng đến SCR-TRANS-02 (Xác nhận người nhận)
+- `amount` prefilled (nếu có) → hiển thị sẵn trên SCR-TRANS-03, user vẫn có thể xóa và nhập lại
+- Nếu user là chủ QR (`recipient_id == current_user_id`): hiện toast "Đây là QR của bạn" và redirect về SCR-TRANS-01 trắng
+
+### QR Payment → Transaction History
+
+Sau khi GD `qr_pay` hoàn tất, Wallet Core ghi 1 record với `type: qr_pay` vào transactions table (xem Wallet Core Module — Section 16 "Cross-Module Data Flow" để biết đầy đủ schema).
+
+Transaction History hiển thị GD `qr_pay` với:
+- Label: "Thanh toán QR — {bank_name}"
+- Icon: ☐
+- Direction: debit
+- `napas_ref`: có (bắt buộc với QR → NAPAS flow)
+
+---
+
 ## 15. Roadmap — Tính năng phát triển
 
 <Info>
