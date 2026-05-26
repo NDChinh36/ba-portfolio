@@ -661,7 +661,7 @@ sequenceDiagram
 | Profile PATCH | P95 < 1s | Gồm S3 upload nếu có avatar mới |
 | Avatar upload | P95 < 3s | Phụ thuộc file size + network |
 | Approval request delivery | P95 < 2s | Push phải đến Device A trong 2s |
-| Approval polling (Device B) | 3s interval | Không quá 100 polls/request |
+| Approval polling (Device B) | 5s interval | Không quá 60 polls/request (300s ÷ 5s); aligned với `poll_after: 5s` trả về trong 202 response |
 
 ### Bảo mật (Security)
 
