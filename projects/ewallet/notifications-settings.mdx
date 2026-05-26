@@ -629,7 +629,8 @@ sequenceDiagram
 | DELETE | `/auth/session` | Đăng xuất thiết bị hiện tại | JWT |
 | POST | `/auth/device/approve` | Device A xác nhận cho phép Device B | JWT + approval_token |
 | POST | `/auth/device/deny` | Device A từ chối Device B | JWT + approval_token |
-| GET | `/auth/login/status` | Device B poll trạng thái chờ approval | approval_token |
+| GET | `/auth/login/status` | Device B poll trạng thái chờ approval (query param: `login_request_id`) | approval_token |
+| GET | `/auth/pending-approvals` | Device A fetch danh sách approval request đang chờ khi reconnect | JWT |
 
 ---
 
