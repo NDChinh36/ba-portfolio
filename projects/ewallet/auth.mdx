@@ -400,6 +400,29 @@ sequenceDiagram
 
 ### SCR-AUTH-09 — Đăng nhập — Nhập PIN
 
+```
+┌─────────────────────────────────┐
+│                                 │
+│         [  Avatar 60px ]        │
+│          090**** 567            │
+│       Không phải bạn?           │
+│                                 │
+│       Nhập mã PIN               │
+│         ● ● ● ─ ─ ─             │
+│                                 │
+│  ⚠ PIN không đúng. Còn 3 lần.  │  ← sau lần sai đầu
+│                                 │
+│  ┌─────────────────────────┐   │
+│  │  1    2    3            │   │
+│  │  4    5    6            │   │
+│  │  7    8    9            │   │
+│  │  👁    0    ⌫           │   │  ← 👁 = biometric
+│  └─────────────────────────┘   │
+│                                 │
+│           Quên PIN?             │
+└─────────────────────────────────┘
+```
+
 | Component | Loại | Label | Điều kiện hiển thị | Action |
 |---|---|---|---|---|
 | Avatar + SĐT | Display | Ảnh đại diện + SĐT (ẩn giữa) | Always | — |
