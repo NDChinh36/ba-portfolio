@@ -213,48 +213,72 @@ sequenceDiagram
 
 ---
 
-## 7. Sequence Diagram — Đăng nhập (PIN + Thiết bị mới)
+## 7. Sequence Diagram — Đăng nhập (PIN + 1-Device Approval Flow)
 
 ```mermaid
 sequenceDiagram
-    actor User
-    participant App
+    autonumber
+    actor DeviceB as 📱 Device B (Mới)
+    actor DeviceA as 📱 Device A (Hiện tại)
+    participant App as App (B)
     participant AuthService
     participant DeviceService
     participant TokenService
     participant NotifService
 
-    User->>App: Nhập SĐT + PIN
-    App->>AuthService: POST /auth/login {phone, pin_hash, device_id, device_info}
+    DeviceB->>App: Nhập SĐT + PIN
+    App->>AuthService: POST /auth/login {phone, pin_hash, device_id_B, device_info_B}
 
-    AuthService->>AuthService: Lookup user by phone
-    AuthService->>AuthService: Check account_status != LOCKED
-    AuthService->>AuthService: Verify bcrypt(pin_hash)
+    Note over AuthService: Lookup user → verify bcrypt(pin_hash)
 
     alt PIN đúng
-        AuthService->>DeviceService: GET /devices?user_id&device_id
-        DeviceService-->>AuthService: {known: false}
+        AuthService->>DeviceService: GET /devices/active?user_id
+        DeviceService-->>AuthService: {active_device_id: device_id_A, device_info_A}
 
-        AuthService->>TokenService: IssueTokens(user_id)
-        TokenService-->>AuthService: {access_token, refresh_token}
+        Note over AuthService: Có thiết bị active → 1-device policy → yêu cầu approval
 
-        AuthService->>DeviceService: RegisterDevice(user_id, device_id, device_info)
-        AuthService->>NotifService: PushAlert(user_id, "NEW_DEVICE_LOGIN", device_info)
-        NotifService-->>AuthService: {sent: true}
+        AuthService->>AuthService: Tạo approval_token (JWT, TTL 300s)
+        AuthService-->>App: 202 {status: "PENDING_APPROVAL", login_request_id, expires_in: 300}
+        App->>DeviceB: SCR-AUTH-15: Đang chờ xác nhận — countdown 5:00
 
-        AuthService-->>App: 200 {access_token, refresh_token, new_device: true}
-        App->>User: SCR-AUTH-15: Cảnh báo thiết bị mới
+        AuthService->>NotifService: Push(device_id_A, "NEW_DEVICE_APPROVAL",\n{device_info_B, login_request_id})
+        NotifService->>DeviceA: Push notification → Tap mở SCR-SETTINGS-05
+
+        loop Polling mỗi 5s
+            App->>AuthService: GET /auth/login/status?login_request_id={id}
+            AuthService-->>App: {status: "PENDING"}
+        end
+
+        alt Device A Đồng ý (trong 5 phút)
+            DeviceA->>AuthService: POST /auth/device/approve {approval_token}
+            AuthService->>TokenService: IssueTokens(user_id, device_id_B)
+            TokenService-->>AuthService: {access_token, refresh_token}
+            AuthService->>DeviceService: SetActiveDevice(user_id, device_id_B)
+            DeviceService->>DeviceService: Revoke refresh token của Device A
+            AuthService-->>App: {status: "APPROVED", access_token, refresh_token}
+            App->>DeviceB: Chuyển Home screen
+
+        else Device A Từ chối
+            DeviceA->>AuthService: POST /auth/device/deny {approval_token}
+            AuthService-->>App: {status: "DENIED"}
+            App->>DeviceB: AUTH_015 — "Thiết bị hiện tại đã từ chối. Liên hệ CSKH nếu cần."
+
+        else Timeout 5 phút (Device A không phản hồi)
+            AuthService->>AuthService: approval_token expired → auto-deny
+            AuthService-->>App: {status: "TIMEOUT"}
+            App->>DeviceB: AUTH_016 — "Hết thời gian chờ xác nhận. Liên hệ CSKH."
+        end
 
     else PIN sai (< 5 lần)
         AuthService->>AuthService: Increment failed_attempts
-        AuthService-->>App: 401 {error: "INVALID_PIN",\nremaining_attempts: N}
-        App->>User: "PIN không đúng. Còn N lần."
+        AuthService-->>App: 401 {error: "INVALID_PIN", remaining_attempts: N}
+        App->>DeviceB: "PIN không đúng. Còn N lần."
 
     else PIN sai lần 5
         AuthService->>AuthService: Set account_status = LOCKED\nlock_until = now + 30min
         AuthService->>NotifService: SendSMS(phone, "ACCOUNT_LOCKED")
-        AuthService-->>App: 423 {error: "ACCOUNT_LOCKED",\nunlock_at: timestamp}
-        App->>User: "Tài khoản bị khóa. Thử lại sau X phút."
+        AuthService-->>App: 423 {error: "ACCOUNT_LOCKED", unlock_at: timestamp}
+        App->>DeviceB: "Tài khoản bị khóa. Thử lại sau X phút."
     end
 ```
 
