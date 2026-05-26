@@ -1,0 +1,196 @@
+---
+title: "BRD — Futures Position Calculator"
+description: "BRD-FUTURES-CALC-001 | Business Requirements Document"
+icon: "file-contract"
+---
+
+## Document Header
+
+| Trường | Giá trị |
+|---|---|
+| **ID** | BRD-FUTURES-CALC-001 |
+| **Phiên bản** | 1.0 |
+| **Trạng thái** | Draft |
+| **Ngày tạo** | 2026-05-26 |
+| **Author** | BA Team |
+| **Reviewer** | Head of Product |
+| **Approver** | CPO / Compliance |
+| **Tài liệu liên quan** | PRD-FUTURES-CALC-001, UX-FUTURES-CALC-001, FRD-FEE-TOKEN-001 |
+
+---
+
+## Người đọc dự kiến
+
+| Vai trò | Mục đích đọc |
+|---|---|
+| Head of Product | Phê duyệt scope và business objective |
+| Compliance | Xác nhận không có rủi ro pháp lý về công cụ tính toán tài chính |
+| Product Manager | Chuyển đổi sang PRD và ưu tiên backlog |
+| Tech Lead | Nắm constraint kỹ thuật trước khi thiết kế giải pháp |
+| UX Lead | Hiểu pain point người dùng để thiết kế luồng |
+| CS Manager | Xác nhận pain point thực tế từ ticket |
+
+---
+
+## Lịch sử thay đổi
+
+| Phiên bản | Ngày | Người thay đổi | Nội dung |
+|---|---|---|---|
+| 1.0 | 2026-05-26 | BA Team | Tạo mới — Draft đầu tiên |
+
+---
+
+## 1. Executive Summary
+
+Futures Position Calculator là công cụ tính toán vị thế tích hợp trực tiếp vào màn Futures Trading, giúp trader ước tính PnL, giá mục tiêu và giá thanh lý trước khi đặt lệnh. Công cụ hoạt động hoàn toàn phía client, không yêu cầu đăng nhập để sử dụng chức năng tính toán cơ bản.
+
+Nhu cầu phát sinh từ hai vấn đề thực tế: (1) CS team liên tục nhận ticket giải thích cách tính PnL, margin và liquidation price — gây lãng phí nguồn lực hỗ trợ; (2) trader phải rời khỏi nền tảng để dùng công cụ bên ngoài, làm gián đoạn luồng quyết định và giảm tỷ lệ chuyển đổi sang đặt lệnh thực sự.
+
+Phiên bản MVP bao gồm ba calculator độc lập (PnL, Target Price, Liquidation Price), tính năng Copy & Fill để đưa thông số sang Order Form, và checkbox phí bằng Native Token. Sản phẩm phục vụ ba nhóm trader (mới, thường, pro) trên cả Web và Mobile.
+
+---
+
+## 2. Business Context
+
+### As-Is vs To-Be
+
+| Chiều | As-Is (Hiện tại) | To-Be (Mục tiêu) |
+|---|---|---|
+| **Trader tính PnL** | Dùng spreadsheet hoặc tool ngoài, tự tra công thức | Tính ngay trên màn giao dịch, công thức chuẩn của nền tảng |
+| **Trader hiểu liquidation risk** | Không có công cụ; học qua kinh nghiệm hoặc hỏi CS | Calculator hiển thị giá thanh lý tức thì theo leverage & số lượng |
+| **Chuyển từ tính toán → đặt lệnh** | Thủ công: ghi kết quả, nhập lại vào Order Form | Copy & Fill tự động điền thông số, auto-select LIMIT/STOP |
+| **Phí giao dịch** | Không rõ phí trước khi đặt lệnh | Hiển thị phí ước tính, hỗ trợ so sánh phí Native Token vs thông thường |
+| **CS ticket về tính toán** | Lượng ticket cao, mất 5–10 phút/ticket giải thích | Trader tự tính; CS chỉ xử lý ticket thực sự cần hỗ trợ |
+
+### Mô tả bối cảnh
+
+Thị trường futures crypto có đặc thù là leverage cao và biến động lớn, khiến việc tính toán sai dẫn đến rủi ro thanh lý ngay lập tức. Trader mới — nhóm chiếm tỷ trọng cao trong acquisition — thường không nắm được công thức tính PnL có phí và margin theo leverage, dẫn đến quyết định không cân nhắc kỹ rủi ro. Đây là pain point đủ lớn để ảnh hưởng cả đến retention và uy tín nền tảng.
+
+---
+
+## 3. Stakeholder Analysis
+
+| Stakeholder | Vai trò | Lợi ích khi có tính năng | Mức độ ảnh hưởng | Mức độ quan tâm |
+|---|---|---|---|---|
+| Trader mới | Người dùng cuối | Hiểu risk trước khi đặt lệnh; tránh liquidation | Cao | Cao |
+| Trader thường | Người dùng cuối | Tính toán nhanh, không cần rời màn | Cao | Trung bình |
+| Trader pro | Người dùng cuối | Copy & Fill giảm thao tác thủ công | Trung bình | Thấp |
+| CS Team | Người hưởng lợi gián tiếp | Giảm ticket giải thích công thức | Trung bình | Cao |
+| Product Team | Owner tính năng | Tăng engagement, conversion, Native Token adoption | Cao | Cao |
+| Compliance | Reviewer rủi ro | Đảm bảo công cụ không bị hiểu là cam kết lợi nhuận | Cao | Trung bình |
+| Finance / Token Team | Liên quan phí Native Token | Tăng tỷ lệ dùng Native Token; cần cung cấp fee rate API | Trung bình | Trung bình |
+
+---
+
+## 4. Business Objectives & KPIs
+
+| ID | Mục tiêu nghiệp vụ | KPI | Target | Timeframe |
+|---|---|---|---|---|
+| OBJ-01 | Giảm CS ticket liên quan tính toán PnL, margin, liquidation | Số ticket/tháng thuộc category "calculation" | Giảm 40% | 3 tháng sau launch |
+| OBJ-02 | Tăng tỷ lệ chuyển đổi từ "xem giá" sang "đặt lệnh" qua Copy & Fill | % phiên dùng Calculator kết thúc bằng Order được đặt | Đạt 25% | 3 tháng sau launch |
+| OBJ-03 | Tăng tỷ lệ sử dụng Native Token làm phí giao dịch | % giao dịch futures dùng Native Token | Tăng 15 điểm % so với baseline | 6 tháng sau launch |
+| OBJ-04 | Giảm tỷ lệ trader mới bị liquidation trong 30 ngày đầu | % tài khoản mới có ít nhất 1 liquidation event trong tháng đầu | Giảm 20% | 6 tháng sau launch |
+
+<Info>
+Target KPI trong bảng trên là ước tính sơ bộ, cần được CS Manager và Growth Team xác nhận baseline trước khi finalize.
+</Info>
+
+---
+
+## 5. Business Requirements
+
+<Info>
+Phần này mô tả **yêu cầu cấp nghiệp vụ** — quy tắc và ràng buộc mà sản phẩm phải đáp ứng về mặt business. Chi tiết kỹ thuật và acceptance criteria được mô tả trong PRD-FUTURES-CALC-001.
+</Info>
+
+| ID | Yêu cầu nghiệp vụ | Mức độ ưu tiên | Rationale |
+|---|---|---|---|
+| BR-BUS-01 | Kết quả tính toán phải sử dụng đúng công thức và fee rate của nền tảng — không được dùng giá trị hardcode | Bắt buộc | Kết quả lệch với thực tế sẽ gây mất tin tưởng và có thể phát sinh tranh chấp |
+| BR-BUS-02 | Công cụ phải có disclaimer rõ ràng: kết quả mang tính tham khảo, không phải cam kết lợi nhuận | Bắt buộc | Yêu cầu của Compliance để tránh rủi ro pháp lý |
+| BR-BUS-03 | Chức năng tính toán cơ bản (PnL, Target Price, Liquidation) phải hoạt động không cần đăng nhập | Bắt buộc | Tăng khả năng tiếp cận, phục vụ user trong giai đoạn đánh giá nền tảng |
+| BR-BUS-04 | Copy & Fill chỉ khả dụng khi user đã đăng nhập; hệ thống phải nhắc login thay vì ẩn tính năng | Bắt buộc | UX rõ ràng — user biết lý do tính năng bị khóa |
+| BR-BUS-05 | Khi fee rate thay đổi (Maker/Taker/Native Token), Calculator phải phản ánh fee rate mới trong vòng 24 giờ | Bắt buộc | Đảm bảo kết quả không lệch thực tế quá lâu |
+| BR-BUS-06 | Checkbox "Phí bằng Native Token" phải hiển thị cả hai kịch bản (đủ số dư / không đủ số dư) và thông báo rõ khi không đủ | Cao | Tránh user nhầm mình đang được giảm phí nhưng thực tế không được áp dụng |
+| BR-BUS-07 | Copy & Fill khi auto-select LIMIT/STOP phải tương thích với Order Form hiện hành; không được ghi đè lệnh đang soạn của user nếu không có xác nhận | Cao | Tránh mất dữ liệu lệnh đang soạn |
+| BR-BUS-08 | Trải nghiệm trên Mobile phải đảm bảo Copy & Fill không mất state khi user chuyển tab hoặc bị gián đoạn | Cao | Mobile là kênh chiếm >60% session; mất state ảnh hưởng trực tiếp OBJ-02 |
+
+---
+
+## 6. Constraints & Assumptions
+
+### Ràng buộc (Constraints)
+
+| ID | Loại | Mô tả |
+|---|---|---|
+| CON-01 | Kỹ thuật | Tính toán thực hiện hoàn toàn phía client — không có computation API backend |
+| CON-02 | Kỹ thuật | Fee rate phải được lấy từ hệ thống cấu hình hiện có; không hardcode |
+| CON-03 | Pháp lý | Bắt buộc có disclaimer ở mọi điểm hiển thị kết quả tính toán |
+| CON-04 | Nền tảng | Phải hoạt động trên Web (desktop & responsive) và Mobile (iOS & Android) |
+| CON-05 | Thời gian | MVP phải deliver trong Q3 2026; các tính năng nâng cao đưa vào roadmap Q4 |
+
+### Giả định (Assumptions)
+
+| ID | Giả định | Rủi ro nếu sai |
+|---|---|---|
+| ASS-01 | Fee rate (Maker, Taker, Native Token discount) được expose qua API hoặc config có thể đọc từ client | Phải bổ sung API — tác động đến timeline |
+| ASS-02 | Order Form hiện tại có interface để nhận dữ liệu từ Copy & Fill mà không cần refactor lớn | Có thể phát sinh effort kỹ thuật đáng kể |
+| ASS-03 | Trader mới chiếm >30% monthly active futures traders và là nhóm có nhu cầu cao nhất với công cụ này | Nếu sai, mức độ impact của OBJ-04 sẽ thấp hơn dự kiến |
+| ASS-04 | Số dư Native Token của user có thể kiểm tra real-time từ phía client khi user đã đăng nhập | Cần confirm với Wallet team |
+
+---
+
+## 7. Business Risks
+
+<Warning>
+Các rủi ro dưới đây cần được review và sign-off bởi Compliance trước khi tính năng được publish.
+</Warning>
+
+| ID | Rủi ro | Xác suất | Tác động | Biện pháp giảm thiểu |
+|---|---|---|---|---|
+| RISK-01 | Công thức tính sai → user trade dựa trên kết quả không chính xác | Thấp | Rất cao | Kiểm thử công thức độc lập bởi 2 bên (BA + Tech); test case bao gồm edge cases về leverage, phí, hướng lệnh |
+| RISK-02 | Fee rate thay đổi mà Calculator chưa cập nhật → kết quả lệch thực tế | Trung bình | Cao | Định nghĩa SLA cập nhật fee rate (≤24h); có cơ chế thông báo khi fee rate vừa thay đổi |
+| RISK-03 | User hiểu kết quả Calculator là cam kết lợi nhuận từ nền tảng | Trung bình | Rất cao | Disclaimer bắt buộc; ngôn từ UI phải rõ ràng "ước tính" / "tham khảo"; review bởi Compliance trước launch |
+| RISK-04 | Mobile UX kém khiến Copy & Fill mất state khi chuyển tab hoặc bị interrupt | Cao | Trung bình | Kiểm thử trên thiết bị thực (iOS + Android); giữ state trong session storage; thông báo khi state bị reset |
+
+---
+
+## 8. Out of Scope (MVP)
+
+Các hạng mục dưới đây **không nằm trong phạm vi MVP** và sẽ được xem xét trong các phiên bản tiếp theo:
+
+- **Lưu lịch sử tính toán** — lưu các kịch bản đã tính để user tham khảo lại
+- **So sánh kịch bản** — tính đồng thời nhiều kịch bản PnL trên cùng màn hình
+- **Calculator cho Cross Margin** — MVP chỉ hỗ trợ Isolated Margin
+- **Tích hợp portfolio** — tính PnL theo tổng danh mục đang mở
+- **API công khai cho Calculator** — cho phép bên thứ ba nhúng công thức
+- **Tính toán thuế** — estimate thuế lợi vốn trên PnL
+- **Thông báo khi giá tiệm cận giá thanh lý** — alert dựa trên kết quả Liquidation Calculator
+
+---
+
+## 9. Dependencies
+
+| Loại | Tài liệu / Hệ thống | Mô tả phụ thuộc | Trạng thái |
+|---|---|---|---|
+| Tài liệu | PRD-FUTURES-CALC-001 | Chi tiết functional requirements và acceptance criteria | Cần tạo sau khi BRD approved |
+| Tài liệu | FRD-FEE-TOKEN-001 | Quy tắc áp dụng phí Native Token và điều kiện eligibility | Cần confirm version hiện hành |
+| Hệ thống | Fee Rate Config / API | Cung cấp Maker/Taker/Native Token rate cho Calculator | Cần confirm interface với backend team |
+| Hệ thống | Order Form Interface | Nhận dữ liệu từ Copy & Fill; hỗ trợ pre-fill và auto-select order type | Cần assess effort với Tech Lead |
+| Hệ thống | Wallet / Balance API | Kiểm tra số dư Native Token real-time khi user bật checkbox phí | Cần confirm với Wallet team |
+| Hệ thống | Analytics / Event Tracking | Đo OBJ-02 (conversion Calculator → Order) và OBJ-03 (Native Token adoption) | Cần định nghĩa event schema |
+
+---
+
+## 10. Approval Sign-off
+
+| Vai trò | Họ tên | Ngày | Chữ ký / Xác nhận |
+|---|---|---|---|
+| Author (BA) | | | |
+| Product Manager | | | |
+| Head of Product | | | |
+| Compliance | | | |
+| CPO | | | |
+
+<Info>
+Tài liệu này được coi là **approved** khi Head of Product và Compliance đã xác nhận. CPO sign-off chỉ bắt buộc nếu tính năng ảnh hưởng đến fee structure hoặc regulatory commitment.
+</Info>
