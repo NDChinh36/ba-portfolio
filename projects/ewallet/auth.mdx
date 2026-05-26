@@ -561,6 +561,9 @@ sequenceDiagram
 | BR-AUTH-11 | Biometric chỉ là shortcut; vẫn cần PIN khi re-enroll hoặc biometric fail 3 lần | SCR-AUTH-10 |
 | BR-AUTH-12 | Session timeout: tự động logout sau 30 phút inactive (app background) | App client |
 | BR-AUTH-13 | Tuổi đăng ký tối thiểu: 15 tuổi (Nghị định 52/2024) | SCR-AUTH-07 |
+| BR-AUTH-14 | Nếu không có thiết bị nào đang active (lần đăng nhập đầu tiên, hoặc sau khi CSKH reset), thiết bị mới được cấp session ngay mà không cần approval | Auth Service, DeviceService |
+| BR-AUTH-15 | Approval request hết hạn sau 5 phút; hệ thống tự động từ chối (auto-deny) → Device B nhận AUTH_016 | Auth Service |
+| BR-AUTH-16 | Mất thiết bị (Device A không tiếp cận được): không có self-service path; phải liên hệ CSKH để revoke session hiện tại và cấp quyền cho thiết bị mới | CSKH, Security Team |
 
 ---
 
