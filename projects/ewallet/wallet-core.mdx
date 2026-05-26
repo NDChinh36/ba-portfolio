@@ -592,3 +592,55 @@ sequenceDiagram
 | OQ-WALLET-03 | Cảnh báo hạn mức 80%: push notification hay chỉ in-app? Tần suất: mỗi GD sau 80% hay chỉ 1 lần? | Product | Sprint 2 |
 | OQ-WALLET-04 | Khi NAPAS rút tiền bị timeout và đang retry: user có thể bắt đầu giao dịch khác không, hay lock toàn bộ ví? | Tech Lead + Risk | Sprint 1 |
 | OQ-WALLET-05 | Balance hiển thị có real-time push (WebSocket) không, hay chỉ pull khi mở app? | Tech Lead | Sprint 2 |
+
+---
+
+## 17. Non-Functional Requirements (NFR)
+
+### Performance
+
+| Chỉ số | Target | Ghi chú |
+|---|---|---|
+| Balance read API | P95 < 100ms | Redis cache; không đọc DB trực tiếp |
+| Nạp tiền (pull) — commit response | P95 < 3s | Tổng thời gian từ PIN confirm đến credit ví |
+| Nạp tiền (push) — webhook processing | P95 < 1s | Thời gian từ NAPAS webhook đến credit ví user |
+| Rút tiền — NAPAS roundtrip | P95 < 5s | Phụ thuộc NAPAS SLA; P99 < 10s |
+| Atomic debit/credit (DB transaction) | P95 < 200ms | PostgreSQL với row-level lock |
+| Virtual account QR load | P95 < 300ms | Cached per user |
+
+### Bảo mật (Security)
+
+| Yêu cầu | Mô tả |
+|---|---|
+| Balance mutation authorization | Mọi thao tác ghi vào balance phải qua Wallet Core Service; không có direct DB write |
+| DB constraint | `CHECK (balance_available >= 0)` và `CHECK (balance_total >= balance_available)` enforce tại DB level |
+| Idempotency bắt buộc | Mọi topup/withdraw API phải kèm `idempotency_key`; server cache 24h |
+| NAPAS webhook authentication | Verify chữ ký HMAC từ NAPAS; whitelist IP NAPAS; reject request thiếu chữ ký |
+| Audit logging | Mọi balance mutation được log: user_id, amount, tx_type, before_balance, after_balance, ip, device_id, timestamp |
+
+### Tính sẵn sàng & Độ tin cậy
+
+| Chỉ số | Target | Ghi chú |
+|---|---|---|
+| Wallet Core Service uptime | ≥ 99.95% | Payment-critical; ≤ 4.4 giờ downtime/năm |
+| NAPAS 247 dependency | ≥ 99.5% | NAPAS SLA cam kết; có retry 3 lần |
+| Circuit breaker (NAPAS) | Mở sau 5 lỗi liên tiếp | Fallback: queue lệnh; notify user; tự đóng sau 60s |
+| Graceful read-only mode | Nếu write path fail: vẫn hiển thị balance (read-only); không cho GD mới | Tránh total outage |
+| DB replication | Sync replica cho reads; primary cho writes | Không single point of failure |
+
+### Tính toàn vẹn dữ liệu & Ledger
+
+| Yêu cầu | Mô tả |
+|---|---|
+| Double-entry ledger | Mỗi transaction tạo 2 ledger entries: debit (giảm source) + credit (tăng destination); tổng balance của hệ thống luôn = 0 |
+| Daily reconciliation | Automated reconciliation mỗi 00:30 UTC+7: so sánh ledger entries vs. wallet balance vs. NAPAS statement |
+| Alert on mismatch | Nếu reconciliation lệch > 0 đồng → alert ngay cho Finance + Tech Lead |
+
+### Lưu trữ & Compliance
+
+| Loại dữ liệu | Thời gian lưu | Cơ sở pháp lý |
+|---|---|---|
+| Transaction records (nạp, rút, phí) | Tối thiểu 5 năm | Nghị định 52/2024 |
+| Ledger entries | Tối thiểu 5 năm | Accounting & audit requirement |
+| Balance snapshots (daily) | 5 năm | Reconciliation & dispute resolution |
+| NAPAS webhook raw payload | 1 năm | Technical audit; dispute với NAPAS |
