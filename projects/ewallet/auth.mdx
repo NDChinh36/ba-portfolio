@@ -603,6 +603,7 @@ sequenceDiagram
 | DELETE | `/devices/{device_id}` | — | `{success: true}` | Đăng xuất một thiết bị cụ thể |
 | GET | `/auth/login/status` | — (query: `login_request_id`) | `{status: "PENDING" / "APPROVED" / "DENIED" / "TIMEOUT", access_token?, refresh_token?}` | Device B polling trạng thái approval request; poll mỗi 5 giây; hết hạn sau 5 phút |
 | DELETE | `/auth/login/status/{login_request_id}` | — | `{success: true}` | Device B hủy yêu cầu đăng nhập đang chờ |
+| GET | `/auth/pending-approvals` | — (header: access_token) | `[{login_request_id, device_info, created_at, expires_at}]` | Device A fetch danh sách approval request đang chờ — dùng khi push notification không đến (Device A vừa reconnect); trả list rỗng nếu không có request pending |
 
 ---
 
