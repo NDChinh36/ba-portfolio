@@ -1,0 +1,442 @@
+---
+title: "User Stories — Futures Position Calculator"
+description: "US-FUTURES-CALC-001 | User Stories & Acceptance Criteria"
+icon: "list-check"
+---
+
+## Thông tin tài liệu
+
+| Trường | Giá trị |
+|---|---|
+| **Mã tài liệu** | US-FUTURES-CALC-001 |
+| **Tên tính năng** | Futures Position Calculator |
+| **Loại tài liệu** | User Stories & Acceptance Criteria |
+| **Phiên bản** | 1.0.0 |
+| **Ngày tạo** | 2026-05-26 |
+| **Trạng thái** | Draft |
+
+---
+
+## Người đọc dự kiến
+
+| Vai trò | Mục đích đọc |
+|---|---|
+| Product Manager | Xác nhận scope và priority |
+| Frontend Developer | Hiểu luồng UX và điều kiện render |
+| QA Engineer | Xây dựng test case từ Acceptance Criteria |
+| UX Designer | Nắm rõ nhu cầu người dùng từng persona |
+| Business Analyst | Tham chiếu khi viết spec kỹ thuật |
+
+---
+
+## Lịch sử thay đổi
+
+| Phiên bản | Ngày | Tác giả | Mô tả thay đổi |
+|---|---|---|---|
+| 1.0.0 | 2026-05-26 | BA Team | Tạo mới toàn bộ tài liệu — 10 user stories |
+
+---
+
+## Story Map
+
+| Epic | Story ID | User Story | Priority | Story Points |
+|---|---|---|---|---|
+| **Tính toán cốt lõi** | US-01 | Tính PnL vị thế Futures | Must Have | 5 |
+| **Tính toán cốt lõi** | US-02 | Tính Giá mục tiêu theo PnL mong muốn | Must Have | 5 |
+| **Tính toán cốt lõi** | US-03 | Tính Giá mục tiêu theo %PnL không cần số lượng | Should Have | 3 |
+| **Tính toán cốt lõi** | US-04 | Tính Giá thanh lý để kiểm soát rủi ro | Must Have | 5 |
+| **Trải nghiệm sử dụng** | US-05 | Giữ nguyên thông số mặc định khi chuyển tab | Must Have | 3 |
+| **Trải nghiệm sử dụng** | US-06 | Sao chép thông số tự động điền vào form đặt lệnh | Must Have | 8 |
+| **Truy cập & Xác thực** | US-07 | Sử dụng calculator khi chưa đăng nhập | Must Have | 2 |
+| **Fee & Ví** | US-08 | Nhận cảnh báo và xử lý khi Native Token không đủ | Must Have | 8 |
+| **Onboarding** | US-09 | Xem hướng dẫn sử dụng lần đầu | Should Have | 3 |
+| **Validation** | US-10 | Tính toán với size validation | Must Have | 3 |
+
+**Tổng Story Points:** 45
+
+---
+
+## Chi tiết từng User Story
+
+---
+
+### US-01: Tính PnL vị thế Futures
+
+**Epic:** Tính toán cốt lõi
+**Persona:** Trader thường
+**Priority:** Must Have
+**Story Points:** 5
+
+**User Story:**
+> Là một Trader thường giao dịch 3–5 lần mỗi ngày, tôi muốn nhập giá vào lệnh, giá thoát lệnh, số lượng và đòn bẩy để tính ngay PnL dự kiến, để tôi quyết định có nên vào lệnh hay không mà không cần tự tính tay.
+
+**Acceptance Criteria:**
+
+| # | Điều kiện | Kết quả mong đợi |
+|---|---|---|
+| AC-01-01 | Trader nhập đủ 4 trường: Giá vào, Giá thoát, Số lượng, Đòn bẩy — tất cả hợp lệ | Hệ thống hiển thị ngay PnL (USDT) và %PnL theo thời gian thực |
+| AC-01-02 | Trader nhập Giá thoát > Giá vào với vị thế Long | PnL hiển thị giá trị dương, màu xanh |
+| AC-01-03 | Trader nhập Giá thoát < Giá vào với vị thế Long | PnL hiển thị giá trị âm, màu đỏ |
+| AC-01-04 | Trader đang dùng Web và nhập PnL âm | Hệ thống chấp nhận và hiển thị bình thường |
+| AC-01-05 | Trader đang dùng Mobile và cố nhập Giá thoát dẫn tới PnL âm | Hệ thống hiển thị cảnh báo, không cho phép xác nhận |
+| AC-01-06 | Trader bỏ trống bất kỳ trường bắt buộc nào | Nút tính toán bị vô hiệu hóa, trường thiếu được highlight |
+| AC-01-07 | Trader thay đổi hướng vị thế (Long ↔ Short) | Kết quả PnL cập nhật lại tức thì không cần bấm tính lại |
+| AC-01-08 | Giá trị nhập vào là số âm hoặc bằng 0 | Hệ thống hiển thị thông báo lỗi ngay tại trường đó |
+
+**Definition of Done:**
+- [ ] Logic tính PnL đã được unit test với ít nhất 10 test cases (Long/Short, dương/âm)
+- [ ] Giao diện cập nhật real-time khi người dùng gõ (debounce ≤ 300ms)
+- [ ] Màu sắc hiển thị PnL tuân thủ design system (xanh/đỏ)
+- [ ] Mobile: ràng buộc PnL không âm được kiểm tra trước khi submit
+- [ ] Web: cho phép PnL âm, không chặn
+- [ ] Code review hoàn tất, không có lỗi lint
+
+**Notes / Assumptions:**
+- PnL được tính theo công thức: `PnL = (Giá thoát - Giá vào) × Số lượng × Hệ số hướng (Long=+1, Short=-1)`
+- %PnL được tính trên margin: `%PnL = PnL / (Giá vào × Số lượng / Đòn bẩy) × 100`
+- Phí giao dịch có thể được tích hợp vào phép tính nếu được khai báo — cần xác nhận với PM
+
+---
+
+### US-02: Tính Giá mục tiêu theo PnL mong muốn
+
+**Epic:** Tính toán cốt lõi
+**Persona:** Trader pro
+**Priority:** Must Have
+**Story Points:** 5
+
+**User Story:**
+> Là một Trader pro tối ưu đòn bẩy, tôi muốn nhập PnL mục tiêu (hoặc %PnL) cùng với số lượng, giá vào và đòn bẩy để biết chính xác mức giá cần đặt lệnh chốt lời (Take Profit), để tôi không cần thử nhiều lần trên order form.
+
+**Acceptance Criteria:**
+
+| # | Điều kiện | Kết quả mong đợi |
+|---|---|---|
+| AC-02-01 | Trader nhập đủ: PnL mục tiêu (USDT), Giá vào, Số lượng, Đòn bẩy, Hướng vị thế | Hệ thống tính và hiển thị Giá mục tiêu tương ứng |
+| AC-02-02 | Trader nhập %PnL thay vì giá trị tuyệt đối | Hệ thống chuyển đổi %PnL sang USDT, tính Giá mục tiêu |
+| AC-02-03 | Trader chuyển từ nhập PnL sang nhập %PnL (toggle) | Giá mục tiêu được tính lại theo mode mới, các trường khác giữ nguyên |
+| AC-02-04 | Giá mục tiêu tính ra nhỏ hơn hoặc bằng 0 | Hệ thống hiển thị cảnh báo "Kết quả không hợp lệ", không hiển thị giá |
+| AC-02-05 | Trader nhập PnL mục tiêu âm với vị thế Long | Hệ thống vẫn tính và hiển thị Giá mục tiêu tương ứng (Web); hiển thị cảnh báo (Mobile) |
+| AC-02-06 | Trader thay đổi đòn bẩy | Giá mục tiêu cập nhật lại tức thì |
+
+**Definition of Done:**
+- [ ] Unit test bao phủ cả hai mode: PnL tuyệt đối và %PnL
+- [ ] Toggle giữa hai mode hoạt động mượt, không mất giá trị đã nhập
+- [ ] Kết quả hiển thị đủ độ chính xác (tối thiểu 4 chữ số thập phân)
+- [ ] Giao diện phân biệt rõ hai mode bằng label và placeholder
+- [ ] QA kiểm tra cross-browser (Chrome, Safari, Firefox)
+
+**Notes / Assumptions:**
+- Công thức: `Giá mục tiêu = Giá vào + PnL / (Số lượng × Hệ số hướng)`
+- Trader pro thường dùng feature này để đặt TP level — cần UX trực quan, tránh nhầm Long/Short
+
+---
+
+### US-03: Tính Giá mục tiêu theo %PnL không cần số lượng
+
+**Epic:** Tính toán cốt lõi
+**Persona:** Trader pro
+**Priority:** Should Have
+**Story Points:** 3
+
+**User Story:**
+> Là một Trader pro đang khảo sát thị trường, tôi muốn tính nhanh Giá mục tiêu chỉ bằng %PnL kỳ vọng, Giá vào và Đòn bẩy mà không cần biết số lượng cụ thể, để tôi có thể đánh giá cơ hội trước khi quyết định size vị thế.
+
+**Acceptance Criteria:**
+
+| # | Điều kiện | Kết quả mong đợi |
+|---|---|---|
+| AC-03-01 | Trader để trống trường Số lượng và nhập đủ: %PnL, Giá vào, Đòn bẩy | Hệ thống tính và hiển thị Giá mục tiêu mà không yêu cầu nhập Số lượng |
+| AC-03-02 | Trader nhập thêm Số lượng sau khi đã có kết quả | Kết quả Giá mục tiêu không thay đổi (Số lượng không ảnh hưởng trong mode này) |
+| AC-03-03 | Trường Số lượng hiển thị trạng thái "optional" | Label hoặc placeholder thể hiện rõ trường này không bắt buộc |
+| AC-03-04 | Trader nhập %PnL = 0 | Hệ thống hiển thị cảnh báo "Tỷ lệ PnL phải khác 0" |
+| AC-03-05 | Trader nhập %PnL âm trên Mobile | Hệ thống hiển thị cảnh báo, không tính toán |
+
+**Definition of Done:**
+- [ ] Trường Số lượng được đánh dấu optional rõ ràng trong UI
+- [ ] Logic tính toán không phụ thuộc vào Số lượng khi mode "không cần qty" được kích hoạt
+- [ ] Unit test bao phủ trường hợp có/không có Số lượng
+- [ ] UX review xác nhận không gây nhầm lẫn giữa US-02 và US-03
+
+**Notes / Assumptions:**
+- Công thức rút gọn: `Giá mục tiêu = Giá vào × (1 + %PnL / (Đòn bẩy × 100) × Hệ số hướng)`
+- Cần phân biệt rõ hai sub-mode này trong UI — có thể dùng radio hoặc toggle "Có số lượng / Không có số lượng"
+
+---
+
+### US-04: Tính Giá thanh lý để kiểm soát rủi ro
+
+**Epic:** Tính toán cốt lõi
+**Persona:** Trader mới
+**Priority:** Must Have
+**Story Points:** 5
+
+**User Story:**
+> Là một Trader mới lo ngại về rủi ro, tôi muốn biết mức giá thanh lý (Liquidation Price) trước khi vào lệnh, để tôi chủ động đặt Stop-Loss trên mức đó và tránh bị thanh lý cưỡng bức.
+
+**Acceptance Criteria:**
+
+| # | Điều kiện | Kết quả mong đợi |
+|---|---|---|
+| AC-04-01 | Trader nhập đủ: Giá vào, Đòn bẩy, Hướng vị thế (Long/Short) | Hệ thống tính và hiển thị Giá thanh lý |
+| AC-04-02 | Trader nhập thêm Số lượng (optional) | Hệ thống ghi nhận nhưng kết quả Giá thanh lý không thay đổi (nếu không tính theo margin mode) |
+| AC-04-03 | Đòn bẩy = 1x | Giá thanh lý hiển thị là 0 hoặc thông báo "Không áp dụng" |
+| AC-04-04 | Trader thay đổi đòn bẩy từ 5x lên 20x | Giá thanh lý cập nhật lại và tiến gần hơn về Giá vào |
+| AC-04-05 | Giá thanh lý tính ra < 0 | Hệ thống hiển thị "0" hoặc "N/A" kèm giải thích ngắn |
+| AC-04-06 | Trader dùng vị thế Long | Giá thanh lý phải luôn < Giá vào |
+| AC-04-07 | Trader dùng vị thế Short | Giá thanh lý phải luôn > Giá vào |
+
+**Definition of Done:**
+- [ ] Unit test kiểm tra Liq Price < Entry (Long) và Liq Price > Entry (Short) ở mọi mức đòn bẩy
+- [ ] Tooltip giải thích ngắn "Giá thanh lý là gì" hiển thị khi hover/tap vào label
+- [ ] Kết quả hiển thị rõ ràng, đủ chữ số thập phân, không bị làm tròn sai
+- [ ] QA kiểm tra edge case đòn bẩy tối đa của sản phẩm
+
+**Notes / Assumptions:**
+- Công thức cơ bản (Cross Margin): `Liq Price = Entry × (1 - 1/Leverage)` (Long); `Entry × (1 + 1/Leverage)` (Short)
+- Nếu sản phẩm hỗ trợ Isolated Margin, cần điều chỉnh công thức — cần xác nhận với Tech
+- Số lượng là optional field trong feature này (F01.03 spec)
+
+---
+
+### US-05: Giữ nguyên thông số mặc định khi chuyển tab
+
+**Epic:** Trải nghiệm sử dụng
+**Persona:** Trader thường
+**Priority:** Must Have
+**Story Points:** 3
+
+**User Story:**
+> Là một Trader thường chuyển qua lại giữa các tab PnL, Target Price và Liquidation Price, tôi muốn các thông số chung (Giá vào, Đòn bẩy, Hướng vị thế) được giữ nguyên khi tôi chuyển tab, để tôi không phải nhập lại từ đầu mỗi lần.
+
+**Acceptance Criteria:**
+
+| # | Điều kiện | Kết quả mong đợi |
+|---|---|---|
+| AC-05-01 | Trader nhập Giá vào = 50,000, Đòn bẩy = 10x, Long trên tab PnL rồi chuyển sang tab Target Price | Giá vào, Đòn bẩy và Hướng vị thế vẫn còn giá trị 50,000 / 10x / Long |
+| AC-05-02 | Trader thay đổi Đòn bẩy ở tab Target Price rồi quay lại tab PnL | Giá trị Đòn bẩy mới được hiển thị ở tab PnL |
+| AC-05-03 | Trader đóng calculator và mở lại (trong cùng phiên) | Default params được khôi phục từ session state |
+| AC-05-04 | Trader bấm "Reset" | Tất cả các trường trở về giá trị mặc định hệ thống; không còn lưu giá trị cũ |
+| AC-05-05 | Trader dùng Mobile, bấm Back rồi mở lại calculator | State không bị mất, các thông số vẫn còn |
+| AC-05-06 | Trader dùng 2 thiết bị khác nhau | State chỉ được lưu trên từng thiết bị, không đồng bộ cross-device |
+
+**Definition of Done:**
+- [ ] Shared state được implement đúng (context, store hoặc session storage)
+- [ ] Test E2E: chuyển qua lại 3 tab, xác nhận state không mất
+- [ ] Mobile test: back navigation không reset state
+- [ ] Nút Reset hoạt động và xóa sạch state
+- [ ] Không có memory leak khi chuyển tab liên tục
+
+**Notes / Assumptions:**
+- Các trường "shared" gồm: Giá vào, Đòn bẩy, Hướng vị thế, Symbol (nếu có)
+- Các trường riêng mỗi tab (PnL target, Giá thoát...) không cần chia sẻ
+- State lưu ở client-side (localStorage hoặc sessionStorage); không cần API
+
+---
+
+### US-06: Sao chép thông số tự động điền vào form đặt lệnh
+
+**Epic:** Trải nghiệm sử dụng
+**Persona:** Trader thường
+**Priority:** Must Have
+**Story Points:** 8
+
+**User Story:**
+> Là một Trader thường, tôi muốn sau khi tính xong trên calculator, chỉ cần bấm một nút để toàn bộ thông số tự động điền vào form đặt lệnh (Order Form), để tôi không mất thêm thời gian nhập tay và tránh nhập sai.
+
+**Acceptance Criteria:**
+
+| # | Điều kiện | Kết quả mong đợi |
+|---|---|---|
+| AC-06-01 | Trader đã đăng nhập và bấm "Copy & Fill" sau khi có kết quả hợp lệ | Hệ thống điền tự động: Giá, Số lượng, Đòn bẩy, Hướng vào Order Form |
+| AC-06-02 | Order Form tự động chọn loại lệnh LIMIT hoặc STOP (tùy giá trị) | Loại lệnh được chọn đúng theo giá trị Giá mục tiêu so với giá thị trường hiện tại |
+| AC-06-03 | Trader chưa đăng nhập và bấm "Copy & Fill" | Hệ thống hiển thị prompt đăng nhập; sau đăng nhập xong, thao tác được hoàn tất |
+| AC-06-04 | Order Form đang có dữ liệu cũ | Hệ thống ghi đè toàn bộ, không merge |
+| AC-06-05 | Giá trị từ calculator không hợp lệ (trống hoặc lỗi) | Nút "Copy & Fill" bị vô hiệu hóa |
+| AC-06-06 | Copy & Fill thành công | Hệ thống hiển thị toast "Đã điền thông số vào lệnh" và focus về Order Form |
+| AC-06-07 | Symbol trên calculator khác symbol đang mở Order Form | Hệ thống cảnh báo "Symbol không khớp", hỏi xác nhận trước khi ghi đè |
+
+**Definition of Done:**
+- [ ] Integration test: dữ liệu từ calculator khớp 100% với dữ liệu trên Order Form sau khi fill
+- [ ] Auto-select LIMIT/STOP logic được unit test
+- [ ] UX: nút "Copy & Fill" disabled rõ ràng khi chưa có kết quả hợp lệ
+- [ ] Flow đăng nhập redirect đúng và không mất thông số
+- [ ] Toast notification hoạt động trên cả Web và Mobile
+- [ ] QA kiểm tra trường hợp symbol không khớp
+
+**Notes / Assumptions:**
+- Tính năng này thuộc F01.04.01 trong spec kỹ thuật
+- LIMIT được chọn khi Giá mục tiêu ≠ giá thị trường; STOP khi Giá mục tiêu là điểm kích hoạt — cần xác nhận logic chính xác với PM
+- Nếu sản phẩm có nhiều loại Order Form, cần định nghĩa "Order Form nào" được điền vào
+
+---
+
+### US-07: Sử dụng calculator khi chưa đăng nhập
+
+**Epic:** Truy cập & Xác thực
+**Persona:** Anonymous trader (chưa có tài khoản hoặc chưa đăng nhập)
+**Priority:** Must Have
+**Story Points:** 2
+
+**User Story:**
+> Là một người dùng chưa đăng nhập, tôi muốn truy cập và sử dụng đầy đủ các chức năng tính toán (PnL, Target Price, Liquidation Price) mà không cần phải đăng ký tài khoản, để tôi có thể đánh giá tính năng trước khi quyết định tạo tài khoản.
+
+**Acceptance Criteria:**
+
+| # | Điều kiện | Kết quả mong đợi |
+|---|---|---|
+| AC-07-01 | Người dùng chưa đăng nhập truy cập trang Calculator | Trang hiển thị đầy đủ, không redirect đến trang login |
+| AC-07-02 | Người dùng chưa đăng nhập tính PnL với dữ liệu hợp lệ | Kết quả được hiển thị bình thường |
+| AC-07-03 | Người dùng chưa đăng nhập bấm nút "Copy & Fill" | Hệ thống hiển thị prompt "Đăng nhập để sử dụng tính năng này" |
+| AC-07-04 | Sau khi đăng nhập từ prompt ở AC-07-03 | Người dùng quay lại calculator với state còn nguyên, thao tác Copy & Fill tiếp tục |
+| AC-07-05 | Người dùng chưa đăng nhập xem hướng dẫn (Tutorial) | Hướng dẫn vẫn hiển thị đầy đủ, không chặn |
+
+**Definition of Done:**
+- [ ] Trang Calculator không có auth guard cho chức năng tính toán
+- [ ] Nút "Copy & Fill" hiển thị với trạng thái đặc biệt (icon lock hoặc label khác) cho người chưa đăng nhập
+- [ ] Prompt đăng nhập không làm mất state calculator
+- [ ] Test: thực hiện đủ AC-07-01 đến AC-07-05 với tài khoản không đăng nhập
+
+**Notes / Assumptions:**
+- Đây là yêu cầu nghiệp vụ quan trọng: "Không cần login để tính; cần login để copy & fill"
+- State của calculator nên được lưu vào sessionStorage để không mất sau redirect đăng nhập
+
+---
+
+### US-08: Nhận cảnh báo và xử lý khi Native Token không đủ
+
+**Epic:** Fee & Ví
+**Persona:** Trader đang sử dụng fee token
+**Priority:** Must Have
+**Story Points:** 8
+
+**User Story:**
+> Là một Trader đang muốn dùng token khác để trả phí giao dịch, tôi muốn được cảnh báo ngay khi Native Token trong ví không đủ và được hỗ trợ hai lựa chọn (chuyển từ ví khác hoặc swap), để tôi không bị chặn giao dịch vì thiếu phí mà không biết cách xử lý.
+
+**Acceptance Criteria:**
+
+| # | Điều kiện | Kết quả mong đợi |
+|---|---|---|
+| AC-08-01 | Trader chọn fee token và số dư Native Token trong ví < mức tối thiểu cần thiết | Hệ thống hiển thị cảnh báo "Số dư Native Token không đủ để trả phí" |
+| AC-08-02 | Cảnh báo được hiển thị | Hệ thống cung cấp 2 lựa chọn: "Chuyển từ Funding Wallet" và "Swap lấy Native Token" |
+| AC-08-03 | Trader chọn "Chuyển từ Funding Wallet" (F01.04.02) | Hệ thống mở luồng Transfer Wallet, hướng dẫn chuyển đúng token và số lượng cần thiết |
+| AC-08-04 | Transfer thành công | Số dư được cập nhật, cảnh báo tự động biến mất, Trader có thể tiếp tục |
+| AC-08-05 | Trader chọn "Swap lấy Native Token" (F01.04.03) | Hệ thống mở luồng Swap với token đích đã được pre-fill là Native Token |
+| AC-08-06 | Swap thành công | Số dư được cập nhật, cảnh báo tự động biến mất |
+| AC-08-07 | Trader bỏ qua cảnh báo và cố gắng submit lệnh | Hệ thống chặn submit và nhắc lại cảnh báo phí |
+| AC-08-08 | Số dư Native Token đủ từ đầu | Không hiển thị cảnh báo; flow bình thường |
+
+**Definition of Done:**
+- [ ] Logic kiểm tra số dư chạy trước khi cho phép submit lệnh
+- [ ] Hai luồng (Transfer và Swap) đều được test E2E end-to-end
+- [ ] Cảnh báo tự động biến mất sau khi số dư đủ (real-time hoặc sau khi luồng hoàn tất)
+- [ ] UX: cảnh báo không block toàn bộ UI, Trader vẫn xem được thông tin calculator
+- [ ] QA test trường hợp số dư đúng bằng ngưỡng tối thiểu (boundary test)
+
+**Notes / Assumptions:**
+- Đây liên quan đến F01.04.02 (Transfer Wallet) và F01.04.03 (Swap) trong spec
+- "Native Token" là token gốc của blockchain đang sử dụng — không đặt tên cụ thể trong tài liệu này
+- Mức tối thiểu Native Token cần thiết cần được định nghĩa rõ bởi team kỹ thuật
+
+---
+
+### US-09: Xem hướng dẫn sử dụng lần đầu
+
+**Epic:** Onboarding
+**Persona:** Trader mới
+**Priority:** Should Have
+**Story Points:** 3
+
+**User Story:**
+> Là một Trader mới lần đầu sử dụng công cụ này, tôi muốn được xem hướng dẫn ngắn gọn (Introduction và Tutorial) ngay khi mở calculator, để tôi hiểu cách sử dụng từng tab và không bị bối rối với các trường nhập liệu.
+
+**Acceptance Criteria:**
+
+| # | Điều kiện | Kết quả mong đợi |
+|---|---|---|
+| AC-09-01 | Trader mở calculator lần đầu tiên | Hệ thống tự động hiển thị Feature Introduction (F01.07) dạng overlay hoặc tooltip |
+| AC-09-02 | Feature Introduction hiển thị | Nội dung giải thích ngắn gọn 3 tab: PnL, Target Price, Liquidation Price |
+| AC-09-03 | Trader bấm "Bỏ qua" ở Introduction | Overlay đóng lại, calculator hiển thị bình thường |
+| AC-09-04 | Trader bấm "Xem hướng dẫn" ở Introduction | Hệ thống mở Tutorial (F01.08) — hướng dẫn từng bước |
+| AC-09-05 | Trader mở calculator lần thứ 2 trở đi | Introduction không tự động hiển thị lại |
+| AC-09-06 | Trader muốn xem lại hướng dẫn | Có nút/icon "?" hoặc "Hướng dẫn" để mở lại Tutorial bất cứ lúc nào |
+| AC-09-07 | Trader dùng Mobile và xem Tutorial | Tutorial responsive, hiển thị đúng trên màn hình nhỏ |
+
+**Definition of Done:**
+- [ ] Trạng thái "đã xem Introduction" được lưu vào localStorage
+- [ ] Introduction không hiển thị lại sau lần đầu (trừ khi clear localStorage)
+- [ ] Nút "?" hoặc tương đương luôn hiển thị để mở Tutorial
+- [ ] Tutorial có thể đóng lại bất cứ lúc nào mà không mất dữ liệu đang nhập
+- [ ] UX review: Introduction không che khuất toàn bộ nội dung trang
+
+**Notes / Assumptions:**
+- F01.07 = Feature Introduction, F01.08 = Tutorial (theo spec)
+- Nội dung Introduction và Tutorial cần được BA/PM cung cấp riêng — tài liệu này chỉ define behavior
+- Có thể cân nhắc A/B test tỷ lệ skip vs. xem hướng dẫn để tối ưu onboarding
+
+---
+
+### US-10: Tính toán với size validation
+
+**Epic:** Validation
+**Persona:** Trader bất kỳ
+**Priority:** Must Have
+**Story Points:** 3
+
+**User Story:**
+> Là một Trader bất kỳ, tôi muốn được cảnh báo ngay khi nhập size vị thế vượt quá giới hạn (quá nhỏ hoặc quá lớn) trước khi tính toán, để tôi chỉnh lại kịp thời và tránh đặt lệnh sai với sàn giao dịch.
+
+**Acceptance Criteria:**
+
+| # | Điều kiện | Kết quả mong đợi |
+|---|---|---|
+| AC-10-01 | Trader nhập Số lượng nhỏ hơn giá trị tối thiểu cho phép | Hệ thống hiển thị lỗi ngay tại trường: "Số lượng tối thiểu là [X]" |
+| AC-10-02 | Trader nhập Số lượng lớn hơn giá trị tối đa cho phép | Hệ thống hiển thị lỗi ngay tại trường: "Số lượng tối đa là [X]" |
+| AC-10-03 | Trader nhập Số lượng trong khoảng hợp lệ | Không hiển thị lỗi; tính toán tiến hành bình thường |
+| AC-10-04 | Trader nhập Số lượng không phải số (ký tự đặc biệt, chữ cái) | Hệ thống chặn nhập và/hoặc hiển thị lỗi "Vui lòng nhập số hợp lệ" |
+| AC-10-05 | Giá trị min/max thay đổi theo Symbol đang chọn | Validation rules được cập nhật theo Symbol — không hardcode |
+| AC-10-06 | Trader nhập Số lượng hợp lệ rồi đổi sang Symbol khác có min cao hơn | Hệ thống re-validate và hiển thị lỗi nếu giá trị cũ không còn hợp lệ |
+| AC-10-07 | Trader toggle giữa Qty mode và Volume mode (F01.06) | Min/max validation áp dụng đúng theo mode đang chọn |
+
+**Definition of Done:**
+- [ ] Validation được trigger on-blur và on-change (sau debounce)
+- [ ] Min/max lấy từ API hoặc config động theo Symbol — không hardcode trong frontend
+- [ ] Unit test bao phủ: dưới min, trên max, đúng bằng min, đúng bằng max, giá trị âm, giá trị 0
+- [ ] Validation chạy lại khi Symbol thay đổi
+- [ ] Validation áp dụng cho cả Qty mode và Volume mode (F01.06)
+- [ ] Thông báo lỗi đủ thông tin (giá trị min/max cụ thể), không chỉ nói "Lỗi"
+
+**Notes / Assumptions:**
+- Min/max size có thể khác nhau giữa các trading pair — cần endpoint hoặc config cung cấp giá trị này
+- F01.06 định nghĩa Qty/Volume toggle — khi toggle, đơn vị thay đổi nên min/max cũng cần đổi đơn vị
+- Cần làm rõ với Tech: validation xảy ra ở client hay server, hay cả hai (defense in depth)
+
+---
+
+## Tổng quan độ phủ
+
+| Epic | Số Stories | Tổng Story Points |
+|---|---|---|
+| Tính toán cốt lõi | 4 (US-01 đến US-04) | 18 |
+| Trải nghiệm sử dụng | 2 (US-05, US-06) | 11 |
+| Truy cập & Xác thực | 1 (US-07) | 2 |
+| Fee & Ví | 1 (US-08) | 8 |
+| Onboarding | 1 (US-09) | 3 |
+| Validation | 1 (US-10) | 3 |
+| **Tổng** | **10** | **45** |
+
+---
+
+## Ràng buộc & Phụ thuộc chéo
+
+| Story | Phụ thuộc vào | Ghi chú |
+|---|---|---|
+| US-06 | US-07 | Copy & Fill chỉ hoạt động sau khi đăng nhập — US-07 define flow auth |
+| US-08 | US-06 | Cảnh báo phí xuất hiện trong luồng submit sau Copy & Fill |
+| US-03 | US-02 | US-03 là sub-mode của US-02, cần xem xét cùng nhau khi thiết kế |
+| US-10 | US-01, US-02, US-03, US-04 | Validation chặn tính toán ở tất cả các tab |
+| US-05 | US-01, US-02, US-03, US-04 | State management bao phủ toàn bộ tab |
+
+---
+
+*Tài liệu này được tạo theo chuẩn nội bộ BA Team. Mọi thay đổi cần được ghi vào bảng Lịch sử thay đổi và thông báo đến các stakeholder liên quan.*
