@@ -62,6 +62,7 @@
           "group": "Generic E-Wallet App",
           "icon": "wallet",
           "pages": [
+            "projects/ewallet/project-context",
             "projects/ewallet/overview",
             "projects/ewallet/auth",
             "projects/ewallet/kyc",
