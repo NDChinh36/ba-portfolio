@@ -456,7 +456,7 @@ sequenceDiagram
 | BR-TRANS-02 | Số tiền tối thiểu: 1,000 VND | Validation |
 | BR-TRANS-03 | Phải xác nhận tên người nhận trước khi tiếp tục (mandatory confirm screen) | SCR-TRANS-02 |
 | BR-TRANS-04 | Giao dịch tức thì, không thể hoàn sau khi confirm | Transfer Service |
-| BR-TRANS-05 | PIN bắt buộc cho mọi lệnh chuyển, bất kể số tiền | SCR-TRANS-05 |
+| BR-TRANS-05 | PIN bắt buộc cho mọi lệnh chuyển, bất kể số tiền. PIN được verify server-side qua Auth Service (bcrypt compare); Transfer Service không tự validate PIN mà gọi Auth Service — xem PRD-EW-AUTH-001 BR-AUTH-06 cho lockout policy (5 sai → 30 phút) | SCR-TRANS-05, Auth Service |
 | BR-TRANS-06 | Idempotency key bắt buộc — unique per sender per 24 giờ | Transfer Service |
 | BR-TRANS-07 | Atomic debit/credit: cả hai xảy ra cùng lúc hoặc không xảy ra | Wallet Core (DB transaction) |
 | BR-TRANS-08 | Timeout Wallet Core > 30 giây: không retry tự động; trả PENDING status | Transfer Service |
