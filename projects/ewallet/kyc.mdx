@@ -612,6 +612,9 @@ Màn hình điện thoại chiếu một chuỗi ánh sáng màu ngẫu nhiên l
 | NFC bị vô hiệu hoá trên thiết bị (iOS) | Phát hiện và bỏ qua bước NFC tự động; OCR only + manual review flag |
 | User đang KYC Tier 2, nộp KYC lần 2 (re-KYC expiry) | Chỉ cập nhật expiry date; không reset tier; không cần manual review nếu auto-approve |
 | CS agent reject nhầm | CS lead có thể override quyết định trong 24h; trigger re-process |
+| User dưới 18 tuổi nộp CCCD của bố/mẹ (bypass tuổi) | Face liveness phát hiện khuôn mặt không khớp với ảnh trên CCCD (face match score < 0.75) → KYC_004; flag tài khoản cho Security review nếu 2 lần fail face match với CCCD của người khác |
+| CCCD có MRZ đọc được nhưng chip NFC bị lỗi cứng (physical damage) | OCR đủ để tiếp tục nhưng NFC fail → được phép skip NFC (BR-KYC-06); package bị flag manual; reviewer check MRZ + face match thủ công |
+| Tài khoản đang ở manual review queue, user submit KYC lần 2 | Block lần submit thứ 2 khi đang có request PENDING; hiển thị "Hồ sơ đang được xem xét. Vui lòng chờ kết quả." |
 
 ---
 
