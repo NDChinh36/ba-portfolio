@@ -1,6 +1,6 @@
 ---
 title: "Module 08 — Notifications & Settings"
-description: "PRD-EW-NOTIF-001 | Push · Profile · PIN · Biometric · Security · Offboarding"
+description: "PRD-EW-NOTIF-001 | Hộp thông báo · Hồ sơ · Bảo mật · Chính sách 1 thiết bị"
 icon: "bell"
 ---
 
@@ -8,578 +8,712 @@ icon: "bell"
 
 <Info>
   **Document ID:** PRD-EW-NOTIF-001 · **Version:** 1.0 · **Status:** Draft  
-  **Ngày tạo:** 2026-05-26 · **Tác giả:** BA Team
+  **Ngày tạo:** 2026-05-26 · **Tác giả:** BA Team  
+  **Reviewer:** Tech Lead, Security Team, QA Lead · **Approver:** Head of Product  
+  **Tài liệu liên quan:** PRD-EW-AUTH-001, PRD-EW-KYC-001
 </Info>
+
+| Vai trò | Mục đích đọc |
+|---|---|
+| Tech Lead / Developer | Thiết kế Notification Service, 1-device session policy, FCM/APNs integration |
+| Security Team | Review 1-device approval flow, session revocation, PIN change security |
+| QA Lead | Test cases: notification inbox, profile update, change PIN, new device approval, logout |
+| UX Designer | Hiểu notification grouping, approval modal, settings layout |
 
 ---
 
-## 1. Tổng quan
+## 1. Tổng quan module
 
-Module Settings là trung tâm quản lý tài khoản và bảo mật của người dùng. Gồm 4 nhóm chính:
-
-| Nhóm | Tính năng |
-|------|----------|
-| **Thông báo** | Bật/tắt push notification toàn app |
-| **Tài khoản** | Cập nhật profile (avatar, email) · Đổi PIN · Biometric |
-| **Bảo mật** | 2FA cho GD lớn · Quản lý thiết bị · Tạm khóa tài khoản |
-| **Đóng tài khoản** | Offboarding flow — rút tiền → xác nhận → xóa tài khoản |
+<CardGroup cols={2}>
+  <Card title="Hộp thông báo" icon="bell">
+    Lưu tất cả notification trong app. Unread badge. Tap để điều hướng đến GD/màn liên quan.
+  </Card>
+  <Card title="Hồ sơ cá nhân" icon="user">
+    Sửa avatar, tên hiển thị, email dự phòng, ngôn ngữ. Họ tên KYC và SĐT là read-only.
+  </Card>
+  <Card title="Bảo mật" icon="shield">
+    Đổi PIN, bật/tắt Biometric. Xem thiết bị đang dùng. Đăng xuất.
+  </Card>
+  <Card title="Chính sách 1 thiết bị" icon="mobile">
+    Chỉ 1 thiết bị active/lúc. Thiết bị mới cần được xác nhận từ thiết bị hiện tại. Mất máy → CSKH.
+  </Card>
+</CardGroup>
 
 ### 1.1 Phạm vi (Scope)
 
 | Tính năng | Trong phạm vi | Ghi chú |
-|-----------|:---:|---------|
-| Bật/tắt push notification toàn app | ✅ | |
-| Phân loại thông báo (GD / bảo mật / khuyến mãi) | ❌ | Roadmap sprint sau |
-| In-app notification center | ❌ | Roadmap sprint sau |
-| Cập nhật avatar, email | ✅ | Không đổi được SĐT/họ tên sau KYC |
-| Đổi PIN | ✅ | Xác thực PIN cũ + OTP |
-| Biometric (Face ID / Fingerprint) | ✅ | Bật/tắt + fallback PIN |
-| 2FA OTP bắt buộc cho GD vượt ngưỡng | ✅ | User tự đặt ngưỡng |
-| Quản lý thiết bị đăng nhập | ✅ | Xem list + đăng xuất từng device (PIN + OTP) |
-| Activity log (lịch sử đăng nhập) | ❌ | Chưa làm |
-| Tạm khóa tài khoản (self-lock) | ✅ | Mở khóa qua OTP |
-| Đóng tài khoản (offboarding) | ✅ | Phải rút hết tiền trước |
+|---|:---:|---|
+| Notification inbox (danh sách, unread badge) | ✅ | Lưu 90 ngày gần nhất |
+| Phân loại thông báo (GD / Bảo mật / Hệ thống) | ✅ | Display-only; không có toggle per category |
+| Toggle bật/tắt push notification per category | ❌ | Roadmap Sprint 10 |
+| Chỉnh sửa hồ sơ (avatar, nickname, email, ngôn ngữ) | ✅ | Họ tên KYC + SĐT = read-only |
+| Đổi PIN (có xác thực PIN cũ) | ✅ | Luồng từ Auth module (SCR-AUTH-14); entry từ Settings |
+| Bật/tắt Biometric | ✅ | Face ID / Vân tay |
+| Xem thiết bị hiện tại + đăng xuất | ✅ | 1 thiết bị duy nhất |
+| Xác nhận / từ chối thiết bị mới đăng nhập | ✅ | **Chính sách 1 thiết bị** — Device A approve/deny |
+| Quản lý nhiều thiết bị | ❌ | Không áp dụng — 1 thiết bị active tại 1 thời điểm |
+| 2FA OTP theo ngưỡng GD | ❌ | Không trong scope MVP |
+| Tự khóa / đóng tài khoản | ❌ | Không trong scope MVP; xử lý qua CSKH |
 
----
+### 1.2 Kiến trúc Chính sách 1 Thiết bị
 
-## 2. Kiến trúc hệ thống
+<Warning>
+  **Thay đổi so với PRD-EW-AUTH-001:** Module này cập nhật hành vi đăng nhập thiết bị mới. Thay vì chỉ "cảnh báo sau khi login" (Auth v1.0), thiết bị mới **phải được thiết bị hiện tại xác nhận TRƯỚC** khi session được cấp. Cần cập nhật SCR-AUTH-15 trong Auth module.
+</Warning>
 
 ```mermaid
-flowchart TD
-    APP[Mobile App]
-
-    subgraph SettingSvc[Settings Service]
-        PROFILE[Profile Manager]
-        SECURITY[Security Manager]
-        DEVICE[Device Manager]
-        NOTIF_PREF[Notification Preference]
-    end
-
-    subgraph AuthSvc[Auth Service]
-        PIN_SVC[PIN Service\nbcrypt verify + update]
-        BIO_SVC[Biometric Service\ntoken store]
-        OTP_SVC[OTP Gateway\nSMS]
-    end
-
-    subgraph WalletSvc[Wallet Service]
-        BALANCE[Balance Check\ntrước khi đóng TK]
-    end
-
-    DB[(User DB\nPostgreSQL)]
-    S3[(Object Storage\nAvatar images)]
-    NOTIF[Notification Service\nFCM/APNs token mgmt]
-
-    APP -->|PATCH /settings/profile| PROFILE
-    PROFILE -->|Upload avatar| S3
-    PROFILE -->|Update email| DB
-    APP -->|POST /settings/pin/change| PIN_SVC
-    PIN_SVC -->|Verify old PIN bcrypt| DB
-    PIN_SVC -->|Verify OTP| OTP_SVC
-    PIN_SVC -->|Store new bcrypt hash| DB
-    APP -->|PATCH /settings/biometric| BIO_SVC
-    BIO_SVC -->|Store/revoke bio token| DB
-    APP -->|PATCH /settings/2fa| SECURITY
-    SECURITY -->|Update 2fa_threshold| DB
-    APP -->|GET/DELETE /devices| DEVICE
-    DEVICE -->|Revoke session| DB
-    APP -->|PATCH /settings/notifications| NOTIF_PREF
-    NOTIF_PREF -->|Update FCM opt-in/out| NOTIF
-    APP -->|POST /account/lock| SECURITY
-    APP -->|POST /account/close| SECURITY
-    SECURITY -->|Check balance zero| WalletSvc
+flowchart LR
+    DevA[Device A\nĐang active] 
+    DevB[Device B\nMuốn đăng nhập]
+    Auth[Auth Service\n1-Device Policy]
+    
+    DevB -->|1. Yêu cầu login| Auth
+    Auth -->|2. Phát hiện Device A đang active| Auth
+    Auth -->|3. Push approval request| DevA
+    DevA -->|4a. Cho phép| Auth
+    Auth -->|5a. Revoke Device A\nGrant Device B| DevB
+    DevA -->|4b. Từ chối| Auth
+    Auth -->|5b. Block Device B\n30 phút| DevB
 ```
 
----
-
-## 3. Danh sách màn hình
-
-| ID | Tên màn hình | Nhóm |
-|----|-------------|------|
-| SCR-SET-01 | Settings home | Navigation |
-| SCR-SET-02 | Notification settings | Thông báo |
-| SCR-SET-03 | Chỉnh sửa profile | Tài khoản |
-| SCR-SET-04 | Đổi PIN — nhập PIN cũ | Tài khoản |
-| SCR-SET-05 | Đổi PIN — OTP xác nhận | Tài khoản |
-| SCR-SET-06 | Đổi PIN — nhập PIN mới | Tài khoản |
-| SCR-SET-07 | Biometric settings | Tài khoản |
-| SCR-SET-08 | Security settings | Bảo mật |
-| SCR-SET-09 | 2FA threshold setup | Bảo mật |
-| SCR-SET-10 | Quản lý thiết bị | Bảo mật |
-| SCR-SET-11 | Đăng xuất thiết bị — PIN + OTP | Bảo mật |
-| SCR-SET-12 | Tạm khóa tài khoản | Bảo mật |
-| SCR-SET-13 | Đóng tài khoản — offboarding | Đóng TK |
-| SCR-SET-14 | Đóng tài khoản — xác nhận cuối | Đóng TK |
+**Timeout policy:** Nếu Device A không phản hồi trong 5 phút → tự động từ chối Device B (security conservative). Nếu Device A không có internet → push không đến → Device B không được login → user phải liên hệ CSKH để force-logout Device A.
 
 ---
 
-## 4. User Flows
+## 2. Danh sách màn hình
 
-### 4.1 Flow A — Đổi PIN
+| Screen ID | Tên màn hình | Nhóm |
+|---|---|---|
+| SCR-NOTIF-01 | Hộp thông báo (Notification inbox) | Thông báo |
+| SCR-SETTINGS-01 | Menu cài đặt chính | Navigation |
+| SCR-SETTINGS-02 | Hồ sơ cá nhân | Hồ sơ |
+| SCR-SETTINGS-03 | Cài đặt bảo mật | Bảo mật |
+| SCR-SETTINGS-04 | Thiết bị đang đăng nhập | Bảo mật |
+| SCR-SETTINGS-05 | Xác nhận thiết bị mới (Device A) | Bảo mật |
+
+---
+
+## 3. User Flow
+
+### 3.1 Flow A — Notification Inbox
 
 ```mermaid
 flowchart TD
-    A([Settings → Đổi PIN]) --> B[SCR-SET-04\nNhập PIN hiện tại 6 chữ số]
-    B --> C{PIN đúng?}
-    C -->|Sai ≤ 3 lần| D[Lỗi: PIN không đúng\nCòn N lần thử]
-    D --> B
-    C -->|Sai > 3 lần| E[Yêu cầu OTP qua SĐT]
-    E --> F[SCR-SET-05 — Nhập OTP 6 số\ngửi đến SĐT đã đăng ký]
-    F --> G{OTP đúng?}
-    G -->|Sai / Hết hạn| H[Lỗi OTP — Gửi lại\ntối đa 3 lần/phiên]
-    H --> F
-    G -->|Đúng| I[SCR-SET-06 — Nhập PIN mới 6 số]
-    C -->|Đúng| I
-    I --> J[Xác nhận PIN mới lần 2]
-    J --> K{2 PIN khớp nhau?}
-    K -->|Không| L[Lỗi: PIN không khớp]
-    L --> I
-    K -->|Có| M{PIN mới ≠ PIN cũ?}
-    M -->|Giống PIN cũ| N[Lỗi: PIN mới không được trùng PIN cũ]
-    N --> I
-    M -->|Khác| O[POST /settings/pin/change\nHash + lưu PIN mới]
-    O --> P[Thành công\nToast: PIN đã được cập nhật]
-    P --> Q[Đăng xuất tất cả thiết bị khác\ntrừ thiết bị hiện tại]
+    A([Tap bell icon ở Home]) --> B[GET /notifications\n?cursor=null&limit=20]
+    B --> C{Có thông báo?}
+    C -- Không --> D[Empty state\n'Chưa có thông báo nào']
+    C -- Có --> E[SCR-NOTIF-01\nDanh sách nhóm theo ngày]
+    E --> F{Thao tác}
+    F -- Tap 1 thông báo --> G[Mark as read\nNavigate đến màn liên quan]
+    G --> H{Loại thông báo}
+    H -- GD --> I[SCR-HIST-04\nChi tiết GD]
+    H -- Bảo mật --> J[SCR-SETTINGS-03\nBảo mật]
+    H -- Thiết bị mới --> K[SCR-SETTINGS-05\nXác nhận thiết bị]
+    H -- Hệ thống --> L[In-app content hoặc URL]
+    F -- Đánh dấu tất cả đã đọc --> M[PATCH /notifications/read-all]
+    M --> E
+    F -- Scroll gần cuối --> N[Load thêm 20 thông báo]
+    N --> E
 ```
 
-### 4.2 Flow B — Bật/Tắt Biometric
+### 3.2 Flow B — Chỉnh sửa hồ sơ
 
 ```mermaid
 flowchart TD
-    A([Settings → Biometric]) --> B[SCR-SET-07\nHiển thị trạng thái hiện tại\nFace ID: ON/OFF · Vân tay: ON/OFF]
-    B --> C{User muốn?}
-    C -->|Bật Biometric| D[Yêu cầu PIN để xác nhận\nhành động nhạy cảm]
-    D --> E{PIN đúng?}
-    E -->|Sai| F[Lỗi PIN → thử lại]
+    A([Settings → Hồ sơ cá nhân]) --> B[SCR-SETTINGS-02\nHiển thị thông tin hiện tại]
+    B --> C{Thao tác}
+    C -- Đổi avatar --> D[Image picker\nCamera / Gallery]
+    D --> E{File hợp lệ?}
+    E -- Sai định dạng / quá lớn --> F[Lỗi inline]
     F --> D
-    E -->|Đúng| G[Prompt native OS\nFace ID / Fingerprint enrollment]
-    G --> H{OS confirm biometric?}
-    H -->|Thành công| I[PATCH /settings/biometric\nenable=true, store bio_token]
-    I --> J[Trạng thái: BẬT ✅]
-    H -->|User cancel / lỗi thiết bị| K[Không thay đổi\nThông báo: Không thể kích hoạt]
-    C -->|Tắt Biometric| L[Popup xác nhận\n'Tắt sẽ yêu cầu PIN mỗi lần thanh toán']
-    L --> M{User confirm?}
-    M -->|Hủy| B
-    M -->|Xác nhận| N[Yêu cầu PIN\nhành động nhạy cảm]
-    N --> O{PIN đúng?}
-    O -->|Sai| P[Lỗi PIN]
-    P --> N
-    O -->|Đúng| Q[PATCH /settings/biometric\nenable=false, revoke bio_token]
-    Q --> R[Trạng thái: TẮT ❌]
-```
-
-### 4.3 Flow C — Đăng xuất thiết bị khác (PIN + OTP)
-
-```mermaid
-flowchart TD
-    A([Settings → Quản lý thiết bị]) --> B[GET /devices\nDanh sách thiết bị đang active]
-    B --> C[SCR-SET-10 — Danh sách\nMỗi thiết bị: tên · OS · Lần cuối active · Current badge]
-    C --> D{User chọn 1 thiết bị}
-    D -->|Thiết bị hiện tại| E[Không cho đăng xuất\nTooltip: Đây là thiết bị bạn đang dùng]
-    D -->|Thiết bị khác| F[Popup xác nhận\n'Đăng xuất [tên thiết bị]?']
-    F --> G{Xác nhận?}
-    G -->|Hủy| C
-    G -->|Tiếp tục| H[SCR-SET-11 — Nhập PIN]
-    H --> I{PIN đúng?}
-    I -->|Sai ≤ 3| H
-    I -->|Sai > 3| J[Block 30 phút]
-    I -->|Đúng| K[Gửi OTP đến SĐT\nDELETE /devices/{device_id} — step 1]
-    K --> L[Nhập OTP 6 số]
-    L --> M{OTP đúng?}
-    M -->|Sai / Hết hạn| N[Lỗi — Gửi lại OTP]
-    N --> L
-    M -->|Đúng| O[Revoke session của thiết bị đó\nXóa FCM token tương ứng]
-    O --> P[Toast: Đã đăng xuất [tên thiết bị] thành công]
+    E -- Hợp lệ --> G[Upload S3\nResize 400x400]
+    G --> H[Cập nhật avatar_url]
+    C -- Sửa Tên hiển thị --> I[Text input]
+    C -- Sửa Email --> J[Text input\nValidate format]
+    C -- Đổi Ngôn ngữ --> K[Bottom sheet chọn: VI / EN]
+    C -- Lưu thay đổi --> L{Có thay đổi?}
+    L -- Không --> M[Toast: Không có gì thay đổi]
+    L -- Có --> N[PATCH /settings/profile]
+    N -- Lỗi email trùng --> O[Lỗi: Email đã được dùng]
+    N -- Thành công --> P[Toast: Cập nhật thành công]
     P --> B
 ```
 
-### 4.4 Flow D — Tạm khóa tài khoản (Self-Lock)
+### 3.3 Flow C — Đổi PIN (từ Settings)
 
 ```mermaid
 flowchart TD
-    A([Settings → Bảo mật → Tạm khóa]) --> B[SCR-SET-12\nCảnh báo: Khóa TK sẽ chặn mọi GD\nChỉ mở khóa được qua OTP SĐT]
-    B --> C{User xác nhận?}
-    C -->|Hủy| D[Quay lại Security Settings]
-    C -->|Đồng ý khóa| E[Nhập PIN hiện tại]
-    E --> F{PIN đúng?}
-    F -->|Sai| G[Lỗi PIN]
-    G --> E
-    F -->|Đúng| H[POST /account/lock]
-    H --> I[Tài khoản locked\nĐăng xuất tất cả phiên\nGửi SMS thông báo]
-    I --> J[Mở app lại: Màn hình\n'Tài khoản tạm khóa'\nNút: Mở khóa qua OTP]
-    J --> K[Gửi OTP đến SĐT]
-    K --> L[Nhập OTP 6 số]
-    L --> M{OTP đúng?}
-    M -->|Sai| N[Lỗi — max 3 lần]
-    N --> L
-    M -->|Đúng| O[POST /account/unlock\nKhôi phục hoàn toàn]
-    O --> P[Đăng nhập lại bình thường]
+    A([Settings → Bảo mật → Đổi PIN]) --> B[SCR-AUTH-14\nNhập PIN hiện tại]
+    B --> C{PIN đúng?}
+    C -- Sai < 5 lần --> D[Lỗi: Còn N lần]
+    D --> B
+    C -- Sai lần 5 --> E[Khóa 30 phút]
+    C -- Đúng --> F[SCR-AUTH-13\nNhập PIN mới 6 số]
+    F --> G[Xác nhận PIN mới]
+    G --> H{Khớp + khác PIN cũ?}
+    H -- Không khớp --> I[Lỗi + về nhập lại]
+    I --> F
+    H -- Trùng PIN cũ --> J[Lỗi: PIN mới không được trùng PIN cũ]
+    J --> F
+    H -- Hợp lệ --> K[POST /settings/pin/change\nHash mới + Revoke sessions thiết bị khác]
+    K --> L[Toast: PIN đã cập nhật]
+    L --> M[Về SCR-SETTINGS-03]
 ```
 
-### 4.5 Flow E — Đóng tài khoản (Offboarding)
+<Note>
+  Đổi PIN dùng lại màn hình từ Auth module (SCR-AUTH-14 và SCR-AUTH-13). Settings chỉ là entry point — không có màn hình mới.
+</Note>
+
+### 3.4 Flow D — Bật / Tắt Biometric
 
 ```mermaid
 flowchart TD
-    A([Settings → Đóng tài khoản]) --> B[SCR-SET-13\nCảnh báo hậu quả đầy đủ\nKhông thể khôi phục]
-    B --> C[Kiểm tra điều kiện đủ]
-    C --> D{Còn số dư?}
-    D -->|Có| E[Chặn: Yêu cầu rút hết tiền trước\nLink sang Withdrawal]
-    E --> F[User thực hiện rút tiền]
-    F --> C
-    D -->|balance = 0| G{Còn liên kết ngân hàng pending withdrawal?}
-    G -->|Có| H[Chặn: Chờ GD pending hoàn tất]
-    G -->|Không| I{KYC Tier có transaction đang pending?}
-    I -->|Có| J[Chặn: Chờ GD pending]
-    I -->|Không| K[SCR-SET-14 — Xác nhận cuối\nLiệt kê tất cả dữ liệu sẽ bị xóa]
-    K --> L[User gõ xác nhận text\n'XÁC NHẬN ĐÓNG TÀI KHOẢN']
-    L --> M[Nhập PIN]
-    M --> N{PIN đúng?}
-    N -->|Sai| O[Lỗi PIN]
-    O --> M
-    N -->|Đúng| P[Gửi OTP]
-    P --> Q[Nhập OTP]
-    Q --> R{OTP đúng?}
-    R -->|Sai| S[Lỗi OTP]
-    S --> Q
-    R -->|Đúng| T[POST /account/close\nSchedule deletion job]
-    T --> U[Gửi email xác nhận đóng TK\nThông báo sẽ xóa sau 30 ngày]
-    U --> V[Đăng xuất toàn bộ\nApp về màn hình Welcome]
+    A([Settings → Bảo mật → Sinh trắc học]) --> B[SCR-SETTINGS-03\nHiển thị trạng thái: Bật/Tắt]
+    B --> C{Thao tác}
+    C -- Toggle ON --> D[Yêu cầu PIN xác nhận\nhành động nhạy cảm]
+    D --> E{PIN đúng?}
+    E -- Sai --> F[Lỗi PIN → thử lại]
+    F --> D
+    E -- Đúng --> G[Gọi LocalAuthentication OS\nEnroll Face ID / Fingerprint]
+    G --> H{OS confirm?}
+    H -- Thành công --> I[PATCH /settings/biometric enable=true\nLưu bio_token encrypted]
+    I --> J[Toast: Sinh trắc học đã bật ✅]
+    H -- User cancel --> K[Toast: Không thay đổi]
+    H -- Thiết bị không hỗ trợ --> L[Toast: Thiết bị không hỗ trợ tính năng này]
+    C -- Toggle OFF --> M[Popup xác nhận\n'Tắt sẽ yêu cầu nhập PIN mỗi lần']
+    M -- Hủy --> B
+    M -- Xác nhận --> N[Yêu cầu PIN]
+    N --> O{PIN đúng?}
+    O -- Sai --> P[Lỗi PIN]
+    P --> N
+    O -- Đúng --> Q[PATCH /settings/biometric enable=false\nRevoke bio_token]
+    Q --> R[Toast: Sinh trắc học đã tắt]
+```
+
+### 3.5 Flow E — Thiết bị mới muốn đăng nhập (Device A nhận yêu cầu)
+
+```mermaid
+flowchart TD
+    A([Device A nhận Push: Thiết bị mới muốn đăng nhập]) --> B{App trạng thái}
+    B -- App đang mở --> C[Modal overlay xuất hiện ngay\nSCR-SETTINGS-05]
+    B -- App trong background/đóng --> D[Push notification với action buttons]
+    D -- Tap notification --> C
+    C --> E[Hiển thị: Tên thiết bị · OS · Thời gian · IP location]
+    E --> F[Countdown: Hết hạn sau 05:00]
+    F --> G{Người dùng chọn}
+    G -- Cho phép --> H[POST /auth/device/approve\n{approval_token}]
+    H --> I[Device A bị đăng xuất ngay\nDevice B hoàn tất login]
+    I --> J[Device A về màn Welcome\nToast: Thiết bị này đã đăng xuất]
+    G -- Từ chối --> K[POST /auth/device/deny\n{approval_token}]
+    K --> L[Device B bị block 30 phút\nPush alert: Yêu cầu bị từ chối]
+    L --> M[Toast: Đã từ chối đăng nhập\nThiết bị của bạn vẫn an toàn]
+    F -- Hết thời gian 5 phút --> N[Auto-deny Device B\nModal tự đóng\nNotification: Yêu cầu đã hết hạn]
 ```
 
 ---
 
-## 5. Sequence Diagram
+## 4. Sequence Diagram
 
-### 5.1 Đổi PIN (End-to-End)
+### 4.1 Notification Delivery & Inbox Sync
 
 ```mermaid
 sequenceDiagram
+    autonumber
     actor User
     participant App
-    participant SettingSvc as Settings Service
-    participant AuthSvc as Auth Service
-    participant OTPGw as OTP Gateway
-    participant DB
+    participant NotifSvc as Notification Service
+    participant FCM as FCM / APNs
+    participant DB as Notification DB
 
-    User->>App: Nhập PIN cũ
-    App->>AuthSvc: POST /settings/pin/verify {pin_hash}
-    AuthSvc->>DB: bcrypt.compare(input, stored_hash)
-    DB-->>AuthSvc: match/no match
+    Note over NotifSvc: Event từ các module khác\n(Transfer, QR, Auth, KYC...)
+    NotifSvc->>DB: INSERT notification {user_id, type, title, body, deep_link, read=false}
+    NotifSvc->>FCM: Send push {token, title, body, data: {type, deep_link}}
+    FCM-->>App: Push notification delivered
 
-    alt PIN sai > 3 lần
-        AuthSvc-->>App: {require_otp: true}
-        App->>OTPGw: POST /otp/send {user_id, purpose: pin_change}
-        OTPGw-->>App: {otp_sent: true, expires_in: 300}
-        App->>User: SCR-SET-05 — Nhập OTP
-        User->>App: Nhập OTP
-        App->>AuthSvc: POST /otp/verify {otp_code}
-        AuthSvc->>DB: Check OTP valid + not expired
-        DB-->>AuthSvc: valid/invalid
-        AuthSvc-->>App: {otp_valid: true}
-    end
+    User->>App: Tap bell icon
+    App->>NotifSvc: GET /notifications?cursor=null&limit=20
+    NotifSvc->>DB: SELECT WHERE user_id=? ORDER BY created_at DESC LIMIT 20
+    DB-->>NotifSvc: notification[]
+    NotifSvc-->>App: {notifications[], next_cursor, unread_count}
+    App->>User: SCR-NOTIF-01 với badge count
 
-    App->>User: SCR-SET-06 — Nhập PIN mới
-    User->>App: Nhập + confirm PIN mới
-    App->>SettingSvc: POST /settings/pin/change {new_pin, confirm_pin, session_token}
-    SettingSvc->>SettingSvc: Validate: new ≠ old, PIN1 = PIN2, 6 digits
-    SettingSvc->>DB: bcrypt.hash(new_pin, cost=12)
-    SettingSvc->>DB: UPDATE users SET pin_hash = new_hash, pin_changed_at = NOW()
-    SettingSvc->>DB: Revoke all sessions EXCEPT current device
-    SettingSvc-->>App: {success: true}
-    App->>User: Toast "PIN đã cập nhật thành công"
-    SettingSvc--)User: SMS: "PIN ví điện tử của bạn vừa được thay đổi lúc HH:mm. Nếu không phải bạn, liên hệ CSKH"
+    User->>App: Tap 1 thông báo
+    App->>NotifSvc: PATCH /notifications/{id}/read
+    NotifSvc->>DB: UPDATE read=true, read_at=NOW()
+    NotifSvc-->>App: {success: true, unread_count: N-1}
+    App->>App: Update badge count
+    App->>User: Navigate đến deep_link target
 ```
 
-### 5.2 Đóng tài khoản (Account Closure)
+### 4.2 New Device Login — 1-Device Approval Flow
 
 ```mermaid
 sequenceDiagram
-    actor User
-    participant App
-    participant SettingSvc as Settings Service
-    participant WalletSvc as Wallet Service
-    participant AuthSvc
-    participant DB
-    participant DeletionJob as Deletion Job (async)
-    participant EmailSvc
+    autonumber
+    actor UserB as User (Device B)
+    participant DevB as Device B App
+    participant Auth as Auth Service
+    participant NotifSvc as Notification Service
+    participant FCM as FCM / APNs
+    actor UserA as User (Device A)
+    participant DevA as Device A App
 
-    User->>App: Yêu cầu đóng tài khoản
-    App->>WalletSvc: GET /wallet/balance {user_id}
-    WalletSvc-->>App: {balance_available: 0, balance_locked: 0}
+    UserB->>DevB: Nhập SĐT + PIN
+    DevB->>Auth: POST /auth/login {phone, pin_hash, device_id_B}
+    Auth->>Auth: Verify PIN ✅
+    Auth->>Auth: Check: có session active trên Device A?
 
-    alt Còn số dư
-        App->>User: "Vui lòng rút hết số dư trước khi đóng tài khoản"
+    alt Device A đang active
+        Auth->>Auth: Tạo approval_token (JWT, expire 5 phút)
+        Auth->>NotifSvc: PushApprovalRequest(user_id, approval_token, device_B_info)
+        NotifSvc->>FCM: Push to Device A {type: NEW_DEVICE_APPROVAL, token, device_info}
+        FCM-->>DevA: Push notification
+        Auth-->>DevB: 202 {status: awaiting_approval, poll_after: 5s}
+        DevB->>UserB: "Đang chờ xác nhận từ thiết bị hiện tại..."
+
+        DevA->>UserA: SCR-SETTINGS-05: Modal xác nhận + countdown 5 phút
+        UserA->>DevA: Nhấn "Cho phép"
+        DevA->>Auth: POST /auth/device/approve {approval_token}
+        Auth->>Auth: Revoke session Device A
+        Auth->>Auth: Issue session Device B
+        Auth-->>DevA: {logout: true}
+        DevA->>UserA: Đăng xuất → màn Welcome
+
+        DevB->>Auth: GET /auth/login/status {approval_token} (polling mỗi 3s)
+        Auth-->>DevB: {status: approved, access_token, refresh_token}
+        DevB->>UserB: Đăng nhập thành công → Home
+
+    else Device A từ chối
+        UserA->>DevA: Nhấn "Từ chối"
+        DevA->>Auth: POST /auth/device/deny {approval_token}
+        Auth->>Auth: Block Device B 30 phút
+        Auth-->>DevB: 403 {status: denied, retry_after: 1800}
+        DevB->>UserB: "Đăng nhập bị từ chối từ thiết bị hiện tại"
+
+    else Hết 5 phút không phản hồi
+        Auth->>Auth: Expire approval_token → auto-deny
+        Auth-->>DevB: 408 {status: timeout}
+        DevB->>UserB: "Không nhận được xác nhận. Thử lại hoặc liên hệ CSKH."
     end
-
-    App->>SettingSvc: GET /account/close/eligibility
-    SettingSvc->>DB: Check pending_transactions, linked_banks, kyc_status
-    DB-->>SettingSvc: {eligible: true}
-    SettingSvc-->>App: {eligible: true, data_to_delete: [...]}
-
-    App->>User: SCR-SET-14 — Xác nhận với danh sách dữ liệu bị xóa
-    User->>App: Gõ text xác nhận + nhập PIN + OTP
-    App->>AuthSvc: Verify PIN + OTP
-    AuthSvc-->>App: {verified: true}
-
-    App->>SettingSvc: POST /account/close {confirmed: true}
-    SettingSvc->>DB: UPDATE users SET status = 'closing', closed_at = NOW() + 30d
-    SettingSvc->>DB: Revoke all active sessions
-    SettingSvc->>DeletionJob: Schedule hard delete after 30 days
-    SettingSvc->>EmailSvc: Send closure confirmation email
-    EmailSvc-->>User: Email "Tài khoản sẽ bị xóa sau 30 ngày. Nhấn link để hủy bỏ"
-    SettingSvc-->>App: {status: closing, delete_at: "2026-06-25"}
-    App->>User: Đăng xuất → Màn hình Welcome
 ```
 
 ---
 
-## 6. Screen Specs
+## 5. Screen Specifications
 
-### SCR-SET-01 — Settings Home
+### SCR-NOTIF-01 — Hộp thông báo
 
-| Section | Items | Icon |
-|---------|-------|------|
-| **Tài khoản** | Chỉnh sửa profile | 👤 |
-| | Đổi PIN | 🔑 |
-| | Sinh trắc học (Face ID / Vân tay) | 🔐 |
-| **Thông báo** | Thông báo đẩy | 🔔 |
-| **Bảo mật** | Bảo mật giao dịch (2FA) | 🛡️ |
-| | Quản lý thiết bị đăng nhập | 📱 |
-| | Tạm khóa tài khoản | 🔒 |
-| **Khác** | Điều khoản & Chính sách | 📄 |
-| | Liên hệ CSKH | 💬 |
-| | Đóng tài khoản | ⚠️ (màu đỏ) |
-| | Đăng xuất | 🚪 |
+```
+┌─────────────────────────────────┐
+│  ←      Thông báo        Đọc tất│
+│                                 │
+│  Hôm nay                        │
+│  ┌───────────────────────────┐  │
+│  │ 🔴 💰 Nhận 500K từ An    │  │  ← 🔴 = chưa đọc
+│  │    Số dư: 2,500,000 đ    │  │
+│  │                   14:30   │  │
+│  └───────────────────────────┘  │
+│  ┌───────────────────────────┐  │
+│  │    🛡 Đăng nhập thành công│  │  ← không có 🔴 = đã đọc
+│  │    iPhone 15 · Hà Nội    │  │
+│  │                   09:15   │  │
+│  └───────────────────────────┘  │
+│                                 │
+│  Hôm qua                        │
+│  ┌───────────────────────────┐  │
+│  │ 🔴 ⚠ Thiết bị mới muốn  │  │
+│  │    đăng nhập — Tap để XN │  │
+│  │                   18:45   │  │
+│  └───────────────────────────┘  │
+│                                 │
+│         ⟳ Đang tải thêm...     │
+└─────────────────────────────────┘
+```
 
----
+| Component | Loại | Nội dung | Action |
+|---|---|---|---|
+| Header | Nav | "Thông báo" | — |
+| "Đọc tất" | Text button | "Đánh dấu tất cả đã đọc" | PATCH /notifications/read-all |
+| Unread dot | Badge (đỏ) | Chấm tròn đỏ bên trái notification chưa đọc | — |
+| Group header | Text bold | "Hôm nay" / "Hôm qua" / "DD tháng MM" | — |
+| Notification row | List item | [Category icon] [Title] [Preview text] [Time] | Tap → mark read + navigate |
+| Category icon | Icon | 💰 GD / 🛡 Bảo mật / ℹ Hệ thống | — |
+| Unread row background | Light tint | Màu nền nhạt cho notification chưa đọc | — |
+| Empty state | Illustration | "Chưa có thông báo nào" | — |
+| Infinite scroll | Spinner | Load thêm batch 20 khi scroll gần cuối | — |
 
-### SCR-SET-02 — Notification Settings
+**Notification categories & icons:**
 
-| Component | Chi tiết |
-|-----------|---------|
-| Header | "Thông báo" |
-| Toggle master | "Thông báo đẩy (Push)" — bật/tắt toàn bộ push notification |
-| Status | Nếu tắt: "Push đã tắt — bạn sẽ không nhận được thông báo từ ứng dụng" |
-| Permission check | Nếu OS đã revoke permission: hiển thị "Cấp quyền thông báo trong Cài đặt điện thoại" + nút "Mở Settings" |
-| Note | "Phân loại chi tiết (GD, bảo mật, khuyến mãi) sẽ sớm ra mắt" |
-
-**Điều kiện hiển thị:**
-- Nếu OS permission chưa được cấp: toggle hiển thị OFF + không thể bật trực tiếp → hướng dẫn ra Settings
-- Toggle thay đổi FCM opt-in/opt-out tại server — không unregister token
-
----
-
-### SCR-SET-03 — Chỉnh sửa Profile
-
-| Component | Chi tiết |
-|-----------|---------|
-| Avatar | Ảnh hiện tại + icon camera để thay — tap → image picker (camera / gallery) |
-| Trường Họ và tên | READ ONLY sau KYC — label "Không thể thay đổi sau xác thực KYC" + icon khóa |
-| Trường SĐT | READ ONLY — label "Số điện thoại không thể thay đổi" |
-| Trường Email | Editable — validate format email |
-| CTA "Lưu thay đổi" | Enabled khi có field nào thay đổi |
-| Avatar upload | Max 5MB, định dạng JPG/PNG/WEBP — resize về 400×400px server-side |
-
----
-
-### SCR-SET-06 — Nhập PIN mới
-
-| Component | Chi tiết |
-|-----------|---------|
-| Header | "Tạo PIN mới" |
-| PIN pad | 6 ô số, dots (không hiện số thực) |
-| Strength hints | "Không dùng số liên tiếp (123456)" · "Không dùng số lặp (111111)" — checklist |
-| Step indicator | Bước 1: Nhập PIN mới · Bước 2: Xác nhận PIN |
-| PIN confirm | Sau khi nhập 6 số: auto-advance sang màn confirm |
-| Mismatch error | "Mã PIN không khớp. Vui lòng thử lại" |
+| Category | Icon | Loại thông báo |
+|---|---|---|
+| GD (Transaction) | 💰 | Nạp/rút/chuyển/QR thành công hoặc thất bại |
+| Bảo mật (Security) | 🛡 | Thiết bị mới, đổi PIN, KYC, tài khoản bị khóa |
+| Hệ thống (System) | ℹ | Cập nhật app, thông báo bảo trì, tin tức |
 
 ---
 
-### SCR-SET-07 — Biometric Settings
+### SCR-SETTINGS-01 — Menu cài đặt chính
 
-| Component | Chi tiết |
-|-----------|---------|
-| Header | "Xác thực sinh trắc học" |
-| Face ID section | Chỉ hiện nếu thiết bị hỗ trợ Face ID. Toggle ON/OFF + icon 🤳 |
-| Vân tay section | Chỉ hiện nếu thiết bị hỗ trợ Fingerprint. Toggle ON/OFF + icon 👆 |
-| Mô tả | "Dùng sinh trắc học để xác thực thanh toán và đăng nhập nhanh hơn" |
-| Fallback note | "Nếu sinh trắc học không nhận diện được, hệ thống sẽ yêu cầu nhập PIN" |
-| Trạng thái không hỗ trợ | "Thiết bị của bạn không hỗ trợ tính năng này" (disabled) |
+```
+┌─────────────────────────────────┐
+│  ←         Cài đặt             │
+│                                 │
+│  ┌─────────────────────────┐   │
+│  │ [Avatar] Nguyễn Đức Chinh│   │
+│  │          Tier 2 ✅        │   │
+│  └─────────────────────────┘   │
+│                                 │
+│  Hồ sơ                          │
+│  ├── Chỉnh sửa hồ sơ      ›    │
+│                                 │
+│  Bảo mật                        │
+│  ├── Đổi PIN              ›    │
+│  ├── Sinh trắc học        ›    │
+│  ├── Thiết bị đang dùng   ›    │
+│                                 │
+│  Hỗ trợ                         │
+│  ├── Trung tâm hỗ trợ     ›    │
+│  ├── Điều khoản & Chính sách ›  │
+│                                 │
+│  ─────────────────────────────  │
+│  [       Đăng xuất       ]     │
+└─────────────────────────────────┘
+```
 
----
-
-### SCR-SET-09 — 2FA Threshold Setup
-
-| Component | Chi tiết |
-|-----------|---------|
-| Header | "Bảo mật giao dịch" |
-| Toggle "Bật OTP cho GD lớn" | Khi bật: mọi GD vượt ngưỡng sẽ yêu cầu OTP SMS thêm sau PIN |
-| Ngưỡng (threshold) | Slider hoặc ô nhập VND — mặc định: 5,000,000 VND |
-| Min threshold | 500,000 VND |
-| Mô tả | "Giao dịch trên [X] VND sẽ yêu cầu mã OTP qua SMS ngoài mã PIN" |
-| Preview | "Hiện tại: Bật — Ngưỡng 5,000,000 VND" |
-
----
-
-### SCR-SET-10 — Quản lý thiết bị
-
-| Component | Chi tiết |
-|-----------|---------|
-| Header | "Thiết bị đăng nhập" |
-| List thiết bị | Mỗi item: [OS icon] Tên thiết bị · Phiên bản OS · Lần cuối active · Badge "Thiết bị này" |
-| Thiết bị hiện tại | Không có nút đăng xuất — chỉ hiện badge |
-| Thiết bị khác | Nút "Đăng xuất" → flow SCR-SET-11 |
-| Nút "Đăng xuất tất cả" | Cuối danh sách — đăng xuất tất cả trừ thiết bị hiện tại (cũng cần PIN + OTP) |
-| Thông tin thiết bị | device_name · device_id (masked) · last_active_at |
-
----
-
-### SCR-SET-12 — Tạm khóa tài khoản
-
-| Component | Chi tiết |
-|-----------|---------|
-| Header | "Tạm khóa tài khoản" |
-| Cảnh báo | Panel đỏ: "Khi khóa tài khoản: Bạn không thể thực hiện giao dịch nào · Tài khoản sẽ bị đăng xuất trên mọi thiết bị · Chỉ mở khóa qua OTP SĐT" |
-| CTA | "Khóa tài khoản" — màu đỏ |
-| Lý do khóa (optional) | Dropdown: Mất điện thoại · Nghi ngờ bị hack · Lý do khác |
-| Hủy | Link text "Không, tôi muốn giữ tài khoản" |
+| Component | Loại | Nội dung | Action |
+|---|---|---|---|
+| User card | Card | Avatar + Tên hiển thị + KYC tier badge | Tap → SCR-SETTINGS-02 |
+| "Chỉnh sửa hồ sơ" | Row | Chevron ›  | → SCR-SETTINGS-02 |
+| "Đổi PIN" | Row | Chevron › | → SCR-AUTH-14 (flow đổi PIN) |
+| "Sinh trắc học" | Row | Trạng thái: Đang bật / Đang tắt + chevron | → SCR-SETTINGS-03 |
+| "Thiết bị đang dùng" | Row | Tên thiết bị hiện tại (ngắn) + chevron | → SCR-SETTINGS-04 |
+| "Trung tâm hỗ trợ" | Row | Chevron | Mở chat CS / FAQ |
+| "Điều khoản" | Row | Chevron | In-app webview |
+| "Đăng xuất" | Button (destructive) | Màu đỏ nhạt | Confirm popup → DELETE /auth/session |
 
 ---
 
-### SCR-SET-13/14 — Đóng tài khoản (Offboarding)
+### SCR-SETTINGS-02 — Hồ sơ cá nhân
 
-**SCR-SET-13 — Điều kiện & Cảnh báo:**
+```
+┌─────────────────────────────────┐
+│  ←      Hồ sơ cá nhân    Lưu  │  ← Lưu disabled khi chưa thay đổi
+│                                 │
+│         [ Avatar 80px ]         │
+│          Đổi ảnh đại diện       │
+│                                 │
+│  Họ và tên                      │
+│  ┌──────────────────────────┐   │
+│  │ Nguyễn Đức Chinh       🔒│   │  ← 🔒 = read-only sau KYC
+│  └──────────────────────────┘   │
+│                                 │
+│  Tên hiển thị                   │
+│  ┌──────────────────────────┐   │
+│  │ Chinh NDC                │   │  ← editable
+│  └──────────────────────────┘   │
+│  Hiện trong các giao dịch       │
+│                                 │
+│  Số điện thoại                  │
+│  ┌──────────────────────────┐   │
+│  │ 090 **** 567           🔒│   │
+│  └──────────────────────────┘   │
+│                                 │
+│  Email dự phòng                 │
+│  ┌──────────────────────────┐   │
+│  │ chinh@example.com        │   │  ← editable
+│  └──────────────────────────┘   │
+│  Nhận thông báo quan trọng      │
+│                                 │
+│  Ngôn ngữ                       │
+│  ┌──────────────────────────┐   │
+│  │ Tiếng Việt            ›  │   │  ← bottom sheet selector
+│  └──────────────────────────┘   │
+└─────────────────────────────────┘
+```
 
-| Component | Chi tiết |
-|-----------|---------|
-| Header | "Đóng tài khoản" (màu đỏ) |
-| Danh sách kiểm tra | ✅ Số dư bằng 0 · ✅ Không có GD đang chờ · ✅ Không có ngân hàng đang chờ liên kết |
-| Danh sách dữ liệu bị xóa | Hồ sơ cá nhân · Lịch sử giao dịch · Liên kết ngân hàng · Dữ liệu KYC |
-| Retention note | "Một số dữ liệu có thể được giữ lại tối đa 5 năm theo quy định pháp luật" |
-| Grace period | "Tài khoản sẽ vẫn còn trong 30 ngày. Trong 30 ngày đó bạn có thể đổi ý qua email hỗ trợ" |
-
-**SCR-SET-14 — Xác nhận cuối:**
-
-| Component | Chi tiết |
-|-----------|---------|
-| Text input confirm | User gõ chính xác "XÁC NHẬN ĐÓNG TÀI KHOẢN" — CTA disabled cho đến khi đúng |
-| PIN input | 6 ô số |
-| OTP input | 6 ô số gửi qua SĐT |
-| CTA | "Xác nhận đóng tài khoản vĩnh viễn" — màu đỏ đậm |
-
----
-
-## 7. Validation Rules
-
-| Rule ID | Field | Điều kiện vi phạm | Lỗi hiển thị |
-|---------|-------|------------------|-------------|
-| VAL-SET-01 | PIN mới | Ít hơn 6 số | "Mã PIN phải có đúng 6 chữ số" |
-| VAL-SET-02 | PIN mới | Số liên tiếp (123456, 654321) | Cảnh báo: "PIN dễ đoán — hãy chọn PIN khác an toàn hơn" |
-| VAL-SET-03 | PIN mới | Số lặp (111111, 000000) | Cảnh báo tương tự |
-| VAL-SET-04 | PIN mới | Trùng PIN cũ | "Mã PIN mới không được trùng với mã PIN hiện tại" |
-| VAL-SET-05 | PIN confirm | Không khớp PIN mới | "Mã PIN xác nhận không khớp" |
-| VAL-SET-06 | Email | Sai format email | "Địa chỉ email không hợp lệ" |
-| VAL-SET-07 | Avatar | > 5MB | "Ảnh quá lớn. Vui lòng chọn ảnh nhỏ hơn 5MB" |
-| VAL-SET-08 | Avatar | Không phải JPG/PNG/WEBP | "Định dạng ảnh không được hỗ trợ" |
-| VAL-SET-09 | 2FA threshold | < 500,000 VND | "Ngưỡng tối thiểu là 500,000 VND" |
-| VAL-SET-10 | Close account text | Không đúng chuỗi xác nhận | CTA disabled — không hiện lỗi, chỉ disable |
-| VAL-SET-11 | Close account | Còn số dư > 0 | "Vui lòng rút hết số dư trước khi đóng tài khoản" |
-| VAL-SET-12 | Close account | Có GD đang pending | "Có giao dịch đang xử lý. Vui lòng chờ hoàn tất" |
-
----
-
-## 8. Business Rules
-
-| ID | Rule | Mô tả |
-|----|------|-------|
-| BR-SET-01 | PIN bcrypt cost=12 | Mã PIN mới được hash bằng bcrypt với cost factor 12. Không lưu plaintext hay MD5 |
-| BR-SET-02 | Đổi PIN → đăng xuất thiết bị khác | Sau khi đổi PIN thành công, tất cả refresh token trên thiết bị khác bị revoke. Thiết bị hiện tại giữ session |
-| BR-SET-03 | SĐT/Họ tên bất biến sau KYC | Sau khi KYC Tier 2 được duyệt, không cho phép thay đổi SĐT và Họ tên qua Settings. Thay đổi phải qua quy trình KYC lại |
-| BR-SET-04 | Biometric token revoke | Khi tắt biometric hoặc đổi PIN → revoke bio_token. Lần đăng nhập/thanh toán biometric tiếp theo sẽ fail → prompt bật lại |
-| BR-SET-05 | 2FA threshold phạm vi | Khi 2FA bật, mọi GD (Transfer + QR Payment + Withdrawal) vượt threshold đều cần OTP thêm, sau PIN |
-| BR-SET-06 | Đăng xuất thiết bị: PIN + OTP | Hành động đăng xuất thiết bị khác cần PIN hiện tại + OTP SMS — không thể chỉ cần 1 trong 2 |
-| BR-SET-07 | Max devices | Một tài khoản tối đa 5 thiết bị active cùng lúc. Đăng nhập thiết bị thứ 6 → yêu cầu đăng xuất 1 thiết bị khác |
-| BR-SET-08 | Self-lock: mở bằng OTP | Tài khoản tự khóa chỉ mở được qua OTP SĐT — không thể mở bằng PIN (vì có thể PIN đã bị lộ) |
-| BR-SET-09 | Offboarding grace period 30 ngày | Sau khi request đóng TK: status = `closing`, tài khoản không dùng được nhưng dữ liệu chưa xóa. User có thể cancel trong 30 ngày qua CSKH |
-| BR-SET-10 | Offboarding: số dư = 0 bắt buộc | Hệ thống từ chối request đóng TK nếu `balance_available + balance_locked > 0` |
-| BR-SET-11 | Dữ liệu pháp lý giữ lại | Sau khi xóa TK: thông tin KYC và lịch sử GD được giữ trong hệ thống (anonymized) tối thiểu 5 năm theo NĐ52/2024 |
-| BR-SET-12 | Notification toggle server-side | Tắt push = update `push_opt_in = false` tại server → không gửi FCM/APNs message. Không unregister token vì user có thể bật lại |
+| Component | Loại | Nội dung | Điều kiện | Action |
+|---|---|---|---|---|
+| Header "Lưu" | Text button | Disabled khi không có thay đổi | Khi có edit | PATCH /settings/profile |
+| Avatar | Image + Tap | Tap → image picker (Camera / Gallery) | Always | Upload S3 |
+| Họ và tên | Display field | Tên từ KYC — read-only | Always | — |
+| Lock icon 🔒 | Icon | Bên phải field read-only | Always | Tooltip: "Không thể thay đổi sau KYC" |
+| Tên hiển thị | Text input | Nickname tự chọn (khác KYC name) | Editable | — |
+| SĐT | Display field | Masked — read-only | Always | — |
+| Email dự phòng | Text input | Validate email format | Editable | — |
+| Ngôn ngữ | Selector | Tiếng Việt / English | Editable | Bottom sheet selector |
 
 ---
 
-## 9. Notification Events
+### SCR-SETTINGS-03 — Cài đặt bảo mật
 
-| Event | Trigger | Kênh | Nội dung |
-|-------|---------|------|---------|
-| `PIN_CHANGED` | Đổi PIN thành công | SMS + Push | "Mã PIN ví điện tử của bạn vừa được thay đổi lúc [HH:mm]. Nếu không phải bạn, khóa tài khoản ngay" |
-| `DEVICE_LOGGED_OUT` | Đăng xuất thiết bị từ xa | Push (thiết bị bị đăng xuất) | "Thiết bị này vừa bị đăng xuất khỏi tài khoản của bạn" |
-| `ACCOUNT_LOCKED` | Tài khoản bị tự khóa | SMS | "Tài khoản ví của bạn đã được khóa theo yêu cầu. Nhập OTP để mở khóa" |
-| `ACCOUNT_UNLOCKED` | Mở khóa thành công | Push | "Tài khoản của bạn đã được mở khóa thành công" |
-| `ACCOUNT_CLOSING` | Request đóng TK | Email | "Tài khoản sẽ bị xóa vào [ngày]. Nhấn link để hủy bỏ nếu đây không phải ý định của bạn" |
-| `BIOMETRIC_CHANGED` | Bật/tắt biometric | Push | "Cài đặt sinh trắc học vừa được thay đổi. Nếu không phải bạn, đổi PIN ngay" |
-| `NEW_DEVICE_LOGIN` | Đăng nhập thiết bị mới | Push + SMS | Đã xử lý trong Auth module (SCR-AUTH-15) |
+```
+┌─────────────────────────────────┐
+│  ←        Bảo mật              │
+│                                 │
+│  Mã PIN                         │
+│  ├── Đổi mã PIN            ›   │
+│                                 │
+│  Sinh trắc học                  │
+│  ├── Face ID            ○──●   │  ← toggle: Đang bật
+│  ├── Vân tay            ○──○   │  ← toggle: Đang tắt
+│                                 │
+│  Thiết bị đang đăng nhập        │
+│  ├── iPhone 15 Pro         ›   │  ← tap → SCR-SETTINGS-04
+│                                 │
+│  ─────────────────────────────  │
+│                                 │
+│  🆘 Bị mất thiết bị?            │
+│  Liên hệ CSKH để đăng xuất     │
+│  và bảo vệ tài khoản            │
+│  [  Liên hệ CSKH  ]            │
+└─────────────────────────────────┘
+```
+
+| Component | Loại | Nội dung | Action |
+|---|---|---|---|
+| "Đổi mã PIN" | Row + chevron | — | → SCR-AUTH-14 |
+| Face ID toggle | Toggle | On/Off — chỉ hiện nếu thiết bị hỗ trợ | Flow D (bật/tắt biometric) |
+| Vân tay toggle | Toggle | On/Off — chỉ hiện nếu thiết bị hỗ trợ | Flow D |
+| "Thiết bị hiện tại" | Row + tên thiết bị + chevron | Tên device ngắn gọn | → SCR-SETTINGS-04 |
+| "Bị mất thiết bị?" | Info box | Text + nút "Liên hệ CSKH" | Mở chat CSKH với template "Tôi bị mất thiết bị" |
 
 ---
 
-## 10. API Endpoints
+### SCR-SETTINGS-04 — Thiết bị đang đăng nhập
+
+```
+┌─────────────────────────────────┐
+│  ←     Thiết bị đang dùng      │
+│                                 │
+│  ┌───────────────────────────┐  │
+│  │ 📱 iPhone 15 Pro          │  │
+│  │ iOS 17.4                  │  │
+│  │ Đăng nhập: 26/05 · 09:15  │  │
+│  │ Hà Nội (IP: 42.112.xxx)   │  │
+│  │                           │  │
+│  │        [Thiết bị này]     │  │  ← badge xanh
+│  └───────────────────────────┘  │
+│                                 │
+│  ─────────────────────────────  │
+│                                 │
+│  ℹ Chính sách bảo mật:          │
+│  Tài khoản chỉ được đăng nhập  │
+│  trên 1 thiết bị tại 1 thời    │
+│  điểm. Thiết bị mới cần được   │
+│  bạn xác nhận trước khi đăng   │
+│  nhập.                          │
+│                                 │
+│  [      Đăng xuất thiết bị     ]│  ← màu đỏ nhạt
+└─────────────────────────────────┘
+```
+
+| Component | Loại | Nội dung | Action |
+|---|---|---|---|
+| Device card | Card | Tên device · OS · Thời gian đăng nhập · IP + city | — |
+| "Thiết bị này" badge | Badge (xanh) | Đánh dấu đây là thiết bị đang dùng | — |
+| Policy info box | Info | Giải thích chính sách 1 thiết bị | — |
+| "Đăng xuất" | Button (danger) | Màu đỏ nhạt | Confirm popup → DELETE /auth/session |
+
+**Confirm popup đăng xuất:**
+- Title: "Đăng xuất khỏi thiết bị này?"
+- Body: "Bạn sẽ cần đăng nhập lại và được xác nhận từ thiết bị mới."
+- CTA: [Hủy] | [Đăng xuất]
+
+---
+
+### SCR-SETTINGS-05 — Xác nhận thiết bị mới (trên Device A)
+
+```
+┌─────────────────────────────────┐
+│                                 │
+│           🔔 !                  │
+│                                 │
+│    Có thiết bị mới muốn         │
+│      đăng nhập vào              │
+│       tài khoản của bạn         │
+│                                 │
+│  ┌───────────────────────────┐  │
+│  │ 📱 Samsung Galaxy S24     │  │
+│  │ Android 14                │  │
+│  │ Hồ Chí Minh (IP: 27.xxx)  │  │
+│  │ 26/05/2026 lúc 20:15      │  │
+│  └───────────────────────────┘  │
+│                                 │
+│  ⏳ Hết hạn sau  04:23          │  ← countdown
+│                                 │
+│  Nếu không phải bạn, hãy TỪ   │
+│  CHỐI ngay để bảo vệ tài khoản  │
+│                                 │
+│  [ ❌ Từ chối — Không phải tôi ]│  ← màu đỏ, prominent
+│                                 │
+│     [ ✅ Cho phép — Đó là tôi ]  │  ← secondary
+└─────────────────────────────────┘
+```
+
+| Component | Loại | Nội dung | Action |
+|---|---|---|---|
+| Alert icon | Icon (large) | 🔔 với badge ! | — |
+| Device info card | Card | Tên device · OS · Thành phố · Timestamp | — |
+| Countdown timer | Text (orange) | "Hết hạn sau MM:SS" | Đếm ngược từ 05:00; khi về 0 → modal tự đóng + auto-deny |
+| Warning text | Text (red) | "Nếu không phải bạn, hãy TỪ CHỐI ngay" | — |
+| "Từ chối" | Primary button (đỏ) | Đặt trên để người dùng dễ thấy | POST /auth/device/deny |
+| "Cho phép" | Secondary button | Đặt dưới — ít nổi bật hơn | POST /auth/device/approve |
+
+<Warning>
+  **UX Decision:** "Từ chối" được đặt trên và màu đỏ nổi bật — vì nếu user thấy màn hình này mà không biết tại sao, hành động an toàn nhất là từ chối. Chỉ user đang chủ động đổi thiết bị mới nên tap "Cho phép".
+</Warning>
+
+---
+
+## 6. Validation Rules
+
+| Rule ID | Field | Điều kiện vi phạm | Xử lý |
+|---|---|---|---|
+| VAL-SET-01 | Tên hiển thị (nickname) | Rỗng hoặc < 2 ký tự | "Tên hiển thị phải có ít nhất 2 ký tự" |
+| VAL-SET-02 | Tên hiển thị | > 50 ký tự | "Tên hiển thị tối đa 50 ký tự" |
+| VAL-SET-03 | Email dự phòng | Sai format email | "Địa chỉ email không hợp lệ" |
+| VAL-SET-04 | Email dự phòng | Email đã được dùng bởi tài khoản khác | "Email này đã được sử dụng" |
+| VAL-SET-05 | Avatar | File > 5MB | "Ảnh quá lớn. Vui lòng chọn ảnh nhỏ hơn 5MB" |
+| VAL-SET-06 | Avatar | Không phải JPG/PNG/WEBP | "Định dạng không được hỗ trợ. Chọn JPG, PNG hoặc WEBP" |
+| VAL-SET-07 | PIN mới (đổi PIN) | Trùng PIN cũ | "Mã PIN mới không được trùng với mã PIN hiện tại" |
+| VAL-SET-08 | PIN confirm | Không khớp PIN mới | "Mã PIN xác nhận không khớp" |
+| VAL-SET-09 | Đăng xuất | User xác nhận đăng xuất | Confirm popup; không thể undone |
+
+---
+
+## 7. Business Rules
+
+| ID | Rule | Áp dụng tại |
+|---|---|---|
+| BR-SET-01 | 1 thiết bị active tại 1 thời điểm | Auth Service; không cho phép 2 session active cùng lúc |
+| BR-SET-02 | Thiết bị mới: bắt buộc approval từ thiết bị hiện tại | Auth Service; thiết bị mới không được login nếu thiết bị cũ chưa approve |
+| BR-SET-03 | Approval timeout: 5 phút → auto-deny | Auth Service; không để request treo vô thời hạn |
+| BR-SET-04 | Mất thiết bị: chỉ CSKH mới có thể force-logout | Không có self-service cho trường hợp này; CSKH verify KYC trước khi force-logout |
+| BR-SET-05 | Nickname khác KYC name | Nickname dùng trong UI giao dịch; KYC name dùng trong hồ sơ pháp lý và NAPAS |
+| BR-SET-06 | Họ tên KYC bất biến sau Tier 2 | Không cho phép thay đổi qua Settings; phải re-KYC |
+| BR-SET-07 | SĐT bất biến | Không đổi SĐT qua Settings; cần process riêng qua CSKH + xác minh carrier |
+| BR-SET-08 | Biometric token revoke | Khi tắt biometric hoặc đổi PIN → revoke bio_token ngay lập tức |
+| BR-SET-09 | Đổi PIN → revoke session thiết bị khác | Sau khi đổi PIN thành công: revoke tất cả session khác ngoài thiết bị hiện tại |
+| BR-SET-10 | Thông báo lưu 90 ngày | Notification records tự expire sau 90 ngày; không lưu vĩnh viễn |
+| BR-SET-11 | Đăng xuất: revoke token | Tap "Đăng xuất" → DELETE /auth/session → revoke access + refresh token ngay lập tức |
+| BR-SET-12 | Push permission: server opt-in | Dù user tắt push trên OS hay trong app đều set `push_opt_in = false` tại server; không unregister FCM token |
+
+---
+
+## 8. Notification Events từ module này
+
+| Event | Channel | Nội dung | Thời điểm |
+|---|---|---|---|
+| Đổi PIN thành công | Push + SMS | "Mã PIN ví của bạn vừa được thay đổi lúc [HH:mm]. Nếu không phải bạn, liên hệ CSKH ngay." | Ngay khi đổi PIN |
+| Thiết bị mới yêu cầu đăng nhập | Push (Device A) | "Có thiết bị mới muốn đăng nhập vào tài khoản của bạn. Tap để xem chi tiết." | Khi Device B gửi login request |
+| Thiết bị mới được cho phép | Push (Device B) | "Đăng nhập được xác nhận. Chào mừng trở lại!" | Khi Device A approve |
+| Thiết bị mới bị từ chối | Push (Device B) | "Yêu cầu đăng nhập bị từ chối. Liên hệ CSKH nếu gặp vấn đề." | Khi Device A deny hoặc timeout |
+| Biometric thay đổi | Push | "Cài đặt sinh trắc học vừa được thay đổi. Nếu không phải bạn, đổi PIN ngay." | Khi bật/tắt biometric |
+| Đăng xuất thành công | Push | "Bạn đã đăng xuất khỏi thiết bị [tên]. Đăng nhập lại khi cần." | Sau logout |
+
+---
+
+## 9. API Summary
 
 | Method | Endpoint | Mô tả | Auth |
-|--------|----------|-------|------|
-| `GET` | `/settings` | Lấy toàn bộ cài đặt user | JWT |
-| `PATCH` | `/settings/profile` | Cập nhật avatar, email | JWT |
-| `POST` | `/settings/pin/verify` | Xác minh PIN hiện tại (bước 1 đổi PIN) | JWT |
-| `POST` | `/settings/pin/change` | Hoàn tất đổi PIN | JWT + OTP session |
-| `PATCH` | `/settings/biometric` | Bật/tắt biometric | JWT + PIN |
-| `PATCH` | `/settings/notifications` | Bật/tắt push notification | JWT |
-| `PATCH` | `/settings/2fa` | Cấu hình 2FA threshold | JWT + PIN |
-| `GET` | `/devices` | Danh sách thiết bị active | JWT |
-| `DELETE` | `/devices/{device_id}` | Đăng xuất 1 thiết bị (PIN + OTP required) | JWT + PIN + OTP |
-| `DELETE` | `/devices` | Đăng xuất tất cả thiết bị khác | JWT + PIN + OTP |
-| `POST` | `/account/lock` | Tự khóa tài khoản | JWT + PIN |
-| `POST` | `/account/unlock` | Mở khóa tài khoản | OTP only (no JWT — đã bị logout) |
-| `GET` | `/account/close/eligibility` | Kiểm tra điều kiện đóng TK | JWT |
-| `POST` | `/account/close` | Request đóng tài khoản | JWT + PIN + OTP |
+|---|---|---|---|
+| GET | `/notifications` | Danh sách notification với cursor pagination | JWT |
+| GET | `/notifications/unread-count` | Số thông báo chưa đọc (cho badge) | JWT |
+| PATCH | `/notifications/{id}/read` | Đánh dấu 1 thông báo đã đọc | JWT |
+| PATCH | `/notifications/read-all` | Đánh dấu tất cả đã đọc | JWT |
+| GET | `/settings/profile` | Lấy thông tin hồ sơ hiện tại | JWT |
+| PATCH | `/settings/profile` | Cập nhật avatar, nickname, email, language | JWT |
+| PATCH | `/settings/biometric` | Bật/tắt biometric | JWT + PIN |
+| GET | `/settings/device` | Thông tin thiết bị đang đăng nhập | JWT |
+| DELETE | `/auth/session` | Đăng xuất thiết bị hiện tại | JWT |
+| POST | `/auth/device/approve` | Device A xác nhận cho phép Device B | JWT + approval_token |
+| POST | `/auth/device/deny` | Device A từ chối Device B | JWT + approval_token |
+| GET | `/auth/login/status` | Device B poll trạng thái chờ approval | approval_token |
 
 ---
 
-## 11. Error Codes
+## 10. Error Codes
 
-| Code | HTTP | Mô tả kỹ thuật | Hiển thị người dùng |
-|------|------|---------------|-------------------|
-| `SET_001` | 400 | PIN mới trùng PIN cũ | "Mã PIN mới không được trùng với mã PIN hiện tại" |
-| `SET_002` | 400 | PIN confirm không khớp | "Mã PIN xác nhận không khớp" |
-| `SET_003` | 401 | PIN cũ sai | "Mã PIN không đúng. Còn [N] lần thử" |
-| `SET_004` | 429 | PIN sai > 3 lần | "Quá số lần thử PIN — cần xác thực OTP" |
-| `SET_005` | 400 | Email không hợp lệ | "Địa chỉ email không hợp lệ" |
-| `SET_006` | 422 | Avatar quá lớn / sai định dạng | "Ảnh không hợp lệ" |
-| `SET_007` | 403 | Cố thay đổi SĐT/Họ tên sau KYC | "Thông tin này không thể thay đổi sau khi xác thực KYC" |
-| `SET_008` | 404 | Device ID không tồn tại | "Thiết bị không tìm thấy" |
-| `SET_009` | 403 | Cố đăng xuất thiết bị hiện tại qua API | "Không thể đăng xuất thiết bị đang sử dụng qua tính năng này" |
-| `SET_010` | 422 | Đóng TK còn số dư | "Vui lòng rút hết số dư trước khi đóng tài khoản" |
-| `SET_011` | 422 | Đóng TK có GD pending | "Có giao dịch đang xử lý. Vui lòng chờ hoàn tất" |
-| `SET_012` | 422 | 2FA threshold dưới 500K | "Ngưỡng OTP tối thiểu là 500,000 VND" |
+| Code | HTTP | Hiển thị user | Ghi chú dev |
+|---|---|---|---|
+| `SET_001` | 400 | "Tên hiển thị không hợp lệ" | Độ dài 2–50 ký tự |
+| `SET_002` | 400 | "Địa chỉ email không hợp lệ" | Email format invalid |
+| `SET_003` | 409 | "Email này đã được sử dụng" | Trùng email với user khác |
+| `SET_004` | 400 | "Ảnh không hợp lệ hoặc quá lớn" | File > 5MB hoặc sai format |
+| `SET_005` | 403 | "Thông tin này không thể thay đổi sau khi xác thực KYC" | Cố sửa họ tên hoặc SĐT |
+| `SET_006` | 400 | "Mã PIN mới không được trùng PIN cũ" | new_pin == old_pin |
+| `SET_007` | 400 | "Mã PIN xác nhận không khớp" | confirm_pin != new_pin |
+| `SET_008` | 408 | "Yêu cầu xác nhận đã hết hạn. Vui lòng thử đăng nhập lại." | approval_token expired |
+| `SET_009` | 403 | "Yêu cầu đăng nhập bị từ chối" | Device A deny hoặc timeout |
+| `SET_010` | 404 | "Không tìm thấy thông báo" | notification_id không tồn tại hoặc đã expire |
+
+---
+
+## 11. Non-Functional Requirements (NFR)
+
+### Performance
+
+| Chỉ số | Target | Ghi chú |
+|---|---|---|
+| Notification inbox load | P95 < 500ms | Redis cache cho unread_count; DB query cho list |
+| Unread badge count | P99 < 100ms | Redis counter; không cần DB query |
+| Profile GET | P95 < 200ms | User record cache |
+| Profile PATCH | P95 < 1s | Gồm S3 upload nếu có avatar mới |
+| Avatar upload | P95 < 3s | Phụ thuộc file size + network |
+| Approval request delivery | P95 < 2s | Push phải đến Device A trong 2s |
+| Approval polling (Device B) | 3s interval | Không quá 100 polls/request |
+
+### Bảo mật (Security)
+
+| Yêu cầu | Mô tả |
+|---|---|
+| 1-device enforcement | Auth Service enforce tại server; client không thể bypass bằng cách gửi request thẳng |
+| Approval token | JWT một lần dùng, expire 5 phút, signed với secret riêng; không thể forge |
+| Push security | Notification payload không chứa sensitive data (số tiền, SĐT đầy đủ) — chỉ chứa `type` và `deep_link` |
+| Session revocation | Revoke ngay lập tức sau logout/approval — không cần chờ token expire |
+| PIN change logging | Mọi PIN change action logged với: user_id, device_id, ip, timestamp |
+
+### Tính sẵn sàng & Độ tin cậy
+
+| Chỉ số | Target | Ghi chú |
+|---|---|---|
+| Notification Service uptime | ≥ 99.5% | Không phải payment-critical |
+| FCM/APNs delivery | Best-effort; retry 3 lần | Push không guaranteed; fallback: user thấy trạng thái khi mở app |
+| Approval flow fallback | Nếu push không đến trong 60s → in-app polling khi Device A online | Device A fetch pending approvals khi reconnect |
+| Settings Service uptime | ≥ 99.9% | Ảnh hưởng đến PIN change và biometric |
+
+### Lưu trữ & Compliance
+
+| Loại dữ liệu | Thời gian lưu | Ghi chú |
+|---|---|---|
+| Notification records | 90 ngày (auto-expire) | Không cần compliance lưu dài; chỉ cần in-app usability |
+| Device approval audit log | 5 năm | Security audit; điều tra nếu có fraud |
+| Profile change history | 5 năm | Bao gồm: ai thay đổi, khi nào, IP, device |
+| Session log (login/logout) | 5 năm | Compliance + fraud investigation |
 
 ---
 
 ## 12. Edge Cases
 
-| # | Tình huống | Xử lý |
-|---|-----------|-------|
-| 1 | User bật Biometric trên thiết bị chưa enroll Face ID / Fingerprint | OS trả về lỗi enrollment → hiển thị "Vui lòng cài đặt sinh trắc học trong Cài đặt điện thoại trước" |
-| 2 | User thay SIM (SĐT mới) → không nhận được OTP cho đổi PIN | Phải qua CSKH với xác minh KYC để cập nhật SĐT. Flow này ngoài phạm vi Settings module |
-| 3 | Đóng tài khoản khi đang có nạp tiền Push đang pending (chưa về) | Kiểm tra `balance_locked > 0` → chặn, hiển thị "Bạn có [X] VND đang chờ nạp" |
-| 4 | Tắt push notification trên app → OS vẫn còn permission | Server set `push_opt_in = false` → không gửi dù có FCM token hợp lệ. Không unregister token |
-| 5 | User có đúng 5 thiết bị, muốn đăng nhập thiết bị mới | Khi login thành công thiết bị 6: hiển thị danh sách 5 thiết bị cũ, yêu cầu chọn 1 để đăng xuất trước khi tiếp tục |
-| 6 | Đóng TK nhưng có ngân hàng đã liên kết | OAuth token bị revoke tự động trong closing job. Ngân hàng được liên kết không ảnh hưởng — không cần unlink thủ công |
-| 7 | User trong grace period 30 ngày muốn hủy đóng TK | Không có flow trong app — phải liên hệ CSKH qua email. CSKH có thể revert `status` về `active` trong DB |
+| Trường hợp | Xử lý |
+|---|---|
+| Device A mất kết nối khi có approval request đang chờ | Push không delivered; khi Device A reconnect, app fetch `GET /auth/pending-approvals` và hiển thị modal nếu approval chưa expire |
+| Device A bị tắt hoàn toàn (hết pin) → approval timeout | Sau 5 phút auto-deny Device B; Device B hiển thị "Không nhận được xác nhận" + link CSKH |
+| User tap "Cho phép" nhưng push bị delay (double approval) | approval_token là single-use; lần gọi approve thứ hai trả 409 Conflict — không double-process |
+| Notification deep link trỏ đến GD đã > 6 tháng | SCR-HIST-04 không load được (ngoài giới hạn); hiển thị "Giao dịch này đã quá cũ để hiển thị chi tiết" |
+| User thay đổi email → email cũ nhận được thông báo quan trọng | Notification vẫn gửi đến email mới ngay sau khi cập nhật; email cũ không nhận thêm |
+| User đổi ngôn ngữ sang EN → push notification vẫn hiện tiếng Việt | Notification content được generate khi event xảy ra (không phải khi user đọc); cần store preferred_language và generate nội dung theo language tại thời điểm event |
+| Avatar upload thất bại (S3 error) → profile khác đã save thành công | Rollback partial: nếu avatar upload fail, trả lỗi cho toàn bộ PATCH; không lưu partial update |
+| SCR-SETTINGS-05 timeout 5 phút nhưng user đang nhìn màn hình khác | Countdown chạy dù app ở background; khi về 0, modal tự dismiss và hiển thị notification "Yêu cầu đã hết hạn tự động" |
 
 ---
 
 ## 13. Open Questions
 
 | # | Câu hỏi | Ảnh hưởng | Target |
-|---|---------|----------|--------|
-| 1 | Phân loại thông báo chi tiết (GD / bảo mật / khuyến mãi) — khi nào làm? | UX personalization — user tránh spam từ promo | Sprint 9 |
-| 2 | In-app notification center (unread badge, danh sách) — scope thế nào? | Cần thiết kế data model riêng cho notification store | Sprint 9 |
-| 3 | Grace period 30 ngày — user có thể tự hủy trong app không? | Nếu có: cần thêm `POST /account/close/cancel` + màn hình hủy | Sprint 8 |
-| 4 | Max devices = 5 có phù hợp không? | User hay đổi điện thoại hoặc dùng tablet có thể bị chặn | Product decision |
-| 5 | Biometric auth: có dùng được cho đăng nhập app không, hay chỉ dùng cho thanh toán? | Auth module cần đồng bộ scope biometric | Sprint 7 clarification |
+|---|---|---|---|
+| 1 | Nếu Device A hoàn toàn offline (mất điện, vứt máy) — user mới mua máy mới — flow CSKH xác minh và force-logout như thế nào? | Critical path cho trường hợp thực tế phổ biến; cần CSKH SOP | Sprint 8 — CSKH design |
+| 2 | Giới hạn notification inbox: sau 90 ngày xóa hết — có cần archive/export không? | Compliance; user có thể cần biên lai thông báo | Sprint 10 |
+| 3 | Push notification khi app bị kill hoàn toàn: approval notification có hiển thị action buttons trực tiếp trên notification shade không? | iOS: Notification Content Extension / Android: Reply action — cần native dev confirm | Sprint 7 tech |
+| 4 | Nickname có hiển thị trong Transaction History (thay cho họ tên đầy đủ) không? | Nếu có: cần sync nickname vào transaction record hoặc join khi display | Sprint 8 |
+| 5 | Email dự phòng có cần xác minh (verify email) không? | Nếu không verify → user có thể nhập email sai và không nhận được thông báo | Product decision Sprint 7 |
