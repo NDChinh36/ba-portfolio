@@ -481,6 +481,8 @@ sequenceDiagram
 | bank_access_token expire (thường 90 ngày) trước khi user thực hiện giao dịch | Wallet Core dùng bank_refresh_token để lấy token mới; nếu refresh fail → notify user re-link |
 | User mở màn hình OAuth trên 2 thiết bị cùng lúc | `state` là GUID unique per session; chỉ session đúng state được accept callback |
 | Hủy liên kết ngân hàng đang dùng làm nguồn nạp trong lệnh scheduled (tương lai) | Block hủy; thông báo "Ngân hàng này đang được dùng trong lịch nạp tiền tự động. Hủy lịch trước." |
+| Ngân hàng thay đổi số tài khoản của user (nâng cấp tài khoản, hợp nhất ngân hàng) | Tài khoản cũ không còn hợp lệ → topup/withdraw fail → WALLET_011; App gợi ý "Ngân hàng này không khả dụng. Vui lòng hủy liên kết và liên kết lại với số tài khoản mới." |
+| Ngân hàng bảo trì planned downtime (thường 0:00–6:00 Chủ Nhật) | OAuth và API calls đến ngân hàng fail → hiển thị banner "Ngân hàng [tên] đang bảo trì, thử lại sau. Các ngân hàng khác vẫn hoạt động bình thường." |
 
 ---
 
