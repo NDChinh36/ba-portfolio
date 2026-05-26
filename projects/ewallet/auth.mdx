@@ -679,7 +679,7 @@ sequenceDiagram
 | PIN storage | bcrypt với cost factor ≥ 12; không lưu plaintext, MD5 hay SHA-1 |
 | Token storage trên thiết bị | Secure Enclave (iOS) / Android Keystore; tuyệt đối không dùng AsyncStorage |
 | Rate limiting | Áp dụng cả per-IP và per-SĐT: OTP ≤ 3 lần/giờ/SĐT; PIN sai ≤ 5 lần/30 phút |
-| Session invalidation | Đổi PIN → revoke tất cả refresh token; thiết bị mới → push cảnh báo ngay lập tức |
+| Session invalidation | Đổi PIN → revoke tất cả refresh token; 1-device policy → session Device A bị revoke khi Device B được approved; thiết bị mới phải qua approval flow trước khi nhận token |
 | Transport security | TLS 1.2 tối thiểu; Certificate Pinning trên mobile client |
 | Biometric | LocalAuthentication on-device; không gửi biometric hash lên server |
 | OTP entropy | 6 chữ số ngẫu nhiên từ CSPRNG; không dùng timestamp-based OTP |
