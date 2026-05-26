@@ -436,6 +436,28 @@ sequenceDiagram
 
 ### SCR-KYC-07 — Chụp Selfie Liveness
 
+```
+┌─────────────────────────────────┐
+│  ① ② ③ ④ Selfie               │
+│                                 │
+│  ┌─────────────────────────┐   │
+│  │    ~~~~~~~~~~~~~~~~~~~~  │   │
+│  │   /    ╭─────────╮    \ │   │
+│  │   |    │  FACE   │    | │   │  ← oval overlay
+│  │   |    │  OVAL   │    | │   │
+│  │   \    ╰─────────╯    / │   │
+│  │    ~~~~~~~~~~~~~~~~~~~~  │   │
+│  └─────────────────────────┘   │
+│                                 │
+│  ↑ Gần hơn / ↓ Xa hơn          │  ← hướng dẫn realtime
+│  Nhìn thẳng · Đủ ánh sáng      │
+│                                 │
+│  ✨ [iProov flash sequence]     │  ← nhấp nháy màu
+│                                 │
+│  ❌ Chưa nhận diện (lần 1/3)   │  ← khi fail
+└─────────────────────────────────┘
+```
+
 | Component | Loại | Nội dung | Điều kiện | Action |
 |---|---|---|---|---|
 | Camera (front) | Camera | Live front camera | Always | — |
