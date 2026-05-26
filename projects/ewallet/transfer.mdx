@@ -277,6 +277,30 @@ sequenceDiagram
 
 ### SCR-TRANS-03 — Nhập số tiền + nội dung
 
+```
+┌─────────────────────────────────┐
+│  ←                             │
+│  ┌───────────────────────────┐  │
+│  │ [👤] NGUYEN VAN AN · 090* │  │  ← mini recipient card
+│  └───────────────────────────┘  │
+│                                 │
+│                                 │
+│          0 đ                    │  ← large amount input
+│                                 │
+│  Số dư: 2,500,000 đ             │
+│  Còn có thể chi hôm nay: 20M đ  │
+│                                 │
+│  [50K]  [100K]  [200K]  [500K]  │
+│                                 │
+│  Nội dung (tùy chọn)            │
+│  ┌───────────────────────────┐  │
+│  │                    0/200  │  │
+│  └───────────────────────────┘  │
+│                                 │
+│       [      Tiếp tục     ]     │
+└─────────────────────────────────┘
+```
+
 | Component | Loại | Nội dung | Điều kiện | Action |
 |---|---|---|---|---|
 | Recipient mini-card | Card | Avatar nhỏ + tên + SĐT ẩn | Always | Tap → về SCR-TRANS-02 |
