@@ -131,11 +131,15 @@ flowchart TD
     L -- Sai lần 5 --> N[Khóa 30 phút\nGửi Push + SMS]
     L -- Đúng --> K
 
-    K --> O{Thiết bị\nmới?}
-    O -- Có --> P[SCR-AUTH-15\nCảnh báo thiết bị mới]
-    P --> Q[Gửi Push notify\nđến thiết bị cũ]
-    Q --> HOME([Home])
-    O -- Không --> HOME
+    K --> O{Có thiết bị\nkhác đang active?}
+    O -- Không --> HOME([Home])
+    O -- Có --> P[Tạo approval_token\nGửi Push đến Device A]
+    P --> Q[SCR-AUTH-15\nDevice B: Đang chờ xác nhận]
+    Q --> R{Kết quả từ\nDevice A?}
+    R -- Đồng ý --> S[Issue Tokens\nRevoke session Device A]
+    S --> HOME
+    R -- Từ chối --> FAIL([AUTH_015: Đăng nhập\nbị từ chối])
+    R -- Timeout 5 phút --> TIMEOUT([AUTH_016: Hết thời\ngian chờ])
 ```
 
 ---
