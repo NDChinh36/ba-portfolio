@@ -180,6 +180,37 @@ Xử lý: Hệ thống hiển thị cảnh báo inline, tự động clamp giá 
 
 Trader nhập PnL mong muốn cùng với thông số vị thế vào tab **Target Price Calculator**. Hệ thống tính toán ngay phía client và trả về mức giá cần đạt được để vị thế đạt đúng PnL mục tiêu đó.
 
+### Sơ đồ luồng (BPMN)
+
+```mermaid
+flowchart LR
+    subgraph TRADER["👤 Trader"]
+        direction TB
+        T1([Mở tab\nTarget Price]) --> T2[Chọn Direction\nLong hoặc Short]
+        T2 --> T3[Nhập: Entry Price\nLeverage · Qty]
+        T3 --> T4{Chọn mode\ninput}
+        T4 -- PnL tuyệt đối --> T5[Nhập PnL\nmong muốn USDT]
+        T4 -- %PnL --> T6[Nhập %PnL\nmong muốn]
+        T5 & T6 --> T7{Kết quả\nhợp lệ?}
+        T7 -- Không hợp lệ --> T3
+        T7 -- Hợp lệ --> T8[Xem\nTarget Price]
+        T8 --> T9([Copy & Fill\nhoặc tính lại])
+    end
+    subgraph CALC["⚙️ Calculator System"]
+        direction TB
+        C1[Pre-fill Entry Price\nvà Fee Rate]
+        C2[Validate\ninput]
+        C3[Tính Target Price\nper BR-CALC-TARGET-01]
+        C4[Hiển thị kết quả\nẩn Phí nếu không có Qty]
+        C1 --> C2 --> C3 --> C4
+    end
+    T1 --> C1
+    T5 --> C2
+    T6 --> C2
+    C3 --> T7
+    C4 --> T8
+```
+
 ### Actor
 
 - **Actor chính:** Trader (có thể chưa đăng nhập)
