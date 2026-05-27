@@ -220,11 +220,10 @@ icon: "list-check"
 | AC-05-06 | Trader dùng 2 thiết bị khác nhau | State chỉ được lưu trên từng thiết bị, không đồng bộ cross-device |
 
 **Definition of Done:**
-- [ ] Shared state được implement đúng (context, store hoặc session storage)
-- [ ] Test E2E: chuyển qua lại 3 tab, xác nhận state không mất
-- [ ] Mobile test: back navigation không reset state
-- [ ] Nút Reset hoạt động và xóa sạch state
-- [ ] Không có memory leak khi chuyển tab liên tục
+- [ ] QA verify: thông số Giá vào và Đòn bẩy giữ nguyên sau khi chuyển qua lại 3 tab (tham chiếu AC-05-01, AC-05-02)
+- [ ] Mobile: thông số không bị mất sau khi bấm Back và mở lại Calculator trong cùng phiên (AC-05-05)
+- [ ] Nút Reset xóa sạch tất cả thông số về giá trị mặc định hệ thống (AC-05-04)
+- [ ] State không đồng bộ cross-device — mỗi thiết bị giữ state độc lập (AC-05-06)
 
 **Notes / Assumptions:**
 - Các trường "shared" gồm: Giá vào, Đòn bẩy, Hướng vị thế, Symbol (nếu có)
