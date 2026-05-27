@@ -66,9 +66,9 @@
             "projects/futures-calculator/brd",
             "projects/futures-calculator/user-stories",
             "projects/futures-calculator/use-cases",
-            "projects/futures-calculator/erd",
             "projects/futures-calculator/calculator",
             "projects/futures-calculator/copy-fill",
+            "projects/futures-calculator/erd",
             "projects/futures-calculator/uat"
           ]
         }
