@@ -91,9 +91,9 @@ icon: "list-check"
 - [ ] QA verify kết quả PnL khớp với bộ dữ liệu kiểm chứng trong UAT (tham chiếu TD-001, TD-002, TD-003)
 
 **Notes / Assumptions:**
-- PnL được tính theo công thức: `PnL = (Giá thoát - Giá vào) × Số lượng × Hệ số hướng (Long=+1, Short=-1)`
-- %PnL được tính trên margin: `%PnL = PnL / (Giá vào × Số lượng / Đòn bẩy) × 100`
-- Phí giao dịch có thể được tích hợp vào phép tính nếu được khai báo — cần xác nhận với PM
+- Công thức tính PnL, %PnL và phí giao dịch được định nghĩa có thẩm quyền tại **FRD Section 5.2** (BR-CALC-PNL-01) — không viết lại công thức ở đây
+- Phí giao dịch được tích hợp vào kết quả PnL; logic chọn loại tài sản phí xem tại **FRD Section 5.5**
+- Cần xác nhận với PM về behavior khi fee rate thay đổi sau khi user đã nhập thông số
 
 ---
 
