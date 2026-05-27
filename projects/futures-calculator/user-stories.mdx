@@ -84,12 +84,11 @@ icon: "list-check"
 | AC-01-08 | Giá trị nhập vào là số âm hoặc bằng 0 | Hệ thống hiển thị thông báo lỗi ngay tại trường đó |
 
 **Definition of Done:**
-- [ ] Logic tính PnL đã được unit test với ít nhất 10 test cases (Long/Short, dương/âm)
-- [ ] Giao diện cập nhật real-time khi người dùng gõ (debounce ≤ 300ms)
-- [ ] Màu sắc hiển thị PnL tuân thủ design system (xanh/đỏ)
-- [ ] Mobile: ràng buộc PnL không âm được kiểm tra trước khi submit
-- [ ] Web: cho phép PnL âm, không chặn
-- [ ] Code review hoàn tất, không có lỗi lint
+- [ ] Trader thấy PnL dương hiển thị màu xanh lá, PnL âm hiển thị màu đỏ
+- [ ] Nút Tính toán bị vô hiệu hóa khi thiếu bất kỳ trường bắt buộc nào
+- [ ] Mobile: hệ thống hiển thị cảnh báo phù hợp khi PnL âm — không cho xác nhận
+- [ ] Web: hệ thống chấp nhận PnL âm và hiển thị kết quả bình thường
+- [ ] QA verify kết quả PnL khớp với bộ dữ liệu kiểm chứng trong UAT (tham chiếu TD-001, TD-002, TD-003)
 
 **Notes / Assumptions:**
 - PnL được tính theo công thức: `PnL = (Giá thoát - Giá vào) × Số lượng × Hệ số hướng (Long=+1, Short=-1)`
