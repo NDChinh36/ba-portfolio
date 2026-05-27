@@ -57,7 +57,122 @@ flowchart LR
 
 ---
 
-## 3. User Flows
+## 3. Swim Lane Diagrams (BPMN)
+
+Các sơ đồ swim lane mô tả **ai làm gì** trong mỗi luồng tính toán — phân biệt rõ trách nhiệm giữa Trader, Calculator UI và Backend Services.
+
+### 3.1 Flow A — PnL Calculator
+
+```mermaid
+flowchart LR
+    subgraph TRADER["👤 Trader"]
+        direction TB
+        AT1([Mở tab PnL]) --> AT2[Chọn Direction\nLong / Short]
+        AT2 --> AT3[Nhập Giá mở\nGiá đóng · Qty · Leverage]
+        AT3 --> AT4[Chọn đơn vị\nToken hoặc Stablecoin]
+        AT4 --> AT5[Tích checkbox\nNative Token nếu muốn]
+        AT5 --> AT6[Bấm Tính toán]
+        AT6 --> AT7{Xem kết quả}
+        AT7 -- Điều chỉnh --> AT3
+        AT7 -- OK --> AT8([Copy & Fill\nhoặc kết thúc])
+    end
+    subgraph UI["⚙️ Calculator UI"]
+        direction TB
+        UI1[Hiển thị form\nPre-fill giá từ Market Data]
+        UI2[Validate real-time:\ngiá > 0 · qty trong range]
+        UI3{Lỗi?}
+        UI4[Tính toán phía client\nper BR-CALC-PNL-01\nF01.01]
+        UI5[Hiển thị:\nIM · PnL · ROI · Phí]
+        UI1 --> UI2 --> UI3
+        UI3 -- Có lỗi --> UI2
+        UI3 -- Hợp lệ --> UI4 --> UI5
+    end
+    subgraph BACKEND["🔌 Market Data · Fee Config"]
+        direction TB
+        BD1[GET /market/price\nGiá thị trường hiện tại]
+        BD2[GET /fee/config\nFee rate mặc định]
+        BD3[GET /market/lot-size\nMin/Max qty config]
+        BD1 --- BD2 --- BD3
+    end
+    AT1 --> UI1
+    BACKEND -- Khi mở Calculator --> UI1
+    AT3 --> UI2
+    AT6 --> UI4
+    UI3 --> AT6
+    UI5 --> AT7
+```
+
+### 3.2 Flow B — Target Price Calculator
+
+```mermaid
+flowchart LR
+    subgraph TRADER["👤 Trader"]
+        direction TB
+        BT1([Mở tab\nGiá mục tiêu]) --> BT2[Nhập: Giá mở\nLeverage · Direction]
+        BT2 --> BT3{Chọn mode\ninput PnL}
+        BT3 -- PnL tuyệt đối --> BT4[Nhập PnL USDT\nvà Số lượng BẮT BUỘC]
+        BT3 -- %PnL --> BT5[Nhập %PnL\nSố lượng OPTIONAL]
+        BT4 & BT5 --> BT6[Bấm Tính toán]
+        BT6 --> BT7[Xem Giá mục tiêu]
+        BT7 --> BT8([Copy & Fill\nhoặc kết thúc])
+    end
+    subgraph UI["⚙️ Calculator UI"]
+        direction TB
+        UI1[Pre-fill Giá mở\nvà Fee Rate]
+        UI2[Validate theo mode:\nPnL abs → Qty bắt buộc\n%PnL → Qty optional]
+        UI3{Có Qty?}
+        UI4[Tính công thức đầy đủ\nHiển thị Phí tuyệt đối]
+        UI5[Tính công thức rút gọn\nẨn Phí tuyệt đối\nChỉ hiện Tỷ lệ phí]
+        UI6[Hiển thị Giá mục tiêu]
+        UI1 --> UI2 --> UI3
+        UI3 -- Có --> UI4 --> UI6
+        UI3 -- Không --> UI5 --> UI6
+    end
+    BT2 --> UI2
+    BT6 --> UI3
+    UI6 --> BT7
+```
+
+### 3.3 Flow C — Liquidation Price Calculator
+
+```mermaid
+flowchart LR
+    subgraph TRADER["👤 Trader"]
+        direction TB
+        CT1([Mở tab\nGiá thanh lý]) --> CT2[Nhập: Giá mở\nLeverage · Direction]
+        CT2 --> CT3[Nhập Số lượng\nOPTIONAL]
+        CT3 --> CT4[Bấm Tính toán\nKhông cần Qty]
+        CT4 --> CT5[Xem Giá thanh lý\nmàu cam — ngưỡng rủi ro]
+        CT5 --> CT6{Đòn bẩy\nquá cao?}
+        CT6 -- Có → điều chỉnh --> CT2
+        CT6 -- Chấp nhận --> CT7([Copy & Fill\nhoặc kết thúc])
+    end
+    subgraph UI["⚙️ Calculator UI"]
+        direction TB
+        UI1[Pre-fill Giá mở\nvà Fee Rate]
+        UI2[Validate:\nGiá > 0 · Leverage ≥ 1]
+        UI3{Có Qty?}
+        UI4[Tính công thức đầy đủ:\ncó tính fee_data và Margin\nper BR-CALC-LIQ-01]
+        UI5[Tính công thức rút gọn:\nchỉ dùng Leverage và Fee Rate\nper BR-CALC-LIQ-01]
+        UI6{Leverage\ncao > 50x?}
+        UI7[Hiển thị cảnh báo:\n⚠️ Khoảng cách thanh lý rất nhỏ]
+        UI8[Hiển thị: Liq Price\n+ % khoảng cách từ Giá mở]
+        UI1 --> UI2 --> UI3
+        UI3 -- Có --> UI4 --> UI6
+        UI3 -- Không --> UI5 --> UI6
+        UI6 -- Cao --> UI7 --> UI8
+        UI6 -- Bình thường --> UI8
+    end
+    CT2 --> UI2
+    CT3 --> UI3
+    CT4 --> UI3
+    UI8 --> CT5
+    UI6 --> CT6
+```
+
+---
+
+## 4. User Flows
 
 ### 3.1 Flow A — PnL Calculator (F01.01)
 
