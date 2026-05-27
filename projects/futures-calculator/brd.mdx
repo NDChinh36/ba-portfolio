@@ -65,6 +65,60 @@ Phiên bản MVP bao gồm ba calculator độc lập (PnL, Target Price, Liquid
 
 Thị trường futures crypto có đặc thù là leverage cao và biến động lớn, khiến việc tính toán sai dẫn đến rủi ro thanh lý ngay lập tức. Trader mới — nhóm chiếm tỷ trọng cao trong acquisition — thường không nắm được công thức tính PnL có phí và margin theo leverage, dẫn đến quyết định không cân nhắc kỹ rủi ro. Đây là pain point đủ lớn để ảnh hưởng cả đến retention và uy tín nền tảng.
 
+### Sơ đồ quy trình nghiệp vụ (BPMN)
+
+**As-Is** — Trader phải rời nền tảng để tính toán, gây ngắt quãng và rủi ro sai sót:
+
+```mermaid
+flowchart LR
+    subgraph ASTRADER["👤 Trader — As-Is"]
+        direction TB
+        AT1([Muốn vào lệnh]) --> AT2[Rời nền tảng\ndùng Excel / App ngoài]
+        AT2 --> AT3[Tự tra công thức\nPnL · Margin · Liq Price]
+        AT3 --> AT4[Ghi lại kết quả\nthủ công]
+        AT4 --> AT5[Quay lại nền tảng]
+        AT5 --> AT6[Nhập từng trường\nvào Order Form]
+        AT6 --> AT7([Đặt lệnh])
+    end
+    subgraph ASRISK["⚠️ Điểm rủi ro As-Is"]
+        direction TB
+        R1[Công thức sai\nQuên tính phí]
+        R2[Nhập nhầm số liệu\nkhi transfer sang form]
+        R3[CS ticket tăng cao\ndo tính toán nhầm]
+    end
+    AT3 -.-> R1
+    AT6 -.-> R2
+    AT3 -.-> R3
+```
+
+**To-Be** — Futures Calculator tích hợp sẵn, rút gọn toàn bộ luồng xuống còn 2 bước chính:
+
+```mermaid
+flowchart LR
+    subgraph TOBETRADER["👤 Trader — To-Be"]
+        direction TB
+        BT1([Muốn vào lệnh]) --> BT2[Mở Calculator\ntích hợp ngay trên màn]
+        BT2 --> BT3[Nhập: Giá vào\nLeverage · Hướng vị thế]
+        BT3 --> BT4[Xem kết quả tức thì\nPnL · Giá TL · Giá MT · Phí]
+        BT4 --> BT5[Nhấn Copy & Fill\n1 thao tác]
+        BT5 --> BT6([Đặt lệnh\nthông số đã điền sẵn])
+    end
+    subgraph TOBESYS["⚙️ Calculator System — To-Be"]
+        direction TB
+        BS1[Tải giá thị trường\nvà fee rate tự động]
+        BS2[Tính toán tức thì\nphía client — BR-CALC-*]
+        BS3[Auto-select LIMIT/STOP\ndựa trên giá vs thị trường]
+        BS1 --> BS2 --> BS3
+    end
+    BT2 --> BS1
+    BT3 --> BS2
+    BS2 --> BT4
+    BT5 --> BS3
+    BS3 --> BT6
+```
+
+**Kết quả nghiệp vụ kỳ vọng:** Giảm 40% CS ticket liên quan tính toán (OBJ-01); tăng 25% tỷ lệ chuyển đổi calculator → lệnh thực (OBJ-02).
+
 ---
 
 ## 3. Stakeholder Analysis
