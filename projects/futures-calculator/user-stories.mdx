@@ -192,9 +192,9 @@ icon: "list-check"
 - [ ] QA kiểm tra edge case đòn bẩy tối đa của sản phẩm (tham chiếu TC-LIQ-004)
 
 **Notes / Assumptions:**
-- Công thức cơ bản (Cross Margin): `Liq Price = Entry × (1 - 1/Leverage)` (Long); `Entry × (1 + 1/Leverage)` (Short)
-- Nếu sản phẩm hỗ trợ Isolated Margin, cần điều chỉnh công thức — cần xác nhận với Tech
-- Số lượng là optional field trong feature này (F01.03 spec)
+- Công thức tính Giá thanh lý (cả có/không có Số lượng) được định nghĩa tại **FRD Section 5.4** (BR-CALC-LIQ-01)
+- MVP chỉ hỗ trợ **Isolated Margin** — nếu scope thay đổi sang Cross Margin cần cập nhật FRD và stories
+- Số lượng là optional field trong feature này (tham chiếu BR-CALC-09 trong FRD)
 
 ---
 
