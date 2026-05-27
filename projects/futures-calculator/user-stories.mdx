@@ -226,9 +226,9 @@ icon: "list-check"
 - [ ] State không đồng bộ cross-device — mỗi thiết bị giữ state độc lập (AC-05-06)
 
 **Notes / Assumptions:**
-- Các trường "shared" gồm: Giá vào, Đòn bẩy, Hướng vị thế, Symbol (nếu có)
-- Các trường riêng mỗi tab (PnL target, Giá thoát...) không cần chia sẻ
-- State lưu ở client-side (localStorage hoặc sessionStorage); không cần API
+- Các trường "shared" (persistent across tabs): Giá vào, Đòn bẩy, Hướng vị thế, Symbol
+- Các trường riêng từng tab (Giá thoát, PnL target...) không cần chia sẻ — reset khi chuyển tab là hành vi mong muốn
+- Cơ chế lưu state là quyết định kỹ thuật — tham chiếu BR-CALC-01 trong FRD để biết business rule
 
 ---
 
