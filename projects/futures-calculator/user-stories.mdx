@@ -119,11 +119,11 @@ icon: "list-check"
 | AC-02-06 | Trader thay đổi đòn bẩy | Giá mục tiêu cập nhật lại tức thì |
 
 **Definition of Done:**
-- [ ] Unit test bao phủ cả hai mode: PnL tuyệt đối và %PnL
-- [ ] Toggle giữa hai mode hoạt động mượt, không mất giá trị đã nhập
-- [ ] Kết quả hiển thị đủ độ chính xác (tối thiểu 4 chữ số thập phân)
+- [ ] Giá mục tiêu hiển thị đúng cho cả hai mode: PnL tuyệt đối và %PnL
+- [ ] Toggle giữa hai mode không mất giá trị đã nhập trước đó
 - [ ] Giao diện phân biệt rõ hai mode bằng label và placeholder
-- [ ] QA kiểm tra cross-browser (Chrome, Safari, Firefox)
+- [ ] Hệ thống hiển thị cảnh báo khi Giá mục tiêu tính ra ≤ 0 (AC-02-04)
+- [ ] QA verify kết quả khớp với dữ liệu kiểm chứng trong UAT (tham chiếu TC-TARGET-001, TC-TARGET-002)
 
 **Notes / Assumptions:**
 - Công thức: `Giá mục tiêu = Giá vào + PnL / (Số lượng × Hệ số hướng)`
