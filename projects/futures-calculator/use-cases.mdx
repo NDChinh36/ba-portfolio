@@ -60,6 +60,40 @@ icon: "diagram-project"
 
 Trader nhập các thông số vị thế (hướng, giá vào, giá thoát, số lượng, đòn bẩy, fee rate) vào tab **PnL Calculator**. Hệ thống tính toán ngay phía client và hiển thị PnL dự kiến cùng Margin ban đầu (Initial Margin).
 
+### Sơ đồ luồng (BPMN)
+
+```mermaid
+flowchart LR
+    subgraph TRADER["👤 Trader"]
+        direction TB
+        T1([Mở tab PnL]) --> T2[Chọn Direction\nLong hoặc Short]
+        T2 --> T3[Nhập: Entry Price\nExit Price · Qty · Leverage]
+        T3 --> T4{Kết quả\nhợp lệ?}
+        T4 -- Lỗi → sửa input --> T3
+        T4 -- Hợp lệ --> T5[Xem: PnL · Margin\nROI · Phí]
+        T5 --> T6([Tính lại hoặc\nCopy & Fill])
+    end
+    subgraph CALC["⚙️ Calculator System"]
+        direction TB
+        C1[Pre-fill Entry Price\nvà Fee Rate từ backend]
+        C2[Validate\nreal-time]
+        C3[Tính toán client-side\nper BR-CALC-PNL-01]
+        C4[Hiển thị kết quả\nmàu xanh/đỏ theo dấu PnL]
+        C1 --> C2 --> C3 --> C4
+    end
+    subgraph BACKEND["🔌 Market Data · Fee Engine"]
+        direction TB
+        B1[Trả về giá\nthị trường hiện tại]
+        B2[Trả về fee rate\nmặc định]
+        B1 --- B2
+    end
+    BACKEND -- Khi mở Calculator --> C1
+    T1 --> C1
+    T3 --> C2
+    C3 --> T4
+    C4 --> T5
+```
+
 ### Actor
 
 - **Actor chính:** Trader (có thể chưa đăng nhập)
