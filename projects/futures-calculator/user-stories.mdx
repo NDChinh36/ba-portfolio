@@ -186,10 +186,10 @@ icon: "list-check"
 | AC-04-07 | Trader dùng vị thế Short | Giá thanh lý phải luôn > Giá vào |
 
 **Definition of Done:**
-- [ ] Unit test kiểm tra Liq Price < Entry (Long) và Liq Price > Entry (Short) ở mọi mức đòn bẩy
+- [ ] QA xác nhận: Giá thanh lý Long **luôn thấp hơn** Giá vào; Giá thanh lý Short **luôn cao hơn** Giá vào (tham chiếu AC-04-06, AC-04-07)
 - [ ] Tooltip giải thích ngắn "Giá thanh lý là gì" hiển thị khi hover/tap vào label
-- [ ] Kết quả hiển thị rõ ràng, đủ chữ số thập phân, không bị làm tròn sai
-- [ ] QA kiểm tra edge case đòn bẩy tối đa của sản phẩm
+- [ ] Kết quả hiển thị với màu cam cảnh báo rủi ro (theo BR-CALC-03)
+- [ ] QA kiểm tra edge case đòn bẩy tối đa của sản phẩm (tham chiếu TC-LIQ-004)
 
 **Notes / Assumptions:**
 - Công thức cơ bản (Cross Margin): `Liq Price = Entry × (1 - 1/Leverage)` (Long); `Entry × (1 + 1/Leverage)` (Short)
