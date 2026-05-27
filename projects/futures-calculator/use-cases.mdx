@@ -403,6 +403,50 @@ Xử lý: Hệ thống không cho phép nhập fee rate ≥ 100%. Hiển thị l
 
 Sau khi tính toán xong ở bất kỳ tab nào của Calculator, Trader (đã đăng nhập) nhấn nút **Copy & Fill**. Hệ thống sao chép toàn bộ thông số đã tính và tự động điền vào Order Form, đồng thời đồng bộ fee preference. Nếu Trader chưa đăng nhập, luồng bị chặn và yêu cầu xác thực trước.
 
+### Sơ đồ luồng (BPMN)
+
+```mermaid
+flowchart LR
+    subgraph TRADER["👤 Trader"]
+        direction TB
+        T1([Nhấn\nCopy & Fill]) --> T2{Đã\nđăng nhập?}
+        T2 -- Chưa --> T3[Đăng nhập\nThông số giữ nguyên]
+        T3 --> T4[Nhấn lại\nCopy & Fill]
+        T2 -- Đã --> T5[Chờ kiểm tra\nsố dư]
+        T4 --> T5
+        T5 --> T6{Native Token\ncheckbox ON?}
+        T6 -- OFF --> T9[Xem Order Form\nđã điền đầy đủ]
+        T6 -- ON → đủ --> T9
+        T6 -- ON → thiếu → ví khác đủ --> T7[Transfer\nNative Token]
+        T6 -- ON → tất cả ví thiếu --> T8[Swap sang\nNative Token]
+        T7 & T8 --> T9
+        T9 --> T10([Xem xét\nvà đặt lệnh])
+    end
+    subgraph SYSTEM["⚙️ Calculator + Order Form"]
+        direction TB
+        S1[Kiểm tra\nAuth session]
+        S2[Kiểm tra số dư\nNative Token ví Futures]
+        S3[Auto-select\nLIMIT hoặc STOP]
+        S4[Fill thông số\nvào Order Form]
+        S1 --> S2 --> S3 --> S4
+    end
+    subgraph BACKEND["🔌 Auth · Wallet · Fee Engine"]
+        direction TB
+        B1[Auth Service\nxác nhận session]
+        B2[Wallet Service\ntrả về số dư]
+        B3[Fee Engine\ncập nhật preference]
+        B1 --- B2 --- B3
+    end
+    T1 --> S1
+    S1 --> B1
+    B1 --> T2
+    S2 --> B2
+    B2 --> T6
+    S3 --> T9
+    S4 --> T9
+    B3 --> S4
+```
+
 ### Actor
 
 - **Actor chính:** Trader (đã đăng nhập)
