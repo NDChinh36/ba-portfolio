@@ -49,7 +49,54 @@ Phiên bản MVP bao gồm ba calculator độc lập (PnL, Target Price, Liquid
 
 ---
 
-## 2. Business Context
+## 2. Đối tượng sử dụng (User Profiles)
+
+<Info>
+Phần này mô tả **ai** sẽ sử dụng tính năng — đặc điểm, nhu cầu và pain point của từng nhóm. Thông tin này là cơ sở để Product và UX ưu tiên thiết kế và để Compliance đánh giá rủi ro phù hợp từng segment.
+</Info>
+
+Futures Position Calculator phục vụ **ba nhóm trader** với hành vi và nhu cầu khác nhau:
+
+### 2.1 Trader mới (New Trader)
+
+| Thuộc tính | Mô tả |
+|---|---|
+| **Kinh nghiệm** | Dưới 3 tháng giao dịch futures; có thể đã trade spot nhưng chưa quen leverage |
+| **Hành vi điển hình** | Đặt lệnh theo cảm tính hoặc tin tức; hiếm khi tính leverage risk trước khi vào lệnh |
+| **Pain point chính** | Không biết liquidation price của mình ở đâu; bị liquidation bất ngờ; không hiểu PnL thực sự gồm phí hay không |
+| **Nhu cầu với Calculator** | Biết mình sẽ bị thanh lý ở mức giá nào trước khi đặt lệnh; hiểu PnL kỳ vọng có tính phí |
+| **Tần suất dùng** | Mỗi lần vào lệnh mới (chủ yếu dùng Liquidation Price Calculator) |
+| **Rủi ro nếu không có** | Liquidation bất ngờ → rút vốn → churn |
+
+### 2.2 Trader thường (Regular Trader)
+
+| Thuộc tính | Mô tả |
+|---|---|
+| **Kinh nghiệm** | 3–18 tháng futures; hiểu cơ bản leverage và margin nhưng không tính tay thường xuyên |
+| **Hành vi điển hình** | Có chiến lược TP/SL sơ bộ; thỉnh thoảng dùng tool ngoài (Excel, app tính) nhưng không thường xuyên |
+| **Pain point chính** | Mất thời gian rời nền tảng để tính; khi quay lại giá đã thay đổi; dễ nhầm kết quả khi nhập lại |
+| **Nhu cầu với Calculator** | Tính nhanh PnL và Target Price ngay trên màn giao dịch; không cần mở tab mới |
+| **Tần suất dùng** | Vài lần mỗi phiên (PnL + Target Price Calculator) |
+| **Rủi ro nếu không có** | Dùng tool đối thủ có tích hợp calculator → giảm stickiness |
+
+### 2.3 Trader pro (Professional Trader)
+
+| Thuộc tính | Mô tả |
+|---|---|
+| **Kinh nghiệm** | Trên 18 tháng; trade đa lệnh, quản lý rủi ro chủ động; biết công thức thuộc lòng |
+| **Hành vi điển hình** | Tính trước nhiều kịch bản; đặt lệnh nhanh sau khi xác nhận thông số; tối ưu phí giao dịch |
+| **Pain point chính** | Thao tác chuyển kết quả sang Order Form mất 5–10 giây/lần × nhiều lệnh/ngày = tổng thời gian đáng kể; muốn thanh toán phí bằng Native Token để được ưu đãi |
+| **Nhu cầu với Calculator** | Copy & Fill 1-click; checkbox phí Native Token để so sánh nhanh; không bị gián đoạn workflow |
+| **Tần suất dùng** | Rất thường xuyên — chủ yếu Copy & Fill và Fee Token comparison |
+| **Rủi ro nếu không có** | Ít bị ảnh hưởng nhất nhưng là nhóm đóng góp volume cao nhất |
+
+<Warning>
+Phân nhóm trader trên dựa trên giả định từ CS ticket history và user research sơ bộ. Product Team cần validate bằng dữ liệu thực (thời gian account tồn tại, volume/tháng, tần suất đặt lệnh) trước khi dùng để ra quyết định UX.
+</Warning>
+
+---
+
+## 3. Business Context
 
 ### As-Is vs To-Be
 
